@@ -1,0 +1,37 @@
+let s:expect = themis#helper('expect')
+
+Describe lamp#feature#rename
+
+  Before each
+    let s:server = lamp#register('typescript-language-server', {
+          \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
+          \   'filetypes': ['typescript', 'typescript.tsx'],
+          \   'root_uri': { -> lamp#config('root') . '/fixture/typescript-fixture/' }
+          \ })
+    call lamp#sync(s:server.start())
+    call lamp#sync(s:server.initialize())
+  End
+
+  After each
+    call lamp#sync(s:server.stop())
+  End
+
+  It Should rename
+    call lamp#view#buffer#open('vsplit', {
+          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+          \   'lnum': 5,
+          \   'col': 2
+          \ })
+    set filetype=typescript
+
+    let s:locations = []
+    call lamp#config('option.on_renamed', { locations -> execute('let s:locations = locations') })
+    call lamp#feature#rename#test_context({ 'new_name': 'module2' })
+    call lamp#feature#rename#do()
+    call lamp#sync({ -> len(s:locations) > 0 })
+    call lamp#config('option.on_renamed', { locations -> [setqflist(locations), execute('copen')] })
+    execute 'bufdo! bdelete!'
+  End
+
+End
+

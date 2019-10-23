@@ -1,0 +1,89 @@
+*vim-lamp* *lamp*
+
+Language Server Protocol Client in Vim.
+
+
+==============================================================================
+CONTENTS                                                       *lamp-contents*
+
+INTRODUCTION                                                      |lamp-intro|
+INSTALL                                                         |lamp-install|
+MAPPING                                                         |lamp-mapping|
+EXAMPLE                                                         |lamp-example|
+FAQ                                                                 |lamp-faq|
+CHANGELOG                                                     |lamp-changelog|
+
+==============================================================================
+INSTALL                                                         *lamp-install*
+
+You can use your favorite plugin manage for install `vim-lamp`.
+The below settings uses dein.nvim.
+
+>
+  call dein#add('hrsh7th/vim-lamp')
+<
+
+
+==============================================================================
+MAPPING                                                         *lamp-mapping*
+
+>
+  <Plug>(lamp-definition)
+  <Plug>(lamp-definition-vsplit)
+  <Plug>(lamp-definition-split)
+<
+
+Go to definition.
+
+
+>
+  <Plug>(lamp-rename)
+<
+
+Rename symbol.
+
+
+...TODO...
+
+==============================================================================
+EXAMPLE                                                         *lamp-example*
+
+
+>
+  " register server when lamp initialized.
+  autocmd! vimrc User lamp#initialized call s:on_lamp_initialized()
+  function! s:on_lamp_initialized() abort
+    call lamp#register('typescript-language-server', {
+            \   'command': ['typescript-language-server', '--stdio'],
+            \   'filetypes': ['typescript', 'javascript', 'typescript.tsx', 'javascript.jsx'],
+            \   'root_uri': { -> '/path/to/project_root_dir' }
+            \ })
+  endfunction
+
+  " register mapping for buffer.
+  autocmd! vimrc User lamp#text_document_did_open call s:on_lamp_text_document_did_open()
+  function! s:on_lamp_text_document_did_open() abort
+    nmap <buffer> gf<CR>    <Plug>(lamp-definition)
+    nmap <buffer> gfs       <Plug>(lamp-definition-split)
+    nmap <buffer> gfv       <Plug>(lamp-definition-vsplit)
+    nmap <buffer> <Leader>i <Plug>(lamp-hover)
+    nmap <buffer> <Leader>r <Plug>(lamp-rename)
+  endfunction
+<
+
+
+
+==============================================================================
+FAQ                                                                 *lamp-faq*
+
+Q1. How to enable auto completion with lsp?
+A1. You can use `deoplete.nvim` with `deoplete-lamp`.
+
+
+
+==============================================================================
+CHANGELOG                                                     *lamp-changelog*
+
+2019/10/30~
+- Publish.
+

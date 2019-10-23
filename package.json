@@ -1,0 +1,16 @@
+{
+  "name": "vim-lamp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "LAMP_TEST=1 themis .",
+    "lint": "vint ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.6.4",
+    "typescript-language-server": "^0.4.0"
+  }
+}

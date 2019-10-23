@@ -1,0 +1,34 @@
+let s:expect = themis#helper('expect')
+
+Describe lamp#feature#rename
+
+  Before each
+    let s:server = lamp#register('typescript-language-server', {
+          \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
+          \   'filetypes': ['typescript', 'typescript.tsx'],
+          \   'root_uri': { -> lamp#config('root') . '/fixture/typescript-fixture/' }
+          \ })
+    call lamp#sync(s:server.start())
+    call lamp#sync(s:server.initialize())
+  End
+
+  After each
+    call lamp#sync(s:server.stop())
+  End
+
+  It Should open hover window
+    call lamp#view#buffer#open('edit', {
+          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+          \   'lnum': 3,
+          \   'col': 29
+          \ })
+    set filetype=typescript
+
+    call lamp#feature#hover#do()
+
+    let s:window_count = tabpagewinnr(1, '$')
+    call lamp#sync({ -> s:window_count != tabpagewinnr(1, '$') })
+  End
+
+End
+

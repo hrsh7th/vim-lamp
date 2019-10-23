@@ -1,0 +1,43 @@
+let s:expect = themis#helper('expect')
+let s:Promise = vital#lamp#import('Async.Promise')
+let s:Server = lamp#server#import()
+
+Describe lamp#server
+
+  Before each
+    let s:server = s:Server.new('typescript-language-server', {
+          \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
+          \   'filetypes': ['typescript', 'typescript.tsx'],
+          \   'root_uri': { -> lamp#config('root') . '/fixture/typescript-fixture/' },
+          \   'initialization_options': { -> {} }
+          \ })
+  End
+
+  After each
+    call s:server.stop()
+    call lamp#sync({ -> !s:server.is_running() })
+  End
+
+  It Should start&stop
+    call s:server.start()
+    call lamp#sync({ -> s:server.is_running() })
+    call s:server.stop()
+    call lamp#sync({ -> !s:server.is_running() })
+  End
+
+  It Should resolved
+    call lamp#sync(s:server.start())
+    call s:expect(lamp#sync(s:server.initialize())).to_have_key('capabilities')
+  End
+
+  It Should rejected
+    try
+      call lamp#sync(s:server.start())
+      call lamp#sync(s:server.request('initialize', {})) " rootUri is required.
+    catch /.*/
+      call s:expect(json_decode(v:exception).code).to_equal(-32603)
+    endtry
+  End
+
+End
+

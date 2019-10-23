@@ -1,0 +1,109 @@
+let s:Promise = vital#lamp#import('Async.Promise')
+let s:expect = themis#helper('expect')
+
+Describe lamp#view#edit
+
+  It Should sort
+    let s:edits = [{
+          \   'range': {
+          \     'start': { 'line': 0, 'character': 0 },
+          \     'end':   { 'line': 1, 'character': 0 },
+          \   },
+          \   'newText': 'def'
+          \ }, {
+          \   'range': {
+          \     'start': { 'line': 1, 'character': 0 },
+          \     'end':   { 'line': 2, 'character': 0 },
+          \   },
+          \   'newText': 'abc'
+          \ }]
+    let s:sorted = lamp#view#edit#sort(s:edits)
+    call s:expect(1).to_equal(s:sorted[0].range.start.line)
+    call s:expect(0).to_equal(s:sorted[1].range.start.line)
+  End
+
+  It Should merge
+    let s:edits = [{
+          \   'range': {
+          \     'start': { 'line': 1, 'character': 0 },
+          \     'end':   { 'line': 2, 'character': 0 },
+          \   },
+          \   'newText': 'abc'
+          \ }, {
+          \   'range': {
+          \     'start': { 'line': 0, 'character': 0 },
+          \     'end':   { 'line': 1, 'character': 0 },
+          \   },
+          \   'newText': 'def'
+          \ }, {
+          \   'range': {
+          \     'start': { 'line': 1, 'character': 0 },
+          \     'end':   { 'line': 2, 'character': 0 },
+          \   },
+          \   'newText': 'ghi'
+          \ }]
+    let s:sorted = lamp#view#edit#sort(s:edits)
+    let s:merged = lamp#view#edit#merge(s:sorted)
+    call s:expect(2).to_equal(len(s:merged))
+    call s:expect(s:edits[1]).to_equal(s:merged[1])
+    call s:expect('abcghi').to_equal(s:merged[0].newText)
+  End
+
+  It Should apply workspace edit
+    let s:filepath1 = lamp#config('root') . '/fixture/typescript-fixture/src/index.ts'
+    let s:fileuri1 = lamp#protocol#document#encode_uri(s:filepath1)
+    let s:filepath2 = lamp#config('root') . '/fixture/typescript-fixture/src/module1.ts'
+    let s:fileuri2 = lamp#protocol#document#encode_uri(s:filepath2)
+    let s:workspace_edit = {
+          \   'changes': {},
+          \   'documentChanges': []
+          \ }
+    let s:workspace_edit.changes[s:fileuri1] = [{
+          \   'range': {
+          \     'start': {
+          \       'line': 0,
+          \       'character': 9
+          \     },
+          \     'end': {
+          \       'line': 0,
+          \       'character': 16
+          \     },
+          \   },
+          \   'newText': 'module2'
+          \ }, {
+          \   'range': {
+          \     'start': {
+          \       'line': 4,
+          \       'character': 0
+          \     },
+          \     'end': {
+          \       'line': 4,
+          \       'character': 7
+          \     },
+          \   },
+          \   'newText': 'module2'
+          \ }]
+    let s:workspace_edit.documentChanges = [{
+          \   'textDocument': { 'uri': s:fileuri2 },
+          \   'edits': [{
+          \     'range': {
+          \       'start': {
+          \         'line': 0,
+          \         'character': 13
+          \       },
+          \       'end': {
+          \         'line': 0,
+          \         'character': 20
+          \       },
+          \     },
+          \     'newText': 'module2'
+          \   }]
+          \ }]
+    call lamp#view#edit#apply_workspace(s:workspace_edit)
+    call s:expect(getbufline(bufnr(s:filepath1), '^', '$')[0]).to_equal("import { module2 } from './module1';")
+    call s:expect(getbufline(bufnr(s:filepath1), '^', '$')[4]).to_equal("module2();")
+    call s:expect(getbufline(bufnr(s:filepath2), '^', '$')[0]).to_equal("export const module2 = () => {")
+    execute 'bufdo! bdelete!'
+  End
+
+End
