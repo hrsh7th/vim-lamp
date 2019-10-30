@@ -7,7 +7,8 @@ let s:tooltip = s:Tooltip.new({})
 function! lamp#feature#diagnostic#init() abort
   augroup lamp#feature#diagnostic
     autocmd!
-    autocmd BufWinEnter * call lamp#feature#diagnostic#update()
+    autocmd WinEnter * call lamp#feature#diagnostic#update()
+    autocmd BufEnter * call lamp#feature#diagnostic#update()
     autocmd CursorMoved * call lamp#feature#diagnostic#show_tooltip()
     autocmd InsertEnter * call lamp#feature#diagnostic#hide_tooltip()
   augroup END

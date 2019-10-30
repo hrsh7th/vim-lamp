@@ -5,46 +5,48 @@ let s:highlights = {}
 " remove.
 "
 function! lamp#view#highlight#remove(bufnr) abort
-  let l:winnr = bufwinnr(a:bufnr)
-  if has_key(s:highlights, l:winnr)
-    let l:current_winnr = winnr()
-    for l:id in s:highlights[l:winnr]
-      try
-        execute printf('keepalt keepjumps %swindo call matchdelete(%s)', l:winnr, l:id)
-      catch /.*/
-      endtry
-    endfor
-    execute printf('%swincmd w', l:current_winnr)
-    call remove(s:highlights, l:winnr)
-  endif
+  for l:winid in win_findbuf(a:bufnr)
+    let l:winnr = win_id2win(l:winid)
+    if has_key(s:highlights, l:winnr)
+      let l:current_winnr = winnr()
+      for l:id in s:highlights[l:winnr]
+        try
+          execute printf('keepalt keepjumps %swindo call matchdelete(%s)', l:winnr, l:id)
+        catch /.*/
+        endtry
+      endfor
+      execute printf('%swincmd w', l:current_winnr)
+      call remove(s:highlights, l:winnr)
+    endif
+  endfor
 endfunction
 
 "
 " error.
 "
 function! lamp#view#highlight#error(bufnr, range) abort
-  call s:add_highlight('lampError', a:bufnr, a:range)
+  call s:add_highlight('LampError', a:bufnr, a:range)
 endfunction
 
 "
 " warning.
 "
 function! lamp#view#highlight#warning(bufnr, range) abort
-  call s:add_highlight('lampWarning', a:bufnr, a:range)
+  call s:add_highlight('LampWarning', a:bufnr, a:range)
 endfunction
 
 "
 " information.
 "
 function! lamp#view#highlight#information(bufnr, range) abort
-  call s:add_highlight('lampInformation', a:bufnr, a:range)
+  call s:add_highlight('LampInformation', a:bufnr, a:range)
 endfunction
 
 "
 " hint.
 "
 function! lamp#view#highlight#hint(bufnr, range) abort
-  call s:add_highlight('lampHint', a:bufnr, a:range)
+  call s:add_highlight('LampHint', a:bufnr, a:range)
 endfunction
 
 
@@ -54,13 +56,15 @@ endfunction
 function! s:add_highlight(highlight, bufnr, range) abort
   call s:initialize()
 
-  let l:winnr = bufwinnr(a:bufnr)
-  if !has_key(s:highlights, l:winnr)
-    let s:highlights[l:winnr] = []
-  endif
-  let s:highlights[l:winnr] += [matchaddpos(a:highlight, s:positions(a:bufnr, a:range), 100, -1, {
-        \   'window': l:winnr
-        \ })]
+  for l:winid in win_findbuf(a:bufnr)
+    let l:winnr = win_id2win(l:winid)
+    if !has_key(s:highlights, l:winnr)
+      let s:highlights[l:winnr] = []
+    endif
+    let s:highlights[l:winnr] += [matchaddpos(a:highlight, s:positions(a:bufnr, a:range), 100, -1, {
+          \   'window': l:winnr
+          \ })]
+  endfor
 endfunction
 
 "
@@ -99,9 +103,9 @@ function! s:initialize() abort
   endif
   let s:initialized = v:true
 
-  execute printf('highlight! lampError guibg=darkred')
-  execute printf('highlight! lampWarning guibg=darkmagenta')
-  execute printf('highlight! lampInformation gui=underline')
-  execute printf('highlight! lampHint gui=underline')
+  execute printf('highlight! LampError guibg=darkred')
+  execute printf('highlight! LampWarning guibg=darkmagenta')
+  execute printf('highlight! LampInformation gui=underline')
+  execute printf('highlight! LampHint gui=underline')
 endfunction
 

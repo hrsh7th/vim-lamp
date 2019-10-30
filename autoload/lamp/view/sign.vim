@@ -14,19 +14,19 @@ function! lamp#view#sign#remove(...) abort
 endfunction
 
 function! lamp#view#sign#error(bufnr, lnum) abort
-  return s:sign_place('lampSignError', a:bufnr, a:lnum)
+  return s:sign_place('LampSignError', a:bufnr, a:lnum)
 endfunction
 
 function! lamp#view#sign#warning(bufnr, lnum) abort
-  return s:sign_place('lampSignWarning', a:bufnr, a:lnum)
+  return s:sign_place('LampSignWarning', a:bufnr, a:lnum)
 endfunction
 
 function! lamp#view#sign#information(bufnr, lnum) abort
-  return s:sign_place('lampSignInformation', a:bufnr, a:lnum)
+  return s:sign_place('LampSignInformation', a:bufnr, a:lnum)
 endfunction
 
 function! lamp#view#sign#hint(bufnr, lnum) abort
-  return s:sign_place('lampSignHint', a:bufnr, a:lnum)
+  return s:sign_place('LampSignHint', a:bufnr, a:lnum)
 endfunction
 
 function! s:sign_place(name, bufnr, lnum) abort
@@ -46,9 +46,9 @@ function! s:initialize() abort
   execute printf('highlight! lampSignInformation guifg=white %s', l:sign_column_guibg)
   execute printf('highlight! lampSignHint guifg=white %s', l:sign_column_guibg)
 
-  call sign_define('lampSignError', { 'text': 'x', 'texthl': 'lampSignError', 'linehl': 'SignColumn' })
-  call sign_define('lampSignWarning', { 'text': '!', 'texthl': 'lampSignWarning', 'linehl': 'SignColumn' })
-  call sign_define('lampSignInformation', { 'text': 'i', 'texthl': 'lampSignInformation', 'linehl': 'SignColumn' })
-  call sign_define('lampSignHint', { 'text': '?', 'texthl': 'lampSignHint', 'linehl': 'SignColumn' })
+  call sign_define('LampSignError', { 'text': 'x', 'texthl': 'lampSignError', 'linehl': 'SignColumn' })
+  call sign_define('LampSignWarning', { 'text': '!', 'texthl': 'lampSignWarning', 'linehl': 'SignColumn' })
+  call sign_define('LampSignInformation', { 'text': 'i', 'texthl': 'lampSignInformation', 'linehl': 'SignColumn' })
+  call sign_define('LampSignHint', { 'text': '?', 'texthl': 'lampSignHint', 'linehl': 'SignColumn' })
 endfunction
 
