@@ -1,28 +1,28 @@
-let s:Tooltip = lamp#view#tooltip#import()
+let s:Floatwin = lamp#view#floatwin#import()
 let s:expect = themis#helper('expect')
 
-Describe lamp#view#tooltip
+Describe lamp#view#floatwin
 
   It Should show multiple content
-    let s:tooltip = s:Tooltip.new({})
-    call s:tooltip.show([1, 1], [
+    let s:floatwin = s:Floatwin.new({})
+    call s:floatwin.show([1, 1], [
           \   { 'lines': ['Error from typescript'] },
           \   { 'lines': ['Error from prettier'] }
           \ ])
-    call s:expect(getbufline(s:tooltip.bufnr, '^', '$')).to_equal([
+    call s:expect(getbufline(s:floatwin.bufnr, '^', '$')).to_equal([
           \   'Error from typescript',
           \   '---------------------',
           \   'Error from prettier'
           \ ])
-    call s:tooltip.hide()
+    call s:floatwin.hide()
   End
 
   It Should enter
     if has('nvim')
-      let s:tooltip = s:Tooltip.new({})
-      call s:tooltip.show([1, 1], [{ 'lines': ['1234567890'] }])
+      let s:floatwin = s:Floatwin.new({})
+      call s:floatwin.show([1, 1], [{ 'lines': ['1234567890'] }])
       let s:winnr = winnr()
-      call s:tooltip.enter()
+      call s:floatwin.enter()
       call s:expect(s:winnr).not.to_equal(winnr())
     else
       call themis#log('[SKIP] nvim only test.')

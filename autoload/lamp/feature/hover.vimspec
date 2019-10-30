@@ -27,7 +27,7 @@ Describe lamp#feature#hover
     let s:test_context = {}
     call lamp#feature#hover#test_context(s:test_context)
     call lamp#feature#hover#do()
-    call lamp#sync({ -> s:test_context.tooltip.is_showing() })
+    call lamp#sync({ -> s:test_context.floatwin.is_showing() })
   End
 
 End

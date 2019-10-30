@@ -1,22 +1,22 @@
 let s:id = 0
 
-function! lamp#view#tooltip#vim#import() abort
-  return s:Tooltip
+function! lamp#view#floatwin#vim#import() abort
+  return s:Floatwin
 endfunction
 
-let s:Tooltip = {}
+let s:Floatwin = {}
 
 "
 " new.
 "
-function! s:Tooltip.new(option) abort
+function! s:Floatwin.new(option) abort
   let s:id += 1
-  let l:bufname = printf('lamp-tooltip-%s', s:id)
+  let l:bufname = printf('lamp-floatwin-%s', s:id)
   call bufadd(l:bufname)
   let l:bufnr = bufnr(l:bufname)
   call setbufvar(l:bufnr, '&filetype', 'markdown')
   call setbufvar(l:bufnr, '&buftype', 'nofile')
-  return extend(deepcopy(s:Tooltip), {
+  return extend(deepcopy(s:Floatwin), {
         \   'winid': v:null,
         \   'bufnr': l:bufnr,
         \   'max_width': get(a:option, 'max_width', float2nr(&columns / 3)),
@@ -31,7 +31,7 @@ endfunction
 "
 " bufpos2winpos.
 "
-function! s:Tooltip.bufpos2winpos(bufpos) abort
+function! s:Floatwin.bufpos2winpos(bufpos) abort
   let l:pos = getpos('.')
   return [a:bufpos[0] - line('w0') - 1, a:bufpos[1] - ((l:pos[2] + l:pos[3]) - wincol()) - 1]
 endfunction
@@ -39,7 +39,7 @@ endfunction
 "
 " fixpos.
 "
-function! s:Tooltip.fixpos(winpos, width, height) abort
+function! s:Floatwin.fixpos(winpos, width, height) abort
   let l:winpos = copy(a:winpos)
 
   " fix height.
@@ -60,7 +60,7 @@ endfunction
 "
 " show_at_cursor.
 "
-function! s:Tooltip.show_at_cursor(contents) abort
+function! s:Floatwin.show_at_cursor(contents) abort
   let l:curpos = getpos('.')
   call self.show([l:curpos[1], l:curpos[2] + l:curpos[3]], a:contents)
 endfunction
@@ -68,11 +68,11 @@ endfunction
 "
 " open.
 "
-function! s:Tooltip.show(bufpos, contents) abort
+function! s:Floatwin.show(bufpos, contents) abort
   let l:width = self.get_width(a:contents)
   let l:height = self.get_height(a:contents)
-  let self.state.winpos = s:Tooltip.bufpos2winpos(a:bufpos)
-  let self.state.winpos = s:Tooltip.fixpos(self.state.winpos, l:width, l:height)
+  let self.state.winpos = s:Floatwin.bufpos2winpos(a:bufpos)
+  let self.state.winpos = s:Floatwin.fixpos(self.state.winpos, l:width, l:height)
   let self.state.contents = a:contents
 
   let l:lines = []
@@ -101,7 +101,7 @@ endfunction
 "
 " is_showing.
 "
-function! s:Tooltip.is_showing() abort
+function! s:Floatwin.is_showing() abort
   call self.sync()
   return !empty(self.winid)
 endfunction
@@ -109,7 +109,7 @@ endfunction
 "
 " enter.
 "
-function! s:Tooltip.enter() abort
+function! s:Floatwin.enter() abort
   if self.is_showing()
     execute printf('%swincmd w', self.winnr())
   endif
@@ -118,7 +118,7 @@ endfunction
 "
 " close
 "
-function! s:Tooltip.hide() abort
+function! s:Floatwin.hide() abort
   if self.is_showing()
     call popup_hide(self.winid)
     let self.winid = v:null
@@ -128,7 +128,7 @@ endfunction
 "
 " winnr.
 "
-function! s:Tooltip.winnr() abort
+function! s:Floatwin.winnr() abort
   if self.is_showing()
     return win_id2win(self.winid)
   endif
@@ -138,7 +138,7 @@ endfunction
 "
 " sync.
 "
-function! s:Tooltip.sync() abort
+function! s:Floatwin.sync() abort
   if empty(self.winid)
     return
   endif
@@ -155,7 +155,7 @@ endfunction
 "
 " config.
 "
-function! s:Tooltip.get_config() abort
+function! s:Floatwin.get_config() abort
   return {
         \   'line': self.state.winpos[0] + 1,
         \   'col':  self.state.winpos[1] + 1,
@@ -173,7 +173,7 @@ endfunction
 "
 " width.
 "
-function! s:Tooltip.get_width(contents) abort
+function! s:Floatwin.get_width(contents) abort
   let l:width = 0
   for l:content in a:contents
     let l:width = max([l:width] + map(copy(l:content.lines), { k, v -> strdisplaywidth(v) }))
@@ -188,7 +188,7 @@ endfunction
 "
 " height.
 "
-function! s:Tooltip.get_height(contents) abort
+function! s:Floatwin.get_height(contents) abort
   let l:width = self.get_width(a:contents)
 
   let l:height = len(a:contents) - 1

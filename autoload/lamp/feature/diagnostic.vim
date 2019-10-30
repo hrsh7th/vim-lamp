@@ -1,5 +1,5 @@
-let s:Tooltip = lamp#view#tooltip#import()
-let s:tooltip = s:Tooltip.new({})
+let s:Floatwin = lamp#view#floatwin#import()
+let s:floatwin = s:Floatwin.new({})
 
 "
 " init
@@ -9,8 +9,8 @@ function! lamp#feature#diagnostic#init() abort
     autocmd!
     autocmd WinEnter * call lamp#feature#diagnostic#update()
     autocmd BufEnter * call lamp#feature#diagnostic#update()
-    autocmd CursorMoved * call lamp#feature#diagnostic#show_tooltip()
-    autocmd InsertEnter * call lamp#feature#diagnostic#hide_tooltip()
+    autocmd CursorMoved * call lamp#feature#diagnostic#show_floatwin()
+    autocmd InsertEnter * call lamp#feature#diagnostic#hide_floatwin()
   augroup END
 endfunction
 
@@ -33,15 +33,15 @@ function! lamp#feature#diagnostic#update() abort
 
       call s:update(l:bufnr, l:diagnostics)
     endfor
-    call lamp#feature#diagnostic#show_tooltip()
+    call lamp#feature#diagnostic#show_floatwin()
   endfunction
   call lamp#debounce('lamp#feature#diagnostic#update', l:fn.debounce, 500)
 endfunction
 
 "
-" lamp#feature#diagnostic#show_tooltip
+" lamp#feature#diagnostic#show_floatwin
 "
-function! lamp#feature#diagnostic#show_tooltip() abort
+function! lamp#feature#diagnostic#show_floatwin() abort
   let l:fn = {}
   function! l:fn.debounce() abort
     if mode() !=# 'n'
@@ -62,22 +62,22 @@ function! lamp#feature#diagnostic#show_tooltip() abort
     if len(l:diagnostics)
       let l:position = [l:diagnostics[0].range.start.line + 1, l:diagnostics[0].range.start.character + 1]
       let l:contents = map(copy(l:diagnostics), { k, v -> {
-            \   'lines': split(get(v, 'message', ''), "\n")
+            \   'lines': split(get(v, 'message', ''), "\n", v:true)
             \ } })
-      call s:tooltip.show(l:position, l:contents)
+      call s:floatwin.show(l:position, l:contents)
     else
-      call lamp#feature#diagnostic#hide_tooltip()
+      call lamp#feature#diagnostic#hide_floatwin()
     endif
   endfunction
-  call lamp#debounce('lamp#feature#diagnostic#show_tooltip', l:fn.debounce, 200)
+  call lamp#debounce('lamp#feature#diagnostic#show_floatwin', l:fn.debounce, 200)
 endfunction
 
 "
 " lamp#feature#diagnostic#hide
 "
-function! lamp#feature#diagnostic#hide_tooltip() abort
-  call s:tooltip.hide()
-  call lamp#debounce('lamp#feature#diagnostic#show_tooltip', { -> {} }, 0)
+function! lamp#feature#diagnostic#hide_floatwin() abort
+  call s:floatwin.hide()
+  call lamp#debounce('lamp#feature#diagnostic#show_floatwin', { -> {} }, 0)
 endfunction
 
 "

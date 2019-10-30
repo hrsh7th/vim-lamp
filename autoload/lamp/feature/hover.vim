@@ -1,12 +1,12 @@
 let s:Promise = vital#lamp#import('Async.Promise')
-let s:Tooltip = lamp#view#tooltip#import()
-let s:tooltip = s:Tooltip.new({})
+let s:Floatwin = lamp#view#floatwin#import()
+let s:floatwin = s:Floatwin.new({})
 
 "
 " for test.
 "
 function! lamp#feature#hover#test_context(context) abort
-  let a:context.tooltip = s:tooltip
+  let a:context.floatwin = s:tooltip
 endfunction
 
 "
@@ -23,8 +23,8 @@ endfunction
 " lamp#feature#hover#do
 "
 function! lamp#feature#hover#do() abort
-  if s:tooltip.is_showing()
-    call s:tooltip.enter()
+  if s:floatwin.is_showing()
+    call s:floatwin.enter()
     return
   endif
 
@@ -56,7 +56,7 @@ function! s:on_response(bufnr, responses) abort
     return
   endif
 
-  call s:tooltip.show_at_cursor(l:contents)
+  call s:floatwin.show_at_cursor(l:contents)
 endfunction
 
 "
@@ -65,9 +65,9 @@ endfunction
 function! s:close() abort
   let l:fn = {}
   function! l:fn.debounce() abort
-    if s:tooltip.is_showing()
-      if winnr() != s:tooltip.winnr()
-        call s:tooltip.hide()
+    if s:floatwin.is_showing()
+      if winnr() != s:floatwin.winnr()
+        call s:floatwin.hide()
       endif
     endif
   endfunction
