@@ -24,5 +24,11 @@ endfunction
 " s:string
 "
 function! s:string(string) abort
-  return substitute(a:string, "\r", '', 'g')
+  let l:string = a:string
+  let l:string = substitute(l:string, "\r", '', 'g')
+  let l:string = substitute(l:string, "\n```", '```', 'g')
+  let l:string = substitute(l:string, "```\n", '```', 'g')
+  let l:string = substitute(l:string, "^\n\|\n$", '', 'g')
+  return " \n" . l:string . "\n "
 endfunction
+

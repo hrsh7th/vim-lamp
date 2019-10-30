@@ -14,7 +14,7 @@ function! s:Tooltip.new(option) abort
         \   'window': v:null,
         \   'buffer': l:buffer,
         \   'max_width': get(a:option, 'max_width', float2nr(&columns / 3)),
-        \   'max_height': get(a:option, 'max_height', float2nr(&lines / 4)),
+        \   'max_height': get(a:option, 'max_height', float2nr(&lines / 3)),
         \   'state': {
         \     'winpos': [0, 0],
         \     'contents': [],
@@ -180,7 +180,11 @@ function! s:Tooltip.get_height(contents) abort
   let l:height = 0
   for l:content in a:contents
     for l:line in l:content.lines
-      let l:height += float2nr(ceil(strdisplaywidth(l:line) / str2float('' . l:width)))
+      if l:line ==# ''
+        let l:height += 1
+      else
+        let l:height += float2nr(ceil(strdisplaywidth(l:line) / str2float('' . l:width)))
+      endif
     endfor
   endfor
 
