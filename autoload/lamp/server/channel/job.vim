@@ -25,13 +25,13 @@ endfunction
 function! s:Job.send(data) abort
   let self.buffer .= a:data
   call timer_stop(self.timer_id)
-  let self.timer_id = timer_start(0, function(s:Job.consume, [], self), { 'repeat': -1 })
+  let self.timer_id = timer_start(0, { timer_id -> self.consume() }, { 'repeat': -1 })
 endfunction
 
 "
 " consume
 "
-function! s:Job.consume(timer_id) abort
+function! s:Job.consume() abort
   if !self.is_running() || self.buffer ==# ''
     call timer_stop(self.timer_id)
     return
@@ -110,13 +110,13 @@ endfunction
 function! s:vim(command, option) abort
   function! s:on_stdout(option, job, data) abort
     if has_key(a:option, 'on_stdout')
-      call a:option.on_stdout(join(a:data, "\n"))
+      call a:option.on_stdout(a:data)
     endif
   endfunction
 
   function! s:on_stderr(option, job, data) abort
     if has_key(a:option, 'on_stderr')
-      call a:option.on_stderr(join(a:data, "\n"))
+      call a:option.on_stderr(a:data)
     endif
   endfunction
 
@@ -130,12 +130,12 @@ function! s:vim(command, option) abort
     call ch_sendraw(a:job, a:data)
   endfunction
 
-  function! s:stop(job, data) abort
-    " TODO: impl
+  function! s:stop(job) abort
+    call ch_close(a:job)
   endfunction
 
   function! s:is_running(job) abort
-    " TODO: impl
+    return ch_status(a:job) ==# 'open'
   endfunction
 
   let l:job = job_start(a:command, {

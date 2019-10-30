@@ -1,3 +1,6 @@
+"
+" lamp#protocol#markup_content#normalize
+"
 function! lamp#protocol#markup_content#normalize(markup_contents) abort
   let l:markup_contents = type(a:markup_contents) == type([]) ? a:markup_contents : [a:markup_contents]
 
@@ -6,12 +9,12 @@ function! lamp#protocol#markup_content#normalize(markup_contents) abort
     if type(l:markup_content) == type('')
       let l:normalized += [{
             \   'filetype': 'markdown',
-            \   'lines': split(s:string(l:markup_content), "\n")
+            \   'lines': split(s:string(l:markup_content), "\n", v:true)
             \ }]
     elseif type(l:markup_content) == type({})
       let l:normalized += [{
             \   'filetype': 'markdown',
-            \   'lines': split(s:string(l:markup_content.value), "\n")
+            \   'lines': split(s:string(l:markup_content.value), "\n", v:true)
             \ }]
     elseif type(l:markup_content) == type([])
       let l:normalized += lamp#protocol#markup_content#normalize(l:markup_content)
@@ -26,9 +29,9 @@ endfunction
 function! s:string(string) abort
   let l:string = a:string
   let l:string = substitute(l:string, "\r", '', 'g')
-  let l:string = substitute(l:string, "\n```", '```', 'g')
-  let l:string = substitute(l:string, "```\n", '```', 'g')
+  let l:string = substitute(l:string, "\n\n```", "\n```", 'g')
+  let l:string = substitute(l:string, "```\n\n", "```\n", 'g')
   let l:string = substitute(l:string, "^\n\|\n$", '', 'g')
-  return " \n" . l:string . "\n "
+  return l:string
 endfunction
 

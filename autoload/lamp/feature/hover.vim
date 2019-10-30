@@ -3,6 +3,13 @@ let s:Tooltip = lamp#view#tooltip#import()
 let s:tooltip = s:Tooltip.new({})
 
 "
+" for test.
+"
+function! lamp#feature#hover#test_context(context) abort
+  let a:context.tooltip = s:tooltip
+endfunction
+
+"
 " lamp#feature#hover#init
 "
 function! lamp#feature#hover#init() abort

@@ -5,10 +5,15 @@ let g:loaded_lamp = v:true
 
 " initialize features.
 for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
-  call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
+  try
+    call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
+  catch /.*/
+    echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+  endtry
 endfor
 
 if has_key(environ(), 'LAMP_TEST')
+  call lamp#config('logfile', '/tmp/lamp.log')
   finish
 endif
 

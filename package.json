@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "open:vim": "vim -u ./.vimrc",
     "test": "npm run test:nvim && npm run test:vim",
     "test:nvim": "LAMP_TEST=1 THEMIS_VIM=nvim themis .",
     "test:vim":  "LAMP_TEST=1 THEMIS_VIM=vim  themis .",

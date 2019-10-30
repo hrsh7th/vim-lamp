@@ -1,6 +1,6 @@
 let s:expect = themis#helper('expect')
 
-Describe lamp#feature#rename
+Describe lamp#feature#hover
 
   Before each
     let s:server = lamp#register('typescript-language-server', {
@@ -24,10 +24,10 @@ Describe lamp#feature#rename
           \ })
     set filetype=typescript
 
+    let s:test_context = {}
+    call lamp#feature#hover#test_context(s:test_context)
     call lamp#feature#hover#do()
-
-    let s:window_count = tabpagewinnr(1, '$')
-    call lamp#sync({ -> s:window_count != tabpagewinnr(1, '$') })
+    call lamp#sync({ -> s:test_context.tooltip.is_showing() })
   End
 
 End

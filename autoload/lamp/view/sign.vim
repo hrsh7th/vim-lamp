@@ -40,10 +40,11 @@ function! s:initialize() abort
   endif
 
   let l:sign_column_bg = synIDattr(hlID('SignColumn'), 'bg')
-  execute printf('highlight! lampSignError guifg=red guibg=%s', l:sign_column_bg)
-  execute printf('highlight! lampSignWarning guifg=yellow guibg=%s', l:sign_column_bg)
-  execute printf('highlight! lampSignInformation guifg=white guibg=%s', l:sign_column_bg)
-  execute printf('highlight! lampSignHint guifg=white guibg=%s', l:sign_column_bg)
+  let l:sign_column_guibg = empty(l:sign_column_bg) ? printf('guibg=%s', l:sign_column_bg) : ''
+  execute printf('highlight! lampSignError guifg=red %s', l:sign_column_guibg)
+  execute printf('highlight! lampSignWarning guifg=yellow %s', l:sign_column_guibg)
+  execute printf('highlight! lampSignInformation guifg=white %s', l:sign_column_guibg)
+  execute printf('highlight! lampSignHint guifg=white %s', l:sign_column_guibg)
 
   call sign_define('lampSignError', { 'text': 'x', 'texthl': 'lampSignError', 'linehl': 'SignColumn' })
   call sign_define('lampSignWarning', { 'text': '!', 'texthl': 'lampSignWarning', 'linehl': 'SignColumn' })
