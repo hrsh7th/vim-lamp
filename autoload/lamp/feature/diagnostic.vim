@@ -7,10 +7,10 @@ let s:floatwin = s:Floatwin.new({})
 function! lamp#feature#diagnostic#init() abort
   augroup lamp#feature#diagnostic
     autocmd!
-    autocmd WinEnter * call lamp#feature#diagnostic#update()
-    autocmd BufEnter * call lamp#feature#diagnostic#update()
-    autocmd CursorMoved * call lamp#feature#diagnostic#show_floatwin()
-    autocmd InsertEnter * call lamp#feature#diagnostic#hide_floatwin() | call lamp#view#highlight#remove(bufnr('%'))
+    autocmd CursorMoved * call s:show_floatwin()
+    autocmd WinEnter,BufEnter * call lamp#feature#diagnostic#update()
+    autocmd InsertEnter * call s:floatwin.hide()
+    autocmd InsertLeave * call s:update()
   augroup END
 endfunction
 
@@ -24,28 +24,16 @@ function! lamp#feature#diagnostic#update() abort
 
   let l:fn = {}
   function! l:fn.debounce() abort
-    for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
-      let l:bufnr = winbufnr(l:winnr)
-      let l:uri = lamp#protocol#document#encode_uri(l:bufnr)
-      let l:servers = lamp#server#registry#all()
-      let l:servers = filter(l:servers, { k, v -> has_key(v.documents, l:uri) })
-
-      let l:diagnostics = []
-      for l:server in l:servers
-        let l:diagnostics += l:server.documents[l:uri].diagnostics
-      endfor
-
-      call s:update(l:bufnr, l:diagnostics)
-    endfor
-    call lamp#feature#diagnostic#show_floatwin()
+    call s:update()
+    call s:show_floatwin()
   endfunction
-  call lamp#debounce('lamp#feature#diagnostic#update', l:fn.debounce, 500)
+  call lamp#debounce('lamp#feature#diagnostic#update', l:fn.debounce, 100)
 endfunction
 
 "
 " lamp#feature#diagnostic#show_floatwin
 "
-function! lamp#feature#diagnostic#show_floatwin() abort
+function! s:show_floatwin() abort
   if mode() !=# 'n'
     return
   endif
@@ -67,49 +55,66 @@ function! lamp#feature#diagnostic#show_floatwin() abort
             \ })
     endfor
 
-    if len(l:diagnostics)
+    if !empty(l:diagnostics)
       let l:screenpos = lamp#view#floatwin#screenpos(l:diagnostics[0].range.start.line + 1, l:diagnostics[0].range.start.character + 1)
       let l:contents = map(copy(l:diagnostics), { k, v -> {
             \   'lines': split(get(v, 'message', ''), "\n", v:true)
             \ } })
       call s:floatwin.show_tooltip(l:screenpos, l:contents)
     else
-      call lamp#feature#diagnostic#hide_floatwin()
+      call s:floatwin.hide()
+      call lamp#debounce('lamp#feature#diagnostic:show_floatwin', { -> {} }, 0)
     endif
   endfunction
-  call lamp#debounce('lamp#feature#diagnostic#show_floatwin', l:fn.debounce, 200)
+  call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:fn.debounce, 500)
 endfunction
 
 "
-" lamp#feature#diagnostic#hide
+" s:update
 "
-function! lamp#feature#diagnostic#hide_floatwin() abort
-  call s:floatwin.hide()
-  call lamp#debounce('lamp#feature#diagnostic#show_floatwin', { -> {} }, 0)
-endfunction
+function! s:update() abort
+  for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
+    let l:bufnr = winbufnr(l:winnr)
 
-"
-" s:update_sign
-"
-function! s:update(bufnr, diagnostics) abort
-  call lamp#view#sign#remove(a:bufnr)
-  call lamp#view#highlight#remove(a:bufnr)
+    call lamp#view#sign#remove(l:bufnr)
+    call lamp#view#highlight#remove(l:bufnr)
 
-  for l:diagnostic in a:diagnostics
-    let l:severity = get(l:diagnostic, 'severity', 1)
-    if l:severity == 1
-      call lamp#view#sign#error(a:bufnr, l:diagnostic.range.start.line + 1)
-      call lamp#view#highlight#error(a:bufnr, l:diagnostic.range)
-    elseif l:severity == 2
-      call lamp#view#sign#warning(a:bufnr, l:diagnostic.range.start.line + 1)
-      call lamp#view#highlight#warning(a:bufnr, l:diagnostic.range)
-    elseif l:severity == 3
-      call lamp#view#sign#information(a:bufnr, l:diagnostic.range.start.line + 1)
-      call lamp#view#highlight#information(a:bufnr, l:diagnostic.range)
-    elseif l:severity == 4
-      call lamp#view#sign#hint(a:bufnr, l:diagnostic.range.start.line + 1)
-      call lamp#view#highlight#hint(a:bufnr, l:diagnostic.range)
-    endif
+    " update.
+    for [l:server_name, l:diagnostics] in items(s:get_diagnostic_map(lamp#protocol#document#encode_uri(l:bufnr)))
+      for l:diagnostic in l:diagnostics
+        let l:severity = get(l:diagnostic, 'severity', 1)
+        if l:severity == 1
+          call lamp#view#sign#error(l:bufnr, l:diagnostic.range.start.line + 1)
+          call lamp#view#highlight#error(l:bufnr, l:diagnostic.range)
+        elseif l:severity == 2
+          call lamp#view#sign#warning(l:bufnr, l:diagnostic.range.start.line + 1)
+          call lamp#view#highlight#error(l:bufnr, l:diagnostic.range)
+        elseif l:severity == 3
+          call lamp#view#sign#information(l:bufnr, l:diagnostic.range.start.line + 1)
+          call lamp#view#highlight#error(l:bufnr, l:diagnostic.range)
+        elseif l:severity == 4
+          call lamp#view#sign#hint(l:bufnr, l:diagnostic.range.start.line + 1)
+          call lamp#view#highlight#error(l:bufnr, l:diagnostic.range)
+        endif
+      endfor
+    endfor
   endfor
+endfunction
+
+"
+" s:get_diagnostic_map
+"
+function! s:get_diagnostic_map(uri) abort
+  let l:servers = lamp#server#registry#all()
+  let l:servers = filter(l:servers, { k, v -> has_key(v.documents, a:uri) })
+  if empty(l:servers)
+    return {}
+  endif
+
+  let l:diagnostic_map = {}
+  for l:server in l:servers
+    let l:diagnostic_map[l:server.name] = l:server.documents[a:uri].diagnostics
+  endfor
+  return l:diagnostic_map
 endfunction
 

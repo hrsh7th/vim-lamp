@@ -6,18 +6,12 @@ let s:highlights = {}
 "
 function! lamp#view#highlight#remove(bufnr) abort
   for l:winid in win_findbuf(a:bufnr)
-    let l:winnr = win_id2win(l:winid)
-    if has_key(s:highlights, l:winnr)
-      let l:current_winnr = winnr()
-      for l:id in s:highlights[l:winnr]
-        try
-          execute printf('keepalt keepjumps %swindo call matchdelete(%s)', l:winnr, l:id)
-        catch /.*/
-        endtry
-      endfor
-      execute printf('%swincmd w', l:current_winnr)
-      call remove(s:highlights, l:winnr)
-    endif
+    let l:current_winnr = winnr()
+    try
+      execute printf('keepalt keepjumps %swindo call clearmatches()', win_id2win(l:winid))
+    catch /.*/
+    endtry
+    execute printf('%swincmd w', l:current_winnr)
   endfor
 endfunction
 
@@ -57,13 +51,7 @@ function! s:add_highlight(highlight, bufnr, range) abort
   call s:initialize()
 
   for l:winid in win_findbuf(a:bufnr)
-    let l:winnr = win_id2win(l:winid)
-    if !has_key(s:highlights, l:winnr)
-      let s:highlights[l:winnr] = []
-    endif
-    let s:highlights[l:winnr] += [matchaddpos(a:highlight, s:positions(a:bufnr, a:range), 100, -1, {
-          \   'window': l:winnr
-          \ })]
+    call matchaddpos(a:highlight, s:positions(a:bufnr, a:range), 100, -1, { 'window': l:winid })
   endfor
 endfunction
 
