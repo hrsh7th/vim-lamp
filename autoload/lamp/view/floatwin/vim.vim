@@ -11,7 +11,7 @@ let s:Floatwin = {}
 "
 function! s:Floatwin.new(option) abort
   let s:id += 1
-  let l:bufname = printf('lamp-floatwin-%s', s:id)
+  let l:bufname = printf('lamp-floatwin-%s.md', s:id)
   call bufadd(l:bufname)
   let l:bufnr = bufnr(l:bufname)
   call setbufvar(l:bufnr, '&filetype', 'markdown')

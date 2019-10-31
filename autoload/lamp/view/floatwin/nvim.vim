@@ -1,3 +1,5 @@
+let s:id = 0
+
 function! lamp#view#floatwin#nvim#import() abort
   return s:Floatwin
 endfunction
@@ -8,8 +10,11 @@ let s:Floatwin = {}
 " new.
 "
 function! s:Floatwin.new(option) abort
-  let l:bufnr = nvim_create_buf(v:false, v:true)
-  call setbufvar(l:bufnr, '&filetype', 'markdown')
+  let s:id += 1
+  let l:bufname = printf('lamp-floatwin-%s.md', s:id)
+  call bufadd(l:bufname)
+  let l:bufnr = bufnr(l:bufname)
+  call setbufvar(l:bufnr, '&buftype', 'nofile')
   return extend(deepcopy(s:Floatwin), {
         \   'window': v:null,
         \   'bufnr': l:bufnr,

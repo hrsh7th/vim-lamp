@@ -8,13 +8,17 @@ function! lamp#protocol#markup_content#normalize(markup_contents) abort
   for l:markup_content in l:markup_contents
     if type(l:markup_content) == type('')
       let l:normalized += [{
-            \   'filetype': 'markdown',
             \   'lines': split(s:string(l:markup_content), "\n", v:true)
             \ }]
     elseif type(l:markup_content) == type({})
+      let l:string = l:markup_content.value
+      if has_key(l:markup_content, 'language')
+        let l:string = '```' . l:markup_content.language . "\n" . l:string
+        let l:string = l:string . "\n" . '```'
+      endif
+
       let l:normalized += [{
-            \   'filetype': 'markdown',
-            \   'lines': split(s:string(l:markup_content.value), "\n", v:true)
+            \   'lines': split(s:string(l:string), "\n", v:true)
             \ }]
     elseif type(l:markup_content) == type([])
       let l:normalized += lamp#protocol#markup_content#normalize(l:markup_content)
