@@ -10,8 +10,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd WinEnter * call lamp#feature#diagnostic#update()
     autocmd BufEnter * call lamp#feature#diagnostic#update()
     autocmd CursorMoved * call lamp#feature#diagnostic#show_floatwin()
-    autocmd InsertEnter * call lamp#feature#diagnostic#hide_floatwin()
-    autocmd InsertEnter * call lamp#view#highlight#remove(bufnr('%'))
+    autocmd InsertEnter * call lamp#feature#diagnostic#hide_floatwin() | call lamp#view#highlight#remove(bufnr('%'))
   augroup END
 endfunction
 
