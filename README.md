@@ -2,11 +2,12 @@
 Language Server Protocol Client for Vim.
 
 # Status
+
 - General
     - [x] initialize
     - [x] initialized
-    - [ ] shutdown
-    - [ ] exit
+    - [ ] ~~shutdown~~
+    - [ ] ~~exit~~
     - [ ] $/cancelRequest
 
 - Window

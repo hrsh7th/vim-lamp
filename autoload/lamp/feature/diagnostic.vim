@@ -11,6 +11,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd BufEnter * call lamp#feature#diagnostic#update()
     autocmd CursorMoved * call lamp#feature#diagnostic#show_floatwin()
     autocmd InsertEnter * call lamp#feature#diagnostic#hide_floatwin()
+    autocmd InsertEnter * call lamp#view#highlight#remove(bufnr('%'))
   augroup END
 endfunction
 
@@ -18,12 +19,16 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update() abort
+  if mode() !=# 'n'
+    return
+  endif
+
   let l:fn = {}
   function! l:fn.debounce() abort
     for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
       let l:bufnr = winbufnr(l:winnr)
       let l:uri = lamp#protocol#document#encode_uri(l:bufnr)
-      let l:servers = values(lamp#server#registry#all())
+      let l:servers = lamp#server#registry#all()
       let l:servers = filter(l:servers, { k, v -> has_key(v.documents, l:uri) })
 
       let l:diagnostics = []
@@ -42,6 +47,10 @@ endfunction
 " lamp#feature#diagnostic#show_floatwin
 "
 function! lamp#feature#diagnostic#show_floatwin() abort
+  if mode() !=# 'n'
+    return
+  endif
+
   let l:fn = {}
   function! l:fn.debounce() abort
     if mode() !=# 'n'
@@ -49,7 +58,7 @@ function! lamp#feature#diagnostic#show_floatwin() abort
     endif
 
     let l:uri = lamp#protocol#document#encode_uri(bufnr('%'))
-    let l:servers = values(lamp#server#registry#all())
+    let l:servers = lamp#server#registry#all()
     let l:servers = filter(l:servers, { k, v -> has_key(v.documents, l:uri) })
 
     let l:diagnostics = []

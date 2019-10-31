@@ -5,7 +5,7 @@ function! lamp#server#registry#set(server) abort
 endfunction
 
 function! lamp#server#registry#all() abort
-  return s:servers
+  return values(s:servers)
 endfunction
 
 function! lamp#server#registry#get_by_name(name) abort

@@ -49,7 +49,7 @@ endfunction
 "
 function! s:Server.stop() abort
   if self.state.started
-    call self.channel.stop()
+   call self.channel.stop()
     let self.state.started = v:false
   endif
   return s:Promise.resolve()
@@ -207,14 +207,14 @@ function! s:Server.change_document(bufnr) abort
 
   " document is not change.
   let l:doc = self.documents[l:uri]
-  if !l:doc.out_of_date()
-    return s:Promise.resolve()
-  endif
 
   let l:sync_kind  = self.capability.get_text_document_sync_kind()
 
   " full sync.
   if l:sync_kind == 1
+    if !l:doc.out_of_date()
+      return s:Promise.resolve()
+    endif
     call l:doc.sync()
     let l:p = self.notify('textDocument/didChange', {
           \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
@@ -224,6 +224,9 @@ function! s:Server.change_document(bufnr) abort
   " incremental sync.
   elseif l:sync_kind == 2
     let l:diff = l:doc.diff()
+    if l:diff.rangeLength == 0 && l:diff.text ==# '' 
+      return s:Promise.resolve()
+    endif
     call l:doc.sync()
     let l:p = self.notify('textDocument/didChange', {
           \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
