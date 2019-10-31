@@ -1,3 +1,4 @@
+" vint: -ProhibitSetNoCompatible
 if has('vim_starting')
   set encoding=utf-8
 endif
@@ -19,7 +20,11 @@ call plug#end()
 
 let g:mapleader = ' '
 
-autocmd! User lamp_initialized call s:on_lamp_initialized()
+augroup vimrc
+  autocmd!
+augroup END
+
+autocmd! vimrc User lamp#initialized call s:on_lamp_initialized()
 function! s:on_lamp_initialized() abort
   call lamp#config('logfile', '/tmp/lamp.log')
   call lamp#register('vim-language-server', {
@@ -28,7 +33,7 @@ function! s:on_lamp_initialized() abort
         \ })
 endfunction
 
-autocmd! User lamp_text_document_did_open call s:on_lamp_text_document_did_open()
+autocmd! vimrc User lamp#text_document_did_open call s:on_lamp_text_document_did_open()
 function! s:on_lamp_text_document_did_open() abort
   nmap <buffer> gf<CR>    <Plug>(lamp-definition)
   nmap <buffer> gfs       <Plug>(lamp-definition-split)

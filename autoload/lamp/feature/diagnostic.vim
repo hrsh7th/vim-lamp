@@ -60,11 +60,11 @@ function! lamp#feature#diagnostic#show_floatwin() abort
     endfor
 
     if len(l:diagnostics)
-      let l:position = [l:diagnostics[0].range.start.line + 1, l:diagnostics[0].range.start.character + 1]
+      let l:screenpos = lamp#view#floatwin#screenpos(l:diagnostics[0].range.start.line + 1, l:diagnostics[0].range.start.character + 1)
       let l:contents = map(copy(l:diagnostics), { k, v -> {
             \   'lines': split(get(v, 'message', ''), "\n", v:true)
             \ } })
-      call s:floatwin.show(l:position, l:contents)
+      call s:floatwin.show_tooltip(l:screenpos, l:contents)
     else
       call lamp#feature#diagnostic#hide_floatwin()
     endif

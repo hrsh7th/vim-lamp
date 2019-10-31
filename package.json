@@ -7,12 +7,18 @@
     "open:vim": "vim -u ./.vimrc",
     "test": "npm run test:nvim && npm run test:vim",
     "test:nvim": "LAMP_TEST=1 THEMIS_VIM=nvim themis .",
-    "test:vim":  "LAMP_TEST=1 THEMIS_VIM=vim  themis .",
+    "test:vim": "LAMP_TEST=1 THEMIS_VIM=vim  themis .",
     "lint": "vint ."
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint"
+    }
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "husky": "^3.0.9",
     "typescript": "^3.6.4",
     "typescript-language-server": "^0.4.0"
   }

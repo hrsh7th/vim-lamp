@@ -1,4 +1,6 @@
 let s:Promise = vital#lamp#import('Async.Promise')
+let s:Floatwin = lamp#view#floatwin#import()
+let s:floatwin = s:Floatwin.new({})
 
 "
 " TextEdit enabled if other completion engine plugin provides below user-data.
@@ -23,36 +25,54 @@ let s:state = {}
 function! lamp#feature#completion#init() abort
   augroup lamp#feature#completion
     autocmd!
+    autocmd MenuPopup * call s:on_menu_popup()
     autocmd CompleteChanged * call s:on_complete_changed()
     autocmd CompleteDone * call s:on_complete_done()
   augroup END
 endfunction
 
 "
+" s:on_menu_popup
+"
+function! s:on_menu_popup() abort
+  let s:state = {}
+endfunction
+
+"
 " s:on_complete_changed
 "
 function! s:on_complete_changed() abort
+  call s:floatwin.hide()
+
   let l:item_data = s:get_item_data(v:completed_item)
   if empty(l:item_data)
     return
   endif
 
+  let l:event = copy(v:event)
+
+  " already resolve requested.
   let s:state[l:item_data.id] = get(s:state, l:item_data.id, {})
   if has_key(s:state[l:item_data.id], 'resolve')
+    call lamp#debounce('lamp#feature#completion:show_documentation', { -> s:show_documentation(l:event, s:state[l:item_data.id]) }, 200)
     return
   endif
 
+  " request resolve.
   let l:fn = {}
-  function! l:fn.debounce(item_data) abort
+  function! l:fn.debounce(event, item_data) abort
     let s:state[a:item_data.id].resolve = s:resolve(a:item_data)
+    call s:show_documentation(a:event, s:state[a:item_data.id])
   endfunction
-  call lamp#debounce('lamp#feature#completion:resolve', { -> l:fn.debounce(l:item_data) }, 100)
+  call lamp#debounce('lamp#feature#completion:show_documentation', { -> l:fn.debounce(l:event, l:item_data) }, 200)
 endfunction
 
 "
 " s:on_complete_done
 "
 function! s:on_complete_done() abort
+  call s:floatwin.hide()
+
   " clear debounce timer.
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
 
@@ -138,5 +158,62 @@ function! s:get_item_data(completed_item) abort
   endif
 
   return l:item_data
+endfunction
+
+"
+" s:show_documentation.
+"
+function! s:show_documentation(event, state) abort
+  let l:resolve = get(a:state, 'resolve', {})
+  if empty(l:resolve)
+    return
+  endif
+
+  let l:completion_item = lamp#sync(l:resolve)
+  if empty(l:completion_item)
+    return
+  endif
+
+  let l:contents = []
+  if has_key(l:completion_item, 'detail')
+    let l:contents += lamp#protocol#markup_content#normalize(l:completion_item.detail)
+  endif
+
+  if has_key(l:completion_item, 'documentation')
+    let l:contents += lamp#protocol#markup_content#normalize(l:completion_item.documentation)
+  endif
+
+  if !empty(l:contents)
+    let l:screenpos = s:get_floatwin_screenpos(a:event, l:contents)
+    if !empty(l:screenpos)
+      call s:floatwin.show(l:screenpos, l:contents)
+    endif
+  endif
+endfunction
+
+"
+" s:get_floatwin_position.
+"
+function! s:get_floatwin_screenpos(event, contents) abort
+  if empty(a:event)
+    return {}
+  endif
+  let l:total_item_count = a:event.size
+  let l:current_item_index = complete_info(['selected']).selected
+
+  " create y.
+  " TODO: how to detect this value.
+  let l:pum_scrolloff = min([4, float2nr(a:event.height / 2)])
+  let l:pum_scrolloff -= max([0, l:current_item_index - (a:event.size - l:pum_scrolloff)])
+  let l:row = a:event.row + min([l:current_item_index, a:event.height - l:pum_scrolloff])
+
+  " create x.
+  let l:doc_width = s:floatwin.get_width(a:contents)
+  let l:col = a:event.col + a:event.width + 1 + (a:event.scrollbar ? 1 : 0)
+  if &columns < l:col + l:doc_width
+    let l:col = a:event.col - l:doc_width - 2
+  endif
+
+  return [l:row, l:col]
 endfunction
 

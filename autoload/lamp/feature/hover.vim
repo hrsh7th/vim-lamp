@@ -6,7 +6,7 @@ let s:floatwin = s:Floatwin.new({})
 " for test.
 "
 function! lamp#feature#hover#test_context(context) abort
-  let a:context.floatwin = s:tooltip
+  let a:context.floatwin = s:floatwin
 endfunction
 
 "
@@ -56,7 +56,7 @@ function! s:on_response(bufnr, responses) abort
     return
   endif
 
-  call s:floatwin.show_at_cursor(l:contents)
+  call s:floatwin.show_tooltip(lamp#view#floatwin#screenpos(line('.'), col('.')), l:contents)
 endfunction
 
 "

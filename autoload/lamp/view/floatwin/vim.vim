@@ -22,64 +22,36 @@ function! s:Floatwin.new(option) abort
         \   'max_width': get(a:option, 'max_width', float2nr(&columns / 3)),
         \   'max_height': get(a:option, 'max_height', float2nr(&lines / 2)),
         \   'state': {
-        \     'winpos': [0, 0],
+        \     'screenpos': [0, 0],
         \     'contents': [],
         \   }
         \ })
 endfunction
 
 "
-" bufpos2winpos.
+" show_tooltip.
 "
-function! s:Floatwin.bufpos2winpos(bufpos) abort
-  let l:pos = getpos('.')
-  return [a:bufpos[0] - line('w0') - 1, a:bufpos[1] - ((l:pos[2] + l:pos[3]) - wincol()) - 1]
-endfunction
-
+" NOTE: tooltip is displaying to above of position.
 "
-" fixpos.
-"
-function! s:Floatwin.fixpos(winpos, width, height) abort
-  let l:winpos = copy(a:winpos)
-
-  " fix height.
-  if l:winpos[0] - a:height >= 0
-    let l:winpos[0] -= a:height - 1
-  else
-    let l:winpos[0] += 2
-  endif
-
-  " fix width.
-  if winwidth(0) < l:winpos[1] + a:width
-    let l:winpos[1] -= (l:winpos[1] + a:width) - winwidth(0)
-  endif
-
-  return l:winpos
-endfunction
-
-"
-" show_at_cursor.
-"
-function! s:Floatwin.show_at_cursor(contents) abort
-  let l:curpos = getpos('.')
-  call self.show([l:curpos[1], l:curpos[2] + l:curpos[3]], a:contents)
+function! s:Floatwin.show_tooltip(screenpos, contents) abort
+  let l:width = self.get_width(a:contents)
+  let l:height = self.get_height(a:contents)
+  let l:screenpos = lamp#view#floatwin#fix_position_as_tooltip(a:screenpos, l:width, l:height)
+  call self.show(screenpos, a:contents)
 endfunction
 
 "
 " open.
 "
-function! s:Floatwin.show(bufpos, contents) abort
-  let l:width = self.get_width(a:contents)
-  let l:height = self.get_height(a:contents)
-  let self.state.winpos = s:Floatwin.bufpos2winpos(a:bufpos)
-  let self.state.winpos = s:Floatwin.fixpos(self.state.winpos, l:width, l:height)
+function! s:Floatwin.show(screenpos, contents) abort
+  let self.state.screenpos = a:screenpos
   let self.state.contents = a:contents
 
   let l:lines = []
   for l:content in a:contents
     let l:lines += l:content.lines
     if l:content isnot a:contents[-1]
-      let l:lines += [repeat('-', l:width)]
+      let l:lines += [repeat('-', self.get_width(a:contents))]
     endif
   endfor
 
@@ -157,8 +129,8 @@ endfunction
 "
 function! s:Floatwin.get_config() abort
   return {
-        \   'line': self.state.winpos[0] + 1,
-        \   'col':  self.state.winpos[1] + 1,
+        \   'line': self.state.screenpos[0] + 1,
+        \   'col':  self.state.screenpos[1] + 1,
         \   'pos': 'topleft',
         \   'moved': [0, 100000],
         \   'scrollbar': 0,
