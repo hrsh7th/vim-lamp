@@ -108,6 +108,7 @@ function! s:on_complete_done() abort
   endif
 
   " TODO: save cursor position.
+  " TODO: Supports workspace/executeCommand
 endfunction
 
 "
@@ -198,12 +199,12 @@ function! s:get_floatwin_screenpos(event, contents) abort
   if empty(a:event)
     return {}
   endif
+
   let l:total_item_count = a:event.size
-  let l:current_item_index = complete_info(['selected']).selected
+  let l:current_item_index = max([complete_info(['selected']).selected, 0]) " NOTE: sometimes vim returns -2.
 
   " create y.
-  " TODO: how to detect this value.
-  let l:pum_scrolloff = min([4, float2nr(a:event.height / 2)])
+  let l:pum_scrolloff = min([4, float2nr(a:event.height / 2)]) " TODO: calculate `4` from Vim script.
   let l:pum_scrolloff -= max([0, l:current_item_index - (a:event.size - l:pum_scrolloff)])
   let l:row = a:event.row + min([l:current_item_index, a:event.height - l:pum_scrolloff])
 

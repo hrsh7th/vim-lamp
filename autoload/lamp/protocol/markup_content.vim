@@ -24,7 +24,7 @@ function! lamp#protocol#markup_content#normalize(markup_contents) abort
       let l:normalized += lamp#protocol#markup_content#normalize(l:markup_content)
     endif
   endfor
-  return l:normalized
+  return filter(l:normalized, { k, v -> v.lines != [''] })
 endfunction
 
 "
@@ -35,7 +35,7 @@ function! s:string(string) abort
   let l:string = substitute(l:string, "\r", '', 'g')
   let l:string = substitute(l:string, "\n\n```", "\n```", 'g')
   let l:string = substitute(l:string, "```\n\n", "```\n", 'g')
-  let l:string = substitute(l:string, "^\n\|\n$", '', 'g')
+  let l:string = substitute(l:string, '^\s*\|\s*$', '', 'g')
   return l:string
 endfunction
 
