@@ -27,6 +27,8 @@ function! s:on_text_document_did_open() abort
   nmap <buffer> gfv       <Plug>(lamp-definition-vsplit)
   nmap <buffer> <Leader>i <Plug>(lamp-hover)
   nmap <buffer> <Leader>r <Plug>(lamp-rename)
+
+  setlocal omnifunc=lamp#complete
 endfunction
 ```
 
@@ -101,6 +103,5 @@ endfunction
 # TODO
 - Refactor floatwin
     - Remove duplicated codes in nvim/vim compat layer
-- Create omnifunc
 - Write `signs/highlight` tests
 

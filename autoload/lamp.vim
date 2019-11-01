@@ -1,7 +1,7 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Server = lamp#server#import()
 
-let s:timer_ids = {}
+let s:debounce_ids = {}
 
 let s:on_locations = { locations -> [setqflist(locations, 'r'), execute('copen')] }
 let s:config = {
@@ -55,10 +55,10 @@ endfunction
 " Debounce.
 "
 function! lamp#debounce(id, fn, timeout) abort
-  if has_key(s:timer_ids, a:id)
-    call timer_stop(s:timer_ids[a:id])
+  if has_key(s:debounce_ids, a:id)
+    call timer_stop(s:debounce_ids[a:id])
   endif
-  let s:timer_ids[a:id] = timer_start(a:timeout, { -> s:debounce(a:fn) }, { 'repeat': 1 })
+  let s:debounce_ids[a:id] = timer_start(a:timeout, { -> s:debounce(a:fn) }, { 'repeat': 1 })
 endfunction
 function! s:debounce(fn) abort
   try
@@ -124,5 +124,67 @@ function! lamp#get(dict, path, default) abort
   endfor
 
   return l:target
+endfunction
+
+"
+" complete.
+"
+function! lamp#complete(find_start, base) abort
+  if a:find_start == 1
+    let l:before_text = getline('.')[0 : col('.') - 1]
+    return strlen(substitute(l:before_text, '\k*$', '', 'g'))
+  endif
+
+  let l:servers = lamp#server#registry#find_by_filetype(&filetype)
+  let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.completionProvider') })
+  if empty(l:servers)
+    return { 'words': [] }
+  endif
+
+  " init context.
+  let s:context = {}
+  let s:context.id = 0
+  let s:context.requests = {}
+
+  " send request.
+  for l:server in l:servers
+    let s:context.requests[l:server.name] = l:server.request('textDocument/completion', {
+          \   'textDocument': lamp#protocol#document#identifier(bufnr('%')),
+          \   'position': lamp#protocol#position#get()
+          \ }).catch(lamp#rescue([]))
+  endfor
+
+  " consume response.
+  let l:returns = { 'words': [], 'refresh': 'always' }
+
+  for [l:server_name, l:request] in items(s:context.requests)
+    let l:response = lamp#sync(l:request)
+
+    let l:items = type(l:response) == type({}) ? l:response.items : l:response
+    for l:item in l:items
+      let l:filter_text = get(l:item, 'filterText', get(l:item, 'insertText', l:item.label))
+      if l:filter_text !~ '^' . a:base
+        continue
+      endif
+
+      let s:context.id += 1
+      let l:vim_item = {}
+      let l:vim_item.word = get(l:item, 'insertText', l:item.label)
+      let l:vim_item.kind = lamp#protocol#completion#get_kind_name(l:item.kind)
+      let l:vim_item.abbr = l:item.label
+      let l:vim_item.menu = '[LAMP]'
+      let l:vim_item.info = get(l:item, 'detail', '') . get(l:item, 'documentation', '')
+      let l:vim_item.user_data = json_encode({
+            \   'lamp': {
+            \     'id': s:context.id,
+            \     'server_name': l:server_name,
+            \     'completion_item': l:item
+            \   }
+            \ })
+      call add(l:returns.words, l:vim_item)
+    endfor
+  endfor
+
+  return l:returns
 endfunction
 

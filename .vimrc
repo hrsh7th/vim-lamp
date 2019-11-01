@@ -40,6 +40,7 @@ function! s:on_lamp_text_document_did_open() abort
   nmap <buffer> gfv       <Plug>(lamp-definition-vsplit)
   nmap <buffer> <Leader>i <Plug>(lamp-hover)
   nmap <buffer> <Leader>r <Plug>(lamp-rename)
+  setlocal omnifunc=lamp#complete
 endfunction
 
 nnoremap H 20h
