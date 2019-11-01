@@ -74,14 +74,23 @@ endfunction
 "
 " s:edits
 "
-function! s:edits(edits) abort
-  if empty(a:edits)
+function! s:edits(workspace_edit) abort
+  if empty(a:workspace_edit)
     return
   endif
-  call lamp#view#edit#apply_workspace(a:edits)
+  let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(a:workspace_edit)
 
+  call lamp#view#edit#apply_workspace(l:workspace_edit)
+
+  " current buffer only.
+  let l:current_uri = lamp#protocol#document#encode_uri(bufnr('%'))
+  if keys(l:workspace_edit) == [l:current_uri]
+    return
+  endif
+
+  " multiple files renamed.
   let l:locations = []
-  for [l:uri, l:edits] in items(lamp#view#edit#normalize_workspace_edit(a:edits))
+  for [l:uri, l:edits] in items(l:workspace_edit)
     for l:edit in l:edits
       let l:path = lamp#protocol#document#decode_uri(l:uri) 
       call add(l:locations, {

@@ -1,4 +1,3 @@
-
 "
 " lamp#view#edit#normalize_workspace_edit
 "
@@ -29,7 +28,7 @@ endfunction
 " lamp#view#edit#apply_workspace
 "
 function! lamp#view#edit#apply_workspace(workspace_edit) abort
-  for [l:uri, l:edits] in items(lamp#view#edit#normalize_workspace_edit(a:workspace_edit))
+  for [l:uri, l:edits] in items(a:workspace_edit)
     let l:bufnr = bufnr(lamp#protocol#document#decode_uri(l:uri), v:true)
     if !bufloaded(l:bufnr)
       call bufload(l:bufnr)
