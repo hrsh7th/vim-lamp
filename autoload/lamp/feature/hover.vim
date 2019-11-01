@@ -63,14 +63,10 @@ endfunction
 " s:close
 "
 function! s:close() abort
-  let l:fn = {}
-  function! l:fn.debounce() abort
-    if s:floatwin.is_showing()
-      if winnr() != s:floatwin.winnr()
-        call s:floatwin.hide()
-      endif
+  if s:floatwin.is_showing()
+    if winnr() != s:floatwin.winnr()
+      call s:floatwin.hide()
     endif
-  endfunction
-  call lamp#debounce('lamp#view#hover:close', l:fn.debounce, 100)
+  endif
 endfunction
 

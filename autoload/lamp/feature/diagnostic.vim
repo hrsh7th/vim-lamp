@@ -15,7 +15,6 @@ function! lamp#feature#diagnostic#init() abort
 
     " update signs & highlights.
     autocmd WinEnter,BufEnter * call s:update()
-    autocmd InsertLeave * call s:update()
   augroup END
 endfunction
 
@@ -78,7 +77,7 @@ function! s:show_floatwin() abort
   if s:floatwin.is_showing()
     call l:fn.debounce()
   else
-    call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:fn.debounce, 500)
+    call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:fn.debounce, 1000)
   endif
 endfunction
 
