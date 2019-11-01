@@ -104,4 +104,7 @@ endfunction
 - Refactor floatwin
     - Remove duplicated codes in nvim/vim compat layer
 - Write `signs/highlight` tests
+- Improve diagnostics handling
+- Create asyncomplete source
+- Floatwin Markdown Syntax
 
