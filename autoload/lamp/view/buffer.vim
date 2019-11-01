@@ -23,8 +23,13 @@ function! lamp#view#buffer#touch(expr) abort
   endif
 
   let l:current_bufnr = bufnr('%')
-  execute printf('noautocmd keepalt keepjumps %sbufdo! undojoin | normal! i_', l:bufnr)
-  execute printf('noautocmd keepalt keepjumps %sbufdo! undojoin | normal! "_x', l:bufnr)
-  execute printf('noautocmd keepalt keepjumps %sbuffer', l:current_bufnr)
+  if l:current_bufnr == l:bufnr
+    undojoin | normal! i_
+    undojoin | normal! "_x
+  else
+    execute printf('noautocmd keepalt keepjumps %sbufdo! undojoin | normal! i_', l:bufnr)
+    execute printf('noautocmd keepalt keepjumps %sbufdo! undojoin | normal! "_x', l:bufnr)
+    execute printf('noautocmd keepalt keepjumps %sbuffer', l:current_bufnr)
+  endif
 endfunction
 

@@ -78,7 +78,6 @@ function! s:neovim(command, option) abort
         \   'on_stdout': function('s:on_stdout', [a:option], {}),
         \   'on_stderr': function('s:on_stderr', [a:option], {}),
         \   'on_exit':   function('s:on_exit', [a:option], {}),
-        \   'detach': v:true
         \ })
   return {
         \ 'send': function('s:send', [l:job], {}),

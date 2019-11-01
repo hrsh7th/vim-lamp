@@ -102,4 +102,5 @@ endfunction
 - Refactor floatwin
     - Remove duplicated codes in nvim/vim compat layer
 - Create omnifunc
+- Write `signs/highlight` tests
 

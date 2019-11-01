@@ -11,7 +11,7 @@ Describe lamp#view#floatwin
           \ ])
     call s:expect(getbufline(s:floatwin.bufnr, '^', '$')).to_equal([
           \   'Error from typescript',
-          \   '---------------------',
+          \   '――――――――――',
           \   'Error from prettier'
           \ ])
     call s:floatwin.hide()

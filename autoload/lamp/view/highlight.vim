@@ -8,7 +8,12 @@ function! lamp#view#highlight#remove(bufnr) abort
   for l:winid in win_findbuf(a:bufnr)
     let l:current_winnr = winnr()
     try
-      execute printf('noautocmd keepalt keepjumps %swindo call clearmatches()', win_id2win(l:winid))
+      let l:winnr = win_id2win(l:winid)
+      if l:current_winnr == l:winnr
+        call clearmatches()
+      else
+        execute printf('noautocmd keepalt keepjumps %swindo call clearmatches()', win_id2win(l:winid))
+      endif
     catch /.*/
     endtry
     execute printf('%swincmd w', l:current_winnr)

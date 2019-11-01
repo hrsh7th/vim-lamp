@@ -11,7 +11,7 @@ function! lamp#feature#diagnostic#init() abort
 
     " update tooltip.
     autocmd CursorMoved * call s:show_floatwin()
-    autocmd InsertEnter * call s:floatwin.hide()
+    autocmd InsertEnter * call s:clear_for_insertmode()
 
     " update signs & highlights.
     autocmd WinEnter,BufEnter * call s:update()
@@ -75,6 +75,14 @@ function! s:show_floatwin() abort
     endif
   endfunction
   call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:fn.debounce, 500)
+endfunction
+
+"
+" s:clear_for_insertmode
+"
+function! s:clear_for_insertmode() abort
+  call s:floatwin.hide()
+  call lamp#view#highlight#remove(bufnr('%'))
 endfunction
 
 "
