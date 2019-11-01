@@ -1,0 +1,49 @@
+let s:expect = themis#helper('expect')
+
+Describe lamp#feature#references
+
+  Before each
+    let s:server = lamp#register('typescript-language-server', {
+          \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
+          \   'filetypes': ['typescript', 'typescript.tsx'],
+          \   'root_uri': { -> lamp#config('root') . '/fixture/typescript-fixture/' }
+          \ })
+    call lamp#sync(s:server.start())
+    call lamp#sync(s:server.initialize())
+  End
+
+  After each
+    call lamp#sync(s:server.stop())
+  End
+
+  It Should retrieve references(not include declaration)
+    call lamp#view#buffer#open('vsplit', {
+          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/module1.ts',
+          \   'lnum': 1,
+          \   'col': 14
+          \ })
+    set filetype=typescript
+
+    let l:bufnr = bufnr('%')
+    call lamp#feature#references#do(v:false)
+    call lamp#sync({ -> l:bufnr != bufnr('%') })
+    " call s:expect(2).to_equal(len(getqflist())) " NOTE: Currently tested server is ignore `includeDeclaration` option.
+    call s:expect(3).to_equal(len(getqflist()))
+  End
+
+  It Should retrieve references(include declaration)
+    call lamp#view#buffer#open('vsplit', {
+          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/module1.ts',
+          \   'lnum': 1,
+          \   'col': 14
+          \ })
+    set filetype=typescript
+
+    let l:bufnr = bufnr('%')
+    call lamp#feature#references#do(v:true)
+    call lamp#sync({ -> l:bufnr != bufnr('%') })
+    call s:expect(3).to_equal(len(getqflist()))
+  End
+
+End
+

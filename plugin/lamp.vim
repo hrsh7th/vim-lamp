@@ -17,11 +17,13 @@ if has_key(environ(), 'LAMP_TEST')
   finish
 endif
 
-nnoremap <Plug>(lamp-definition)        :<C-u>call lamp#feature#definition#do('edit')<CR>
-nnoremap <Plug>(lamp-definition-split)  :<C-u>call lamp#feature#definition#do('split')<CR>
-nnoremap <Plug>(lamp-definition-vsplit) :<C-u>call lamp#feature#definition#do('vsplit')<CR>
-nnoremap <Plug>(lamp-rename)            :<C-u>call lamp#feature#rename#do()<CR>
-nnoremap <Plug>(lamp-hover)             :<C-u>call lamp#feature#hover#do()<CR>
+nnoremap <Plug>(lamp-definition)                     :<C-u>call lamp#feature#definition#do('edit')<CR>
+nnoremap <Plug>(lamp-definition-split)               :<C-u>call lamp#feature#definition#do('split')<CR>
+nnoremap <Plug>(lamp-definition-vsplit)              :<C-u>call lamp#feature#definition#do('vsplit')<CR>
+nnoremap <Plug>(lamp-rename)                         :<C-u>call lamp#feature#rename#do()<CR>
+nnoremap <Plug>(lamp-hover)                          :<C-u>call lamp#feature#hover#do()<CR>
+nnoremap <Plug>(lamp-references)                     :<C-u>call lamp#feature#references#do(v:false)<CR>
+nnoremap <Plug>(lamp-references-include-declaration) :<C-u>call lamp#feature#references#do(v:true)<CR>
 
 augroup lamp
   autocmd!

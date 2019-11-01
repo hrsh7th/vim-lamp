@@ -8,6 +8,7 @@ let s:config = {
       \   'root': expand('<sfile>:p:h:h'),
       \   'debug.log': v:null,
       \   'feature.definition.on_definitions': s:on_locations,
+      \   'feature.references.on_references': s:on_locations,
       \   'feature.rename.on_renamed': s:on_locations,
       \   'view.sign.error.text': 'x',
       \   'view.sign.warning.text': '!',

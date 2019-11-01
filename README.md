@@ -32,7 +32,7 @@ function! s:on_text_document_did_open() abort
 endfunction
 ```
 
-# Status
+# [Status](https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/)
 
 - General
     - [x] initialize
@@ -83,7 +83,7 @@ endfunction
     - [x] textDocument/definition
     - [ ] textDocument/typeDefinition
     - [ ] textDocument/implementation
-    - [ ] textDocument/references
+    - [x] textDocument/references
     - [ ] textDocument/documentHighlight
     - [ ] textDocument/documentSymbol
     - [ ] textDocument/codeAction
@@ -107,4 +107,8 @@ endfunction
 - Improve diagnostics handling
 - Create asyncomplete source
 - Floatwin Markdown Syntax
+- Improve error logging
+    - Currently not supported logging the error at `s:Promise.all`.
+    - Probably should patch the `Promise.vim` in the vital.vim.
+- Show message when has no server that supports specific capability
 

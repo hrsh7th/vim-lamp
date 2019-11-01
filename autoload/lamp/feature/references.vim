@@ -1,36 +1,39 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 
 "
-" lamp#feature#definition#init
+" lamp#feature#references#init
 "
-function! lamp#feature#definition#init() abort
+function! lamp#feature#references#init() abort
   " noop.
 endfunction
 
 "
-" lamp#feature#definition#do
+" lamp#feature#references#do
 "
-function! lamp#feature#definition#do(command) abort
+function! lamp#feature#references#do(include_declaration) abort
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype', ''))
-  let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.definitionProvider') })
+  let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.referencesProvider') })
   if empty(l:servers)
     return
   endif
 
   let l:promises = map(l:servers, { k, v ->
-        \   v.request('textDocument/definition', {
+        \   v.request('textDocument/references', {
         \     'textDocument': lamp#protocol#document#identifier(bufnr('%')),
         \     'position': lamp#protocol#position#get(),
+        \     'context': {
+        \       'includeDeclaration': a:include_declaration
+        \     }
         \   }).catch(lamp#rescue([]))
         \ })
-  call s:Promise.all(l:promises).then({ responses -> s:on_response(a:command, l:bufnr, responses) })
+  call s:Promise.all(l:promises).then({ responses -> s:on_response(l:bufnr, responses) })
 endfunction
 
 "
 " s:on_response
 "
-function! s:on_response(command, bufnr, responses) abort
+function! s:on_response(bufnr, responses) abort
   let l:locations = []
   for l:response in a:responses
     for l:location in l:response
@@ -42,10 +45,6 @@ function! s:on_response(command, bufnr, responses) abort
     endfor
   endfor
 
-  if len(l:locations) == 1
-    call lamp#view#buffer#open(a:command, l:locations[0])
-  elseif len(l:locations) > 1
-    call lamp#config('feature.definition.on_definitions')(l:locations)
-  endif
+  call lamp#config('feature.references.on_references')(l:locations)
 endfunction
 
