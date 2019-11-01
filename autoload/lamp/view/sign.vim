@@ -47,7 +47,7 @@ function! s:initialize() abort
     return
   endif
 
-  let l:sign_column_bg = synIDattr(hlID('SignColumn'), 'bg')
+  let l:sign_column_bg = synIDattr(hlID('SignColumn'), 'bg', 'gui')
   let l:sign_column_guibg = !empty(l:sign_column_bg) ? printf('guibg=%s', l:sign_column_bg) : ''
   execute printf('highlight! LampSignError guifg=red %s', l:sign_column_guibg)
   execute printf('highlight! LampSignWarning guifg=yellow %s', l:sign_column_guibg)
