@@ -2,6 +2,14 @@ let s:initialized = v:false
 
 let s:sign_group = 'lamp'
 
+function! lamp#view#sign#get_line(bufnr, lnum) abort
+  let l:signs = get(sign_getplaced(a:bufnr, {
+        \   'group': s:sign_group,
+        \   'lnum': a:lnum
+        \ }), 0, {})
+  return get(l:signs, 'signs', [])
+endfunction
+
 function! lamp#view#sign#remove(...) abort
   call s:initialize()
   if len(a:000) > 0 

@@ -1,15 +1,20 @@
 let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({})
 
+
 "
 " init
 "
 function! lamp#feature#diagnostic#init() abort
   augroup lamp#feature#diagnostic
     autocmd!
+
+    " update tooltip.
     autocmd CursorMoved * call s:show_floatwin()
-    autocmd WinEnter,BufEnter * call lamp#feature#diagnostic#update()
     autocmd InsertEnter * call s:floatwin.hide()
+
+    " update signs & highlights.
+    autocmd WinEnter,BufEnter * call s:update()
     autocmd InsertLeave * call s:update()
   augroup END
 endfunction
@@ -34,13 +39,15 @@ endfunction
 " lamp#feature#diagnostic#show_floatwin
 "
 function! s:show_floatwin() abort
-  if mode() !=# 'n'
+  if mode() !=# 'n' || empty(lamp#view#sign#get_line(bufnr('%'), line('.')))
+    call s:floatwin.hide()
     return
   endif
 
   let l:fn = {}
   function! l:fn.debounce() abort
-    if mode() !=# 'n'
+    if mode() !=# 'n' || empty(lamp#view#sign#get_line(bufnr('%'), line('.')))
+      call s:floatwin.hide()
       return
     endif
 
@@ -57,13 +64,14 @@ function! s:show_floatwin() abort
 
     if !empty(l:diagnostics)
       let l:screenpos = lamp#view#floatwin#screenpos(l:diagnostics[0].range.start.line + 1, l:diagnostics[0].range.start.character + 1)
-      let l:contents = map(copy(l:diagnostics), { k, v -> {
-            \   'lines': split(get(v, 'message', ''), "\n", v:true)
-            \ } })
+      let l:contents = map(copy(l:diagnostics), { k, v ->
+            \   {
+            \     'lines': split(get(v, 'message', ''), "\n", v:true)
+            \   }
+            \ })
       call s:floatwin.show_tooltip(l:screenpos, l:contents)
     else
       call s:floatwin.hide()
-      call lamp#debounce('lamp#feature#diagnostic:show_floatwin', { -> {} }, 0)
     endif
   endfunction
   call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:fn.debounce, 500)
@@ -73,6 +81,10 @@ endfunction
 " s:update
 "
 function! s:update() abort
+  if mode() !=# 'n'
+    return
+  endif
+
   for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
     let l:bufnr = winbufnr(l:winnr)
 

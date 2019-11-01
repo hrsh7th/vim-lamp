@@ -14,8 +14,6 @@ function! s:Job.new(command, option) abort
   let l:job = has('nvim') ? s:neovim(a:command, a:option) : s:vim(a:command, a:option)
   return extend(deepcopy(s:Job), {
         \   'job': l:job,
-        \   'timer_id': 0,
-        \   'buffer': '',
         \ })
 endfunction
 
@@ -23,23 +21,7 @@ endfunction
 " send
 "
 function! s:Job.send(data) abort
-  let self.buffer .= a:data
-  call timer_stop(self.timer_id)
-  let self.timer_id = timer_start(0, { timer_id -> self.consume() }, { 'repeat': -1 })
-endfunction
-
-"
-" consume
-"
-function! s:Job.consume() abort
-  if !self.is_running() || self.buffer ==# ''
-    call timer_stop(self.timer_id)
-    return
-  endif
-
-  let l:data = strpart(self.buffer, 0, 1024)
-  call self.job.send(l:data)
-  let self.buffer = strpart(self.buffer, 1024, strlen(self.buffer))
+  call self.job.send(a:data)
 endfunction
 
 "
