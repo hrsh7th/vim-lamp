@@ -92,6 +92,6 @@ function! s:edits(edits) abort
             \ })
     endfor
   endfor
-  call lamp#config('option.on_renamed')(l:locations)
+  call lamp#config('feature.rename.on_renamed')(l:locations)
 endfunction
 

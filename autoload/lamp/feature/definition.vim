@@ -45,7 +45,7 @@ function! s:on_response(command, bufnr, responses) abort
   if len(l:locations) == 1
     call lamp#view#buffer#open(a:command, l:locations[0])
   elseif len(l:locations) > 1
-    call lamp#config('option.on_definitions')(l:locations)
+    call lamp#config('feature.definition.on_definitions')(l:locations)
   endif
 endfunction
 

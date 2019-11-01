@@ -3,17 +3,16 @@ let s:Server = lamp#server#import()
 
 let s:timer_ids = {}
 
+let s:on_locations = { locations -> [setqflist(locations, 'r'), execute('copen')] }
 let s:config = {
       \   'root': expand('<sfile>:p:h:h'),
-      \   'logfile': '',
-      \   'option.on_definitions': { locations -> [
-      \     setqflist(locations, 'r'),
-      \     execute('copen')
-      \   ] },
-      \   'option.on_renamed': { locations -> [
-      \     setqflist(locations, 'r'),
-      \     execute('copen')
-      \   ] }
+      \   'debug.log': v:null,
+      \   'feature.definition.on_definitions': s:on_locations,
+      \   'feature.rename.on_renamed': s:on_locations,
+      \   'view.sign.error.text': 'x',
+      \   'view.sign.warning.text': '!',
+      \   'view.sign.information.text': 'i',
+      \   'view.sign.hint.text': '?',
       \ }
 
 "
@@ -37,8 +36,8 @@ endfunction
 " Logging.
 "
 function! lamp#log(...) abort
-  if strlen(lamp#config('logfile')) > 0
-    call writefile([strcharpart(join(a:000, "\t"), 0, 512)], lamp#config('logfile'), 'a')
+  if lamp#config('debug.log')
+    call writefile([strcharpart(join(a:000, "\t"), 0, 512)], lamp#config('debug.log'), 'a')
   endif
 endfunction
 

@@ -54,9 +54,25 @@ function! s:initialize() abort
   execute printf('highlight! LampSignInformation guifg=white %s', l:sign_column_guibg)
   execute printf('highlight! LampSignHint guifg=white %s', l:sign_column_guibg)
 
-  call sign_define('LampSignError', { 'text': 'x', 'texthl': 'LampSignError', 'linehl': 'SignColumn' })
-  call sign_define('LampSignWarning', { 'text': '!', 'texthl': 'LampSignWarning', 'linehl': 'SignColumn' })
-  call sign_define('LampSignInformation', { 'text': 'i', 'texthl': 'LampSignInformation', 'linehl': 'SignColumn' })
-  call sign_define('LampSignHint', { 'text': '?', 'texthl': 'LampSignHint', 'linehl': 'SignColumn' })
+  call sign_define('LampSignError', {
+        \   'text': lamp#config('view.sign.error.text'),
+        \   'texthl': 'LampSignError',
+        \   'linehl': 'SignColumn'
+        \ })
+  call sign_define('LampSignWarning', {
+        \   'text': lamp#config('view.sign.warning.text'),
+        \   'texthl': 'LampSignWarning',
+        \   'linehl': 'SignColumn'
+        \ })
+  call sign_define('LampSignInformation', {
+        \   'text': lamp#config('view.sign.information.text'),
+        \   'texthl': 'LampSignInformation',
+        \   'linehl': 'SignColumn'
+        \ })
+  call sign_define('LampSignHint', {
+        \   'text': lamp#config('view.sign.hint.text'),
+        \   'texthl': 'LampSignHint',
+        \   'linehl': 'SignColumn'
+        \ })
 endfunction
 

@@ -52,10 +52,10 @@ Describe lamp#feature#definition
     set filetype=typescript
 
     let s:called = v:false
-    call lamp#config('option.on_definitions', { -> execute('let s:called = v:true') })
+    call lamp#config('feature.definition.on_definitions', { -> execute('let s:called = v:true') })
     call lamp#feature#definition#do('edit')
     call lamp#sync({ -> s:called })
-    call lamp#config('option.on_definitions', { -> execute('copen') })
+    call lamp#config('feature.definition.on_definitions', { -> execute('copen') })
   End
 
 End
