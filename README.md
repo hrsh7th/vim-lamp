@@ -1,6 +1,13 @@
 # vim-lamp
 Language Server Protocol Client for Vim.
 
+# Requirements
+
+- vim
+    - 8.1 or later
+- nvim
+    - 0.4.0 or later
+
 # Setting
 
 ```viml

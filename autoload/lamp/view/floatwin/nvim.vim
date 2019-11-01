@@ -12,9 +12,9 @@ let s:Floatwin = {}
 function! s:Floatwin.new(option) abort
   let s:id += 1
   let l:bufname = printf('lamp-floatwin-%s.md', s:id)
-  call bufadd(l:bufname)
-  call bufload(l:bufname)
-  let l:bufnr = bufnr(l:bufname)
+  let l:bufnr = bufnr(l:bufname, v:true)
+  call setbufvar(l:bufnr, '&buflisted', v:true)
+  call setbufvar(l:bufnr, '&filetype', 'markdown')
   call setbufvar(l:bufnr, '&buftype', 'nofile')
   return extend(deepcopy(s:Floatwin), {
         \   'window': v:null,
