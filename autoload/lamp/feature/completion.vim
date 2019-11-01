@@ -20,7 +20,7 @@ let s:user_data_key = 'lamp'
 "   }
 " }
 "
-let s:state = {}
+let s:item_state = {}
 
 function! lamp#feature#completion#init() abort
   augroup lamp#feature#completion
@@ -35,7 +35,7 @@ endfunction
 " s:on_menu_popup
 "
 function! s:on_menu_popup() abort
-  let s:state = {}
+  let s:item_state = {}
 endfunction
 
 "
@@ -52,17 +52,17 @@ function! s:on_complete_changed() abort
   let l:event = copy(v:event)
 
   " already resolve requested.
-  let s:state[l:item_data.id] = get(s:state, l:item_data.id, {})
-  if has_key(s:state[l:item_data.id], 'resolve')
-    call lamp#debounce('lamp#feature#completion:show_documentation', { -> s:show_documentation(l:event, s:state[l:item_data.id]) }, 200)
+  let s:item_state[l:item_data.id] = get(s:item_state, l:item_data.id, {})
+  if has_key(s:item_state[l:item_data.id], 'resolve')
+    call lamp#debounce('lamp#feature#completion:show_documentation', { -> s:show_documentation(l:event, s:item_state[l:item_data.id]) }, 200)
     return
   endif
 
   " request resolve.
   let l:fn = {}
   function! l:fn.debounce(event, item_data) abort
-    let s:state[a:item_data.id].resolve = s:resolve(a:item_data)
-    call s:show_documentation(a:event, s:state[a:item_data.id])
+    let s:item_state[a:item_data.id].resolve = s:resolve(a:item_data)
+    call s:show_documentation(a:event, s:item_state[a:item_data.id])
   endfunction
   call lamp#debounce('lamp#feature#completion:show_documentation', { -> l:fn.debounce(l:event, l:item_data) }, 200)
 endfunction
@@ -83,10 +83,10 @@ function! s:on_complete_done() abort
   endif
 
   " get item state.
-  let l:state = get(s:state, l:item_data.id, {})
+  let l:item_state = get(s:item_state, l:item_data.id, {})
 
   " resolve if needed.
-  let l:promise = get(l:state, 'resolve', {})
+  let l:promise = get(l:item_state, 'resolve', {})
   if empty(l:promise)
     let l:promise = s:resolve(l:item_data)
   endif
@@ -104,7 +104,7 @@ function! s:on_complete_done() abort
 
   let l:additional_text_edits = get(l:completion_item, 'additionalTextEdits', {})
   if !empty(l:additional_text_edits)
-    call lamp#view#edit#apply(bufnr('%'), l:additional_text_edits)
+    call timer_start(0, { -> lamp#view#edit#apply(bufnr('%'), l:additional_text_edits) }, { 'repeat': 1 })
   endif
 
   " TODO: save cursor position.
@@ -164,8 +164,8 @@ endfunction
 "
 " s:show_documentation.
 "
-function! s:show_documentation(event, state) abort
-  let l:resolve = get(a:state, 'resolve', {})
+function! s:show_documentation(event, item_state) abort
+  let l:resolve = get(a:item_state, 'resolve', {})
   if empty(l:resolve)
     return
   endif
