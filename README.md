@@ -60,7 +60,7 @@ endfunction
     - [ ] workspace/configuration
     - [ ] workspace/didChangeWatchedFiles
     - [ ] workspace/symbol
-    - [ ] workspace/executeCommand
+    - [x] workspace/executeCommand
     - [ ] workspace/applyEdit
 
 - Synchronization

@@ -97,18 +97,31 @@ function! s:on_complete_done() abort
     return
   endif
 
+  " textEdit.
   let l:text_edit = get(l:completion_item, 'textEdit', {})
   if !empty(l:text_edit)
-    call lamp#view#edit#apply(bufnr('%'), [l:text_edit])
+    call timer_start(0, { -> lamp#view#edit#apply(bufnr('%'), [l:text_edit]) }, { 'repeat': 1 })
   endif
 
+  " additionalTextEdits.
   let l:additional_text_edits = get(l:completion_item, 'additionalTextEdits', {})
   if !empty(l:additional_text_edits)
     call timer_start(0, { -> lamp#view#edit#apply(bufnr('%'), l:additional_text_edits) }, { 'repeat': 1 })
   endif
 
-  " TODO: save cursor position.
-  " TODO: Supports workspace/executeCommand
+  " executeCommand.
+  if has_key(l:completion_item, 'command')
+    let l:server = lamp#server#registry#get_by_name(l:item_data.server_name)
+    if empty(l:server)
+      return
+    endif
+    call l:server.request('workspace/executeCommand', {
+          \   'command': l:completion_item.command.command,
+          \   'arguments': get(l:completion_item.command, 'arguments')
+          \ })
+  endif
+
+  " TODO: adjust cursor position
 endfunction
 
 "
