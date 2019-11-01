@@ -12,7 +12,7 @@ for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:fa
   endtry
 endfor
 
-if has_key(environ(), 'LAMP_TEST')
+if exists('$LAMP_TEST')
   call lamp#config('debug.log', '/tmp/lamp.log')
   finish
 endif
