@@ -117,4 +117,5 @@ endfunction
     - Sometimes miss concealing to end of fenced code block
     - Automatic fenced language detection
 - Show message when has no server that supports specific capability
+- Design canceling outdated request
 
