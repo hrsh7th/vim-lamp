@@ -35,7 +35,9 @@ endfunction
 " lamp#view#floatwin#screenpos
 "
 function! lamp#view#floatwin#screenpos(line, col) abort
+  let l:scroll_x = col('.') - wincol()
+  let l:scroll_y = line('.') - winline()
   let l:winpos = win_screenpos(win_getid())
-  return [l:winpos[0] + winline() - 1, l:winpos[1] + wincol() - 1]
+  return [l:winpos[0] + (a:line - l:scroll_y) - 1, l:winpos[1] + (a:col - l:scroll_x) - 1]
 endfunction
 

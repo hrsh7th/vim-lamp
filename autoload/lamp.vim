@@ -14,6 +14,12 @@ let s:config = {
       \   'view.sign.warning.text': '!',
       \   'view.sign.information.text': 'i',
       \   'view.sign.hint.text': '?',
+      \   'view.floatwin.fenced_language': {
+      \     'help': ['help'],
+      \     'vim': ['vim'],
+      \     'typescript': ['ts', 'tsx', 'typescript', 'typescriptreact', 'typescript.tsx'],
+      \     'javascript': ['js', 'jsx', 'javascript', 'javascriptreact', 'javascript.jsx']
+      \   }
       \ }
 
 "
@@ -37,7 +43,7 @@ endfunction
 " Logging.
 "
 function! lamp#log(...) abort
-  if lamp#config('debug.log')
+  if strlen(lamp#config('debug.log')) > 0
     call writefile([strcharpart(join(a:000, "\t"), 0, 512)], lamp#config('debug.log'), 'a')
   endif
 endfunction
@@ -72,12 +78,12 @@ endfunction
 "
 " rescue.
 "
-function! lamp#rescue(default) abort
+function! lamp#rescue(...) abort
   function! s:catch(err, default) abort
-    call lamp#log('[RESQUE]', a:default, '<-', a:err)
+    call lamp#log('[RESCUE]', a:default, '<-', a:err)
     return a:default
   endfunction
-  return function('s:catch', [a:default], {})
+  return function('s:catch', [get(a:000, 0, v:null)], {})
 endfunction
 
 "

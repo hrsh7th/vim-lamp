@@ -190,7 +190,10 @@ function! s:show_documentation(event, item_state) abort
 
   let l:contents = []
   if has_key(l:completion_item, 'detail')
-    let l:contents += lamp#protocol#markup_content#normalize(l:completion_item.detail)
+    let l:contents += lamp#protocol#markup_content#normalize({
+          \   'language': &filetype,
+          \   'value': l:completion_item.detail
+          \ })
   endif
 
   if has_key(l:completion_item, 'documentation')

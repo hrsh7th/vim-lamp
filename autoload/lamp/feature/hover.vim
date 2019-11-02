@@ -41,7 +41,9 @@ function! lamp#feature#hover#do() abort
         \     'position': lamp#protocol#position#get()
         \   }).catch(lamp#rescue(v:null))
         \ })
-  call s:Promise.all(l:promises).then({ res -> s:on_response(l:bufnr, res) })
+  let l:p = s:Promise.all(l:promises)
+  let l:p = l:p.then({ res -> s:on_response(l:bufnr, res) })
+  let l:p = l:p.catch(lamp#rescue(v:null))
 endfunction
 
 "

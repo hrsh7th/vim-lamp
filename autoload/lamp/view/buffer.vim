@@ -22,14 +22,27 @@ function! lamp#view#buffer#touch(expr) abort
     return
   endif
 
+  call lamp#view#buffer#do(l:bufnr, { -> [
+        \   execute('undojoin | normal! i_'),
+        \   execute('undojoin | normal! "_x"')
+        \ ] })
+endfunction
+
+"
+" safe bufdo.
+"
+function! lamp#view#buffer#do(bufnr, fn) abort
   let l:current_bufnr = bufnr('%')
-  if l:current_bufnr == l:bufnr
-    undojoin | normal! i_
-    undojoin | normal! "_x
-  else
-    execute printf('noautocmd keepalt keepjumps %sbufdo! undojoin | normal! i_', l:bufnr)
-    execute printf('noautocmd keepalt keepjumps %sbufdo! undojoin | normal! "_x', l:bufnr)
-    execute printf('noautocmd keepalt keepjumps %sbuffer', l:current_bufnr)
+  if l:current_bufnr == a:bufnr
+    call a:fn()
+    return
   endif
+
+  try
+    execute printf('noautocmd keepalt keepjumps %sbufdo! call a:fn()', a:bufnr)
+  catch /.*/
+    echomsg string({ 'e': v:exception, 't': v:throwpoint })
+  endtry
+  execute printf('noautocmd keepalt keepjumps %sbuffer', l:current_bufnr)
 endfunction
 

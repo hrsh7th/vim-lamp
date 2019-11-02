@@ -114,8 +114,7 @@ endfunction
 - Improve diagnostics handling
 - Create asyncomplete source
 - Floatwin Markdown Syntax
-- Improve error logging
-    - Currently not supported logging the error at `s:Promise.all`.
-    - Probably should patch the `Promise.vim` in the vital.vim.
+    - Sometimes miss concealing to end of fenced code block
+    - Automatic fenced language detection
 - Show message when has no server that supports specific capability
 
