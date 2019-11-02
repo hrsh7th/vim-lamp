@@ -28,6 +28,13 @@ function! lamp#protocol#range#current_word() abort
         \ }
 endfunction
 
+function! lamp#protocol#range#has_length(range) abort
+  return a:range.start.line < a:range.end.line || (
+        \   a:range.start.line == a:range.end.line &&
+        \   a:range.start.character < a:range.end.character
+        \ )
+endfunction
+
 function! lamp#protocol#range#to_vim(range) abort
   return {
         \   'start': {

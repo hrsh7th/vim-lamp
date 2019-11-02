@@ -45,6 +45,10 @@ endfunction
 function! s:add_highlight(highlight, bufnr, range) abort
   call s:initialize()
 
+  if !lamp#protocol#range#has_length(a:range)
+    return
+  endif
+
   for l:winid in win_findbuf(a:bufnr)
     call matchaddpos(a:highlight, s:positions(a:bufnr, a:range), 100, -1, { 'window': l:winid })
   endfor

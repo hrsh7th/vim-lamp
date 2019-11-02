@@ -14,7 +14,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd InsertEnter * call s:clear_for_insertmode()
 
     " update signs & highlights.
-    autocmd WinEnter,BufEnter,InsertLeave * call s:update()
+    autocmd WinEnter,BufEnter,InsertLeave,BufWritePost * call s:update()
   augroup END
 endfunction
 
