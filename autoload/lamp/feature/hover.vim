@@ -5,8 +5,8 @@ let s:floatwin = s:Floatwin.new({})
 "
 " for test.
 "
-function! lamp#feature#hover#test_context(context) abort
-  let a:context.floatwin = s:floatwin
+function! lamp#feature#hover#test(test) abort
+  let a:test.floatwin = s:floatwin
 endfunction
 
 "

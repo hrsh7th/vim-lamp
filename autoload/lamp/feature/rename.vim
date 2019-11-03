@@ -3,9 +3,9 @@ let s:Promise = vital#lamp#import('Async.Promise')
 "
 " for test.
 "
-let s:test_context = {}
-function! lamp#feature#rename#test_context(test_context) abort
-  let s:test_context = a:test_context
+let s:test = {}
+function! lamp#feature#rename#test(test) abort
+  let s:test= a:test
 endfunction
 
 "
@@ -55,13 +55,13 @@ endfunction
 " s:request_rename
 "
 function! s:request_rename(bufnr, server, target) abort
-  if !has_key(s:test_context, 'new_name')
+  if !has_key(s:test, 'new_name')
     let l:new_name = input('New name: ', get(a:target, 'placeholder', ''))
     if l:new_name ==# '' || l:new_name ==# get(a:target, 'placeholder', '')
       return
     endif
   else
-    let l:new_name = s:test_context.new_name
+    let l:new_name = s:test.new_name
   endif
 
   return a:server.request('textDocument/rename', {

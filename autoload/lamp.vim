@@ -78,13 +78,19 @@ endfunction
 "
 " rescue.
 "
-function! lamp#rescue(...) abort
-  function! s:catch(err, default) abort
-    call lamp#log('[RESCUE]', a:default, '<-', a:err)
-    return a:default
+if !exists('$LAMP_TEST')
+  function! lamp#rescue(...) abort
+    function! s:catch(err, default) abort
+      call lamp#log('[RESCUE]', a:default, '<-', a:err)
+      return a:default
+    endfunction
+    return function('s:catch', [get(a:000, 0, v:null)], {})
   endfunction
-  return function('s:catch', [get(a:000, 0, v:null)], {})
-endfunction
+else
+  function! lamp#rescue(...) abort
+    return { err -> execute('throw err') }
+  endfunction
+endif
 
 "
 " Sync.

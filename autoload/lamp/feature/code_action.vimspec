@@ -1,6 +1,7 @@
+let s:Promise = vital#lamp#import('Async.Promise')
 let s:expect = themis#helper('expect')
 
-Describe lamp#feature#rename
+Describe lamp#feature#code_action
 
   Before each
     let s:server = lamp#register('typescript-language-server', {
@@ -17,20 +18,26 @@ Describe lamp#feature#rename
     execute 'bufdo! edit!'
   End
 
-  It Should rename
+  It Should run code action
     call lamp#view#buffer#open('vsplit', {
           \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
-          \   'lnum': 5,
-          \   'col': 2
+          \   'lnum': 3,
+          \   'col': 1
           \ })
     set filetype=typescript
 
-    let s:locations = []
-    call lamp#config('feature.rename.on_renamed', { locations -> execute('let s:locations = locations') })
-    call lamp#feature#rename#test({ 'new_name': 'module2' })
-    call lamp#feature#rename#do()
-    call lamp#sync({ -> len(s:locations) > 0 })
-    call lamp#config('feature.rename.on_renamed', { locations -> [setqflist(locations), execute('copen')] })
+    let l:bufnr = bufnr('%')
+    let l:uri = lamp#protocol#document#encode_uri(l:bufnr)
+
+    " wait for diagnostic.
+    call s:server.ensure_document(l:bufnr)
+    call lamp#sync({ -> len(get(get(s:server.documents, l:uri, {}), 'diagnostics', [])) > 0 })
+
+    let l:buflines = getbufline(l:bufnr, 3)
+    call lamp#feature#code_action#test({ 'action_index': 0 })
+    call lamp#feature#code_action#do(0)
+    call lamp#sync({ -> getbufline(l:bufnr, 3) != l:buflines })
+    call s:expect(['']).to_equal(getbufline(l:bufnr, 3))
   End
 
 End

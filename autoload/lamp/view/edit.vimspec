@@ -3,6 +3,10 @@ let s:expect = themis#helper('expect')
 
 Describe lamp#view#edit
 
+  After each
+    execute 'bufdo! edit!'
+  End
+
   It Should sort
     let s:edits = [{
           \   'range': {
@@ -103,7 +107,6 @@ Describe lamp#view#edit
     call s:expect(getbufline(bufnr(s:filepath1), '^', '$')[0]).to_equal("import { module2 } from './module1';")
     call s:expect(getbufline(bufnr(s:filepath1), '^', '$')[4]).to_equal("module2();")
     call s:expect(getbufline(bufnr(s:filepath2), '^', '$')[0]).to_equal("export const module2 = () => {")
-    execute 'bufdo! bdelete!'
   End
 
 End

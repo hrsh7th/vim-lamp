@@ -3,6 +3,10 @@ let s:expect = themis#helper('expect')
 
 Describe lamp#view#floatwin
 
+  After each
+    execute 'bufdo! edit!'
+  End
+
   It Should show multiple content
     let s:floatwin = s:Floatwin.new({})
     call s:floatwin.show([1, 1], [

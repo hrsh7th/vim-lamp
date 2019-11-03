@@ -14,6 +14,7 @@ Describe lamp#feature#hover
 
   After each
     call lamp#sync(s:server.stop())
+    execute 'bufdo e!'
   End
 
   It Should open hover window
@@ -24,10 +25,10 @@ Describe lamp#feature#hover
           \ })
     set filetype=typescript
 
-    let s:test_context = {}
-    call lamp#feature#hover#test_context(s:test_context)
+    let s:test = {}
+    call lamp#feature#hover#test(s:test)
     call lamp#feature#hover#do()
-    call lamp#sync({ -> s:test_context.floatwin.is_showing() })
+    call lamp#sync({ -> s:test.floatwin.is_showing() })
   End
 
 End

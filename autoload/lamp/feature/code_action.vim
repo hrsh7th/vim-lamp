@@ -1,5 +1,14 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 
+let s:test = {}
+
+"
+" for test
+"
+function! lamp#feature#code_action#test(test) abort
+  let s:test = a:test
+endfunction
+
 "
 " lamp#feature#code_action#init
 "
@@ -55,9 +64,14 @@ function! s:on_responses(responses) abort
     return
   endif
 
-  let l:index = lamp#view#input#select('Select code actions:', map(copy(l:code_actions), { k, v ->
-        \   v.action.title
-        \ }))
+  if has_key(s:test, 'action_index')
+    let l:index = s:test.action_index
+  else
+    let l:index = lamp#view#input#select('Select code actions:', map(copy(l:code_actions), { k, v ->
+          \   v.action.title
+          \ }))
+  endif
+
   if l:index < 0
     return
   endif
