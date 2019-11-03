@@ -22,13 +22,15 @@ if exists('$LAMP_TEST')
   finish
 endif
 
-nnoremap <Plug>(lamp-definition)                     :<C-u>call lamp#feature#definition#do('edit')<CR>
-nnoremap <Plug>(lamp-definition-split)               :<C-u>call lamp#feature#definition#do('split')<CR>
-nnoremap <Plug>(lamp-definition-vsplit)              :<C-u>call lamp#feature#definition#do('vsplit')<CR>
-nnoremap <Plug>(lamp-rename)                         :<C-u>call lamp#feature#rename#do()<CR>
-nnoremap <Plug>(lamp-hover)                          :<C-u>call lamp#feature#hover#do()<CR>
-nnoremap <Plug>(lamp-references)                     :<C-u>call lamp#feature#references#do(v:false)<CR>
-nnoremap <Plug>(lamp-references-include-declaration) :<C-u>call lamp#feature#references#do(v:true)<CR>
+nnoremap <silent><Plug>(lamp-definition)                     :<C-u>call lamp#feature#definition#do('edit')<CR>
+nnoremap <silent><Plug>(lamp-definition-split)               :<C-u>call lamp#feature#definition#do('split')<CR>
+nnoremap <silent><Plug>(lamp-definition-vsplit)              :<C-u>call lamp#feature#definition#do('vsplit')<CR>
+nnoremap <silent><Plug>(lamp-rename)                         :<C-u>call lamp#feature#rename#do()<CR>
+nnoremap <silent><Plug>(lamp-hover)                          :<C-u>call lamp#feature#hover#do()<CR>
+nnoremap <silent><Plug>(lamp-references)                     :<C-u>call lamp#feature#references#do(v:false)<CR>
+nnoremap <silent><Plug>(lamp-references-include-declaration) :<C-u>call lamp#feature#references#do(v:true)<CR>
+nnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(0)<CR>
+vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(2)<CR>
 
 augroup lamp
   autocmd!

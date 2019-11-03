@@ -100,7 +100,8 @@ function! s:on_complete_done() abort
   " textEdit.
   let l:text_edit = get(l:completion_item, 'textEdit', {})
   if !empty(l:text_edit)
-    call timer_start(0, { -> lamp#view#edit#apply(bufnr('%'), [l:text_edit]) }, { 'repeat': 1 })
+    " TODO: The server that returns textEdit.
+    call lamp#view#edit#apply(bufnr('%'), [l:text_edit])
   endif
 
   " additionalTextEdits.

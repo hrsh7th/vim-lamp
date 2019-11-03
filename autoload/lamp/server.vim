@@ -96,6 +96,17 @@ function! s:Server.request(method, params) abort
 endfunction
 
 "
+" Response for language server.
+"
+function! s:Server.response(id, data) abort
+  let l:p = s:Promise.resolve()
+  let l:p = l:p.then({ -> lamp#log('-> [RESPONSE]', a:id, a:data) })
+  let l:p = l:p.then({ -> self.channel.response(a:id, a:data) })
+  let l:p = l:p.finally({ -> self.finally(l:p) })
+  return l:p
+endfunction
+
+"
 " Notify for language server.
 "
 function! s:Server.notify(method, params) abort
@@ -262,16 +273,16 @@ endfunction
 " On notification from server.
 "
 function! s:Server.on_notification(notification) abort
-  call lamp#log('  <- [NOTIFY]', a:notification)
-
-  if a:notification.method ==# 'textDocument/publishDiagnostics'
-    if !has_key(self.documents, a:notification.params.uri)
-      return
+  try
+    if has_key(a:notification, 'id')
+      call lamp#log('<- [REQUEST]', a:notification)
+    else
+      call lamp#log('  <- [NOTIFY]', a:notification)
     endif
-    let l:doc = self.documents[a:notification.params.uri]
-    call l:doc.set_diagnostics(a:notification.params.diagnostics)
-    call lamp#feature#diagnostic#update()
-  endif
+    call lamp#server#notification#on(self, a:notification)
+  catch /.*/
+    call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
+  endtry
 endfunction
 
 "

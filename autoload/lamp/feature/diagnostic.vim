@@ -57,18 +57,20 @@ function! s:show_floatwin() abort
     let l:diagnostics = []
     for l:server in l:servers
       let l:diagnostics += filter(copy(l:server.documents[l:uri].diagnostics), { k, diagnostic ->
-            \   lamp#protocol#range#in_line(diagnostic.range, lamp#protocol#position#get())
+            \   lamp#protocol#range#in_line(diagnostic.range)
             \ })
     endfor
 
     if !empty(l:diagnostics)
-      let l:screenpos = lamp#view#floatwin#screenpos(l:diagnostics[0].range.start.line + 1, l:diagnostics[0].range.start.character + 1)
+      let l:screenpos = lamp#view#floatwin#screenpos(
+            \ l:diagnostics[0].range.start.line + 1,
+            \ l:diagnostics[0].range.start.character + 1)
       let l:contents = map(copy(l:diagnostics), { k, v ->
             \   {
             \     'lines': split(get(v, 'message', ''), "\n", v:true)
             \   }
             \ })
-      call s:floatwin.show_tooltip(l:screenpos, l:contents)
+      call s:floatwin.show(l:screenpos, l:contents)
     else
       call s:floatwin.hide()
     endif

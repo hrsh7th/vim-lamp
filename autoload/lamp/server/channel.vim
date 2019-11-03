@@ -71,6 +71,13 @@ function! s:Channel.request(method, params) abort
 endfunction
 
 "
+" Send response.
+"
+function! s:Channel.response(id, data) abort
+  call self.job.send(self.to_message(extend({ 'id': a:id }, a:data)))
+endfunction
+
+"
 " Send notify.
 "
 function! s:Channel.notify(method, params) abort

@@ -68,7 +68,7 @@ endfunction
     - [ ] workspace/didChangeWatchedFiles
     - [ ] workspace/symbol
     - [x] workspace/executeCommand
-    - [ ] workspace/applyEdit
+    - [x] workspace/applyEdit
 
 - Synchronization
     - [x] textDocument/didOpen
@@ -93,7 +93,7 @@ endfunction
     - [x] textDocument/references
     - [ ] textDocument/documentHighlight
     - [ ] textDocument/documentSymbol
-    - [ ] textDocument/codeAction
+    - [x] textDocument/codeAction
     - [ ] textDocument/codeLens
     - [ ] codeLens/resolve
     - [ ] textDocument/documentLink

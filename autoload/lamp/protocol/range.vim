@@ -1,5 +1,64 @@
-function! lamp#protocol#range#in_line(range, position) abort
-  return a:range.start.line <= a:position.line && a:position.line <= a:range.end.line
+"
+" lamp#protocol#range#in_line
+"
+function! lamp#protocol#range#in_line(range) abort
+  let l:position = lamp#protocol#position#get()
+  return a:range.start.line <= l:position.line && l:position.line <= a:range.end.line
+endfunction
+
+"
+" lamp#protocol#range#compare_nearest
+"
+function! lamp#protocol#range#compare_nearest(range1, range2, position) abort
+  let l:start_line_diff1 = abs(a:range1.start.line - a:position.line)
+  let l:start_line_diff2 = abs(a:range2.start.line - a:position.line)
+  if l:start_line_diff1 < l:start_line_diff2
+    return -1
+  elseif l:start_line_diff1 > l:start_line_diff2
+    return 1
+  endif
+
+  let l:end_line_diff1 = abs(a:range1.end.line - a:position.line)
+  let l:end_line_diff2 = abs(a:range2.end.line - a:position.line)
+  if l:end_line_diff1 < l:end_line_diff2
+    return -1
+  elseif l:end_line_diff1 > l:end_line_diff2
+    return 1
+  endif
+
+  let l:start_char_diff1 = abs(a:range1.start.character - a:position.character)
+  let l:start_char_diff2 = abs(a:range2.start.character - a:position.character)
+  if l:start_char_diff1 < l:start_char_diff2
+    return -1
+  elseif l:start_char_diff1 > l:start_char_diff2
+    return 1
+  endif
+
+  let l:end_char_diff1 = abs(a:range1.end.character - a:position.character)
+  let l:end_char_diff2 = abs(a:range2.end.character - a:position.character)
+  if l:end_char_diff1 < l:end_char_diff2
+    return -1
+  elseif l:end_char_diff1 > l:end_char_diff2
+    return 1
+  endif
+
+  return 0
+endfunction
+
+"
+" lamp#protocol#range#compare_nearest
+"
+function! lamp#protocol#range#get_current_line() abort
+  return {
+        \   'start': {
+        \     'line': line('.') - 1,
+        \     'character': 0,
+        \   },
+        \   'end': {
+        \     'line': line('.'),
+        \     'character': 0,
+        \   }
+        \ }
 endfunction
 
 function! lamp#protocol#range#current_word() abort
