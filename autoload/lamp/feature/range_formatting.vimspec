@@ -1,0 +1,51 @@
+let s:expect = themis#helper('expect')
+
+Describe lamp#feature#range_formatting
+
+  Before each
+    let s:server = lamp#register('typescript-language-server', {
+          \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
+          \   'filetypes': ['typescript', 'typescript.tsx'],
+          \   'root_uri': { -> lamp#config('root') . '/fixture/typescript-fixture/' }
+          \ })
+    call lamp#sync(s:server.start())
+    call lamp#sync(s:server.initialize())
+  End
+
+  After each
+    call lamp#sync(s:server.stop())
+    execute 'bufdo! edit!'
+  End
+
+  It Should formatting
+    return " NOTE: typescript-langeuage-server is not supported range formatting.
+
+    let &expandtab = 1
+    let &shiftwidth = 2
+
+    call lamp#view#buffer#open('edit', {
+          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/formatting.ts',
+          \   'lnum': 1,
+          \   'col': 1
+          \ })
+    set filetype=typescript
+
+    let l:bufnr = bufnr('%')
+    let l:lines = getbufline(l:bufnr, '^', '$')
+
+    normal! Vjj
+    call lamp#feature#range_formatting#do()
+    call lamp#sync({ -> getbufline(l:bufnr, '^', '$') != l:lines })
+    call s:expect([
+          \   'if (true) {',
+          \   '  console.log("sample text1");',
+          \   '}',
+          \   '',
+          \   'if(true){',
+          \   'console.log("sample text2");',
+          \   '}'
+          \ ]).to_equal(getbufline(l:bufnr, '^', '$'))
+  End
+
+End
+

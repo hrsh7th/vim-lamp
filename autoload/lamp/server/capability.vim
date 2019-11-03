@@ -61,10 +61,17 @@ let g:lamp#server#capability#definition = {
       \     'rename': {
       \       'prepareSupport': v:true
       \     },
-      \
-      \
       \     'completion': {
       \       'dynamicRegistration': v:false,
+      \       'snippetSupport': v:false,
+      \       'commitCharacterSupports': v:false,
+      \       'documentationFormat': ['plaintext', 'markdown'],
+      \       'deprecatedSupport': v:false,
+      \       'preselectSupport': v:false,
+      \     },
+      \     'hoverSupport': {
+      \       'dynamicRegistration': v:false,
+      \       'contentFormat': [],
       \     },
       \   },
       \   'experimental': {},

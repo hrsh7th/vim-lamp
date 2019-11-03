@@ -46,3 +46,13 @@ function! lamp#view#buffer#do(bufnr, fn) abort
   execute printf('noautocmd keepalt keepjumps %sbuffer', l:current_bufnr)
 endfunction
 
+"
+" get_indent_option
+"
+function! lamp#view#buffer#get_indent_size() abort
+  if &shiftwidth
+    return &shiftwidth
+  endif
+  return &tabstop
+endfunction
+

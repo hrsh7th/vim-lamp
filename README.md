@@ -35,7 +35,10 @@ function! s:on_text_document_did_open() abort
   nmap <buffer> <Leader>i    <Plug>(lamp-hover)
   nmap <buffer> <Leader>r    <Plug>(lamp-rename)
   nmap <buffer> <Leader>g    <Plug>(lamp-references)
+  nmap <buffer> <Leader>f    <Plug>(lamp-formatting)
+  vmap <buffer> <Leader>f    <Plug>(lamp-range-formatting)
   nmap <buffer> <Leader><CR> <Plug>(lamp-code-action)
+  vmap <buffer> <Leader><CR> <Plug>(lamp-code-action)
 
   setlocal omnifunc=lamp#complete
 endfunction
@@ -102,8 +105,8 @@ endfunction
     - [ ] documentLink/resolve
     - [ ] textDocument/documentColor
     - [ ] textDocument/colorPresentation
-    - [ ] textDocument/formatting
-    - [ ] textDocument/rangeFormatting
+    - [x] textDocument/formatting
+    - [x] textDocument/rangeFormatting
     - [ ] textDocument/onTypeFormatting
     - [x] textDocument/rename
     - [x] textDocument/prepareRename
