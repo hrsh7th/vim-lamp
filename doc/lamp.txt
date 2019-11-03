@@ -27,23 +27,26 @@ The below settings uses dein.nvim.
 ==============================================================================
 MAPPING                                                         *lamp-mapping*
 
+Normal Mode~
+
 >
   <Plug>(lamp-definition)
-  <Plug>(lamp-definition-vsplit)
   <Plug>(lamp-definition-split)
+  <Plug>(lamp-definition-vsplit)
+  <Plug>(lamp-hover)
+  <Plug>(lamp-rename)
+  <Plug>(lamp-references)
+  <Plug>(lamp-code-action)
 <
 
-Go to definition.
 
+Visual Mode~
 
 >
-  <Plug>(lamp-rename)
+  <Plug>(lamp-code-action)
 <
 
-Rename symbol.
 
-
-...TODO...
 
 ==============================================================================
 EXAMPLE                                                         *lamp-example*
@@ -51,11 +54,11 @@ EXAMPLE                                                         *lamp-example*
 
 >
   set ambwidth=double
-  
+
   augroup vimrc
     autocmd!
   augroup END
-  
+
   autocmd! vimrc User lamp#initialized * call s:on_initialized()
   function! s:on_initialized()
     call lamp#register('typescript-language-server', {
@@ -65,15 +68,17 @@ EXAMPLE                                                         *lamp-example*
         \   'initialization_options': { -> {} },
         \ })
   endfunction
-  
+
   autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open()
   function! s:on_text_document_did_open() abort
-    nmap <buffer> gf<CR>    <Plug>(lamp-definition)
-    nmap <buffer> gfs       <Plug>(lamp-definition-split)
-    nmap <buffer> gfv       <Plug>(lamp-definition-vsplit)
-    nmap <buffer> <Leader>i <Plug>(lamp-hover)
-    nmap <buffer> <Leader>r <Plug>(lamp-rename)
-  
+    nmap <buffer> gf<CR>       <Plug>(lamp-definition)
+    nmap <buffer> gfs          <Plug>(lamp-definition-split)
+    nmap <buffer> gfv          <Plug>(lamp-definition-vsplit)
+    nmap <buffer> <Leader>i    <Plug>(lamp-hover)
+    nmap <buffer> <Leader>r    <Plug>(lamp-rename)
+    nmap <buffer> <Leader>g    <Plug>(lamp-references)
+    nmap <buffer> <Leader><CR> <Plug>(lamp-code-action)
+
     setlocal omnifunc=lamp#complete
   endfunction
 <
@@ -83,8 +88,11 @@ EXAMPLE                                                         *lamp-example*
 ==============================================================================
 FAQ                                                                 *lamp-faq*
 
-Q1. How to enable auto completion with lsp?
-A1. You can use `deoplete.nvim` with `deoplete-lamp`.
+Q.
+  How to enable auto completion with lamp?
+A.
+  If you use `deoplete.nvim`, you can use `deoplete-lamp`.
+  If you want to use `omnifunc`, you can use `setlocal omnifunc=lamp#complete` .
 
 
 

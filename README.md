@@ -1,7 +1,7 @@
 # vim-lamp
 Language Server Protocol Client for Vim.
 
-# Requirements
+# Requirement
 
 - vim
     - 8.1 or later
@@ -29,11 +29,13 @@ endfunction
 
 autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open()
 function! s:on_text_document_did_open() abort
-  nmap <buffer> gf<CR>    <Plug>(lamp-definition)
-  nmap <buffer> gfs       <Plug>(lamp-definition-split)
-  nmap <buffer> gfv       <Plug>(lamp-definition-vsplit)
-  nmap <buffer> <Leader>i <Plug>(lamp-hover)
-  nmap <buffer> <Leader>r <Plug>(lamp-rename)
+  nmap <buffer> gf<CR>       <Plug>(lamp-definition)
+  nmap <buffer> gfs          <Plug>(lamp-definition-split)
+  nmap <buffer> gfv          <Plug>(lamp-definition-vsplit)
+  nmap <buffer> <Leader>i    <Plug>(lamp-hover)
+  nmap <buffer> <Leader>r    <Plug>(lamp-rename)
+  nmap <buffer> <Leader>g    <Plug>(lamp-references)
+  nmap <buffer> <Leader><CR> <Plug>(lamp-code-action)
 
   setlocal omnifunc=lamp#complete
 endfunction
@@ -46,7 +48,7 @@ endfunction
     - [x] initialized
     - [ ] ~~shutdown~~
     - [ ] ~~exit~~
-    - [ ] $/cancelRequest
+    - [ ] ~~$/cancelRequest~~
 
 - Window
     - [ ] window/showMessage
