@@ -120,18 +120,7 @@ function! s:get_range(range, diagnostic) abort
 
   " visual selection.
   if a:range != 0
-    let l:start = getpos("'<")
-    let l:end = getpos("'>")
-    return {
-          \   'start': {
-          \     'line': l:start[1] - 1,
-          \     'character': l:start[2] - 1
-          \   },
-          \   'end': {
-          \     'line': l:end[1] - 1,
-          \     'character': l:end[2] - 1
-          \   }
-          \ }
+    return lamp#view#visual#range()
   endif
 
   " line range.
