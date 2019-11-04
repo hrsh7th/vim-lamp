@@ -119,7 +119,7 @@ function! s:on_complete_done() abort
     call l:server.request('workspace/executeCommand', {
           \   'command': l:completion_item.command.command,
           \   'arguments': get(l:completion_item.command, 'arguments')
-          \ })
+          \ }).catch(lamp#rescue())
   endif
 
   " TODO: adjust cursor position
@@ -156,6 +156,9 @@ function! s:get_item_data(completed_item) abort
   else
     try
       let l:user_data = json_decode(a:completed_item.user_data)
+      if type(l:user_data) != type({}) " vim's json_decode is not throw exception.
+        let l:user_data = {}
+      endif
     catch /.*/
       let l:user_data = {}
     endtry
