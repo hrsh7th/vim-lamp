@@ -53,7 +53,8 @@ EXAMPLE                                                         *lamp-example*
 
 
 >
-  set ambwidth=double
+  set hidden
+  set ambiwidth=double
 
   augroup vimrc
     autocmd!

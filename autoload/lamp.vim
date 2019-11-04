@@ -43,6 +43,9 @@ endfunction
 " Logging.
 "
 function! lamp#log(...) abort
+  if exists('$LAMP_TEST')
+    call lamp#config('debug.log', '/tmp/lamp.log')
+  endif
   if strlen(lamp#config('debug.log')) > 0
     call writefile([strcharpart(join(a:000, "\t"), 0, 512)], lamp#config('debug.log'), 'a')
   endif

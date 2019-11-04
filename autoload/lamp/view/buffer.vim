@@ -29,7 +29,7 @@ function! lamp#view#buffer#touch(expr) abort
 endfunction
 
 "
-" safe bufdo.
+" bufdo.
 "
 function! lamp#view#buffer#do(bufnr, fn) abort
   let l:current_bufnr = bufnr('%')
@@ -54,5 +54,21 @@ function! lamp#view#buffer#get_indent_size() abort
     return &shiftwidth
   endif
   return &tabstop
+endfunction
+
+"
+" for test.
+"
+function! lamp#view#buffer#reset() abort
+  set hidden
+  enew!
+
+  let l:bufnr = bufnr('$')
+  while l:bufnr >= 0
+    if bufloaded(l:bufnr) && l:bufnr != bufnr('%')
+      call lamp#view#buffer#do(l:bufnr, { -> execute('bwipeout!') })
+    endif
+    let l:bufnr -= 1
+  endwhile
 endfunction
 

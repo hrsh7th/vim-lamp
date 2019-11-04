@@ -15,7 +15,7 @@ Describe lamp#feature#code_action
 
   After each
     call lamp#sync(s:server.stop())
-    execute 'bufdo! edit!'
+    call lamp#view#buffer#reset()
   End
 
   It Should run code action

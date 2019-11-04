@@ -17,11 +17,6 @@ for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:fa
   endtry
 endfor
 
-if exists('$LAMP_TEST')
-  call lamp#config('debug.log', '/tmp/lamp.log')
-  finish
-endif
-
 nnoremap <silent><Plug>(lamp-definition)                     :<C-u>call lamp#feature#definition#do('edit')<CR>
 nnoremap <silent><Plug>(lamp-definition-split)               :<C-u>call lamp#feature#definition#do('split')<CR>
 nnoremap <silent><Plug>(lamp-definition-vsplit)              :<C-u>call lamp#feature#definition#do('vsplit')<CR>

@@ -14,7 +14,7 @@ Describe lamp#feature#range_formatting
 
   After each
     call lamp#sync(s:server.stop())
-    execute 'bufdo! edit!'
+    call lamp#view#buffer#reset()
   End
 
   It Should formatting

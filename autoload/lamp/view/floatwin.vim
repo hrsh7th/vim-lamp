@@ -94,13 +94,13 @@ function! s:Floatwin.show(screenpos, contents) abort
     endif
   endfor
 
-  " write lines
-  call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
-
   " show or move
   call lamp#view#floatwin#{s:namespace}#show(self)
   call setwinvar(self.winnr(), '&wrap', 1)
   call setwinvar(self.winnr(), '&conceallevel', 3)
+
+  " write lines
+  call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
 endfunction
 
 "

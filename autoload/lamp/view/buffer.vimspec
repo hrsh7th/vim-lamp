@@ -3,7 +3,7 @@ let s:expect = themis#helper('expect')
 Describe lamp#view#buffer
 
   After each
-    execute 'bufdo! edit!'
+    call lamp#view#buffer#reset()
   End
 
   It Should open buffer

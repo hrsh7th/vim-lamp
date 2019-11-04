@@ -11,12 +11,19 @@ Language Server Protocol Client for Vim.
 # Setting
 
 ```viml
-set ambwidth=double
+"
+" required options.
+"
+set hidden
+set ambiwidth=double
 
 augroup vimrc
   autocmd!
 augroup END
 
+"
+" initialize servers.
+"
 autocmd! vimrc User lamp#initialized * call s:on_initialized()
 function! s:on_initialized()
   call lamp#register('typescript-language-server', {
@@ -27,6 +34,9 @@ function! s:on_initialized()
       \ })
 endfunction
 
+"
+" initialize buffers.
+"
 autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open()
 function! s:on_text_document_did_open() abort
   nmap <buffer> gf<CR>       <Plug>(lamp-definition)
