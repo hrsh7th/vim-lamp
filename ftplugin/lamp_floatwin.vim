@@ -18,24 +18,32 @@ function! s:update()
 
   call s:clear()
   syntax clear
+  runtime! syntax/markdown.vim
   syntax include @Markdown syntax/markdown.vim
 
   for [l:syntax, l:marks] in items(lamp#config('view.floatwin.fenced_language'))
     call s:clear()
     let l:grouplist = printf('@MarkdownFenced_%s', s:escape(l:syntax))
+
+    " include syntax.
     try
-      execute printf('syntax include %s syntax/%s.vim', l:grouplist, l:syntax)
-      execute printf('syntax include %s after/syntax/%s.vim', l:grouplist, l:syntax)
+      if l:syntax ==# 'vim'
+        execute printf('syntax include %s syntax/vim/generated.vim', l:grouplist)
+      else
+        execute printf('syntax include %s syntax/%s.vim', l:grouplist, l:syntax)
+        execute printf('syntax include %s after/syntax/%s.vim', l:grouplist, l:syntax)
+      endif
     catch /.*/
       continue
     endtry
 
+    " apply '```%mark% ... ```' to the syntax.
     for l:mark in l:marks
       call s:clear()
       let l:group = printf('MarkdownFenced_%s', s:escape(l:mark))
-      let l:start_mark = printf('^\s*```\s*%s', l:mark)
-      let l:end_mark = '^\s*```\s*$'
-      execute printf('syntax region %s start="%s" end="%s" containedin=@Markdown contains=%s,MarkdownFencedEnd,MarkdownFencedStart',
+      let l:start_mark = printf('^\s*```\s*%s\s*', l:mark)
+      let l:end_mark = '\s*```\s*$'
+      execute printf('syntax region %s matchgroup=MarkdownFencedStart start="%s" matchgroup=MarkdownFencedEnd end="%s" containedin=@Markdown contains=%s concealends',
             \   l:group,
             \   l:start_mark,
             \   l:end_mark,
@@ -43,8 +51,6 @@ function! s:update()
             \ )
     endfor
   endfor
-  execute printf('syntax match MarkdownFencedStart "^\s*```\s*\w\+" contained conceal')
-  execute printf('syntax match MarkdownFencedEnd "^\s*```\s*$" contained conceal')
 endfunction
 
 "

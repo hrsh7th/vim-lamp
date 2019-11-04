@@ -1,0 +1,21 @@
+let s:Promise = vital#lamp#import('Async.Promise')
+let s:expect = themis#helper('expect')
+
+Describe lamp#protocol#markup_content
+
+  After each
+    call lamp#view#buffer#reset()
+  End
+
+  It Should format fenced code block
+    let l:normalized = lamp#protocol#markup_content#normalize([join([
+          \   '```typescript',
+          \   'const promise = Promise.then();',
+          \   '```'
+          \ ], "\n")])
+    call s:expect(l:normalized[0].lines).to_equal(["```typescript const promise = Promise.then(); ```"])
+  End
+
+End
+
+

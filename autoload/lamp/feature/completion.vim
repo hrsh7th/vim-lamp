@@ -230,9 +230,14 @@ function! s:get_floatwin_screenpos(event, contents) abort
 
   " create x.
   let l:doc_width = s:floatwin.get_width(a:contents)
-  let l:col = a:event.col + a:event.width + 1 + (a:event.scrollbar ? 1 : 0)
-  if &columns < l:col + l:doc_width
-    let l:col = a:event.col - l:doc_width - 2
+  let l:col_if_right = a:event.col + a:event.width + 1 + (a:event.scrollbar ? 1 : 0)
+  let l:col_if_left = a:event.col - l:doc_width - 2
+
+  " use more big space.
+  if a:event.col > (&columns - l:col_if_right)
+    let l:col = l:col_if_left
+  else
+    let l:col = l:col_if_right
   endif
 
   return [l:row, l:col]

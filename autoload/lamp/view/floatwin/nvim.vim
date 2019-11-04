@@ -44,7 +44,7 @@ function! lamp#view#floatwin#nvim#is_showing(floatwin) abort
   endif
 
   try
-    return win_id2win(nvim_win_get_number(a:floatwin.nvim_window)) != -1
+    return nvim_win_get_number(a:floatwin.nvim_window) != -1
   catch /.*/
   endtry
   return v:false
