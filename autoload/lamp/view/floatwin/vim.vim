@@ -5,7 +5,7 @@ function! lamp#view#floatwin#vim#show(floatwin) abort
   if lamp#view#floatwin#vim#is_showing(a:floatwin)
     call popup_move(a:floatwin.vim_winid, s:get_config(a:floatwin))
   else
-    let a:floatwin.winid = popup_create(a:floatwin.bufnr, s:get_config(a:floatwin))
+    let a:floatwin.vim_winid = popup_create(a:floatwin.bufnr, s:get_config(a:floatwin))
   endif
 endfunction
 
@@ -15,7 +15,7 @@ endfunction
 function! lamp#view#floatwin#vim#hide(floatwin) abort
   if lamp#view#floatwin#vim#is_showing(a:floatwin)
     call popup_hide(a:floatwin.vim_winid)
-    let a:floatwin.winid = v:null
+    let a:floatwin.vim_winid = v:null
   endif
 endfunction
 
@@ -44,6 +44,10 @@ endfunction
 " lamp#view#floatwin#vim#is_showing
 "
 function! lamp#view#floatwin#vim#is_showing(floatwin) abort
+  if empty(get(a:floatwin, 'vim_winid', v:null))
+    return v:false
+  endif
+
   if win_id2win(a:floatwin.vim_winid) == -1
     let a:floatwin.vim_winid = v:null
     return v:false
