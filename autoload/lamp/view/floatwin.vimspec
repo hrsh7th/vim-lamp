@@ -7,6 +7,36 @@ Describe lamp#view#floatwin
     execute 'bufdo! edit!'
   End
 
+  It Should compat layer has same api
+    execute printf('source %s/%s', lamp#config('root'), 'autoload/lamp/view/floatwin/nvim.vim')
+    execute printf('source %s/%s', lamp#config('root'), 'autoload/lamp/view/floatwin/vim.vim')
+
+    for s:namespace in ['nvim', 'vim']
+      for [s:function, s:args] in items({
+            \   'show': ['floatwin'],
+            \   'hide': ['floatwin'],
+            \   'enter': ['floatwin'],
+            \   'write': ['floatwin', 'lines'],
+            \   'is_showing': ['floatwin'],
+            \   'winnr': ['floatwin']
+            \ })
+        call s:expect(printf('*lamp#view#floatwin#%s#%s', s:namespace, s:function)).to_exist()
+      endfor
+    endfor
+  End
+
+  It Should return is_showing
+    let s:floatwin = s:Floatwin.new({})
+    call s:expect(s:floatwin.is_showing()).to_equal(v:false)
+    call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
+    call s:expect(s:floatwin.is_showing()).to_equal(v:true)
+
+    " force close (no use `s:floatwin.hide()`).
+    call lamp#view#window#do(win_getid(s:floatwin.winnr()), { -> execute('quit') })
+
+    call s:expect(s:floatwin.is_showing()).to_equal(v:false)
+  End
+
   It Should show multiple content
     let s:floatwin = s:Floatwin.new({})
     call s:floatwin.show([1, 1], [

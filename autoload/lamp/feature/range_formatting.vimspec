@@ -18,7 +18,8 @@ Describe lamp#feature#range_formatting
   End
 
   It Should formatting
-    return " NOTE: typescript-langeuage-server is not supported range formatting.
+    " NOTE: typescript-langeuage-server is not supported range formatting.
+    return
 
     let &expandtab = 1
     let &shiftwidth = 2
