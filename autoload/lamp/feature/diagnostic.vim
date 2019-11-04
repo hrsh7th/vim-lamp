@@ -64,7 +64,7 @@ function! s:show_floatwin() abort
     if !empty(l:diagnostics)
       let l:screenpos = lamp#view#floatwin#screenpos(
             \ l:diagnostics[0].range.start.line + 1,
-            \ l:diagnostics[0].range.start.character + 1)
+            \ l:diagnostics[0].range.start.character)
       let l:contents = map(copy(l:diagnostics), { k, v ->
             \   {
             \     'lines': split(get(v, 'message', ''), "\n", v:true)
