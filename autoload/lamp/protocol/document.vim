@@ -5,6 +5,9 @@ let s:language_id_map = {
 
 function! lamp#protocol#document#encode_uri(bufnr_or_path) abort
   let l:path = type(a:bufnr_or_path) == type('') ? a:bufnr_or_path : bufname(a:bufnr_or_path)
+  if empty(l:path)
+    let l:path = getcwd()
+  endif
   let l:path = fnamemodify(l:path, ':p')
   let l:path = 'file://' . substitute(l:path, '\([^a-zA-Z0-9-_.~/]\)', '\=printf("%%%02x", char2nr(submatch(1)))', 'g')
   return l:path

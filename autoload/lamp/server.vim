@@ -197,9 +197,9 @@ function! s:Server.open_document(bufnr) abort
   if has_key(self.documents, l:uri)
     return s:Promise.resolve()
   endif
+  let self.documents[l:uri] = s:Document.new(a:bufnr)
 
   " create document.
-  let self.documents[l:uri] = s:Document.new(a:bufnr)
   let l:p = self.notify('textDocument/didOpen', {
         \   'textDocument': lamp#protocol#document#item(a:bufnr),
         \ })
@@ -251,6 +251,12 @@ endfunction
 " Close document.
 "
 function! s:Server.close_document(bufnr) abort
+  " ignore if buffer is not related file.
+  " if remove this, occure inifinite loop because bufexists always return -1.
+  if !filereadable(fnamemodify(bufname(a:bufnr), ':p'))
+    return s:Promise.resolve()
+  endif
+
   " buffer is not unloaded.
   if bufexists(a:bufnr)
     return s:Promise.resolve()

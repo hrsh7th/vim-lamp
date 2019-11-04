@@ -3,7 +3,7 @@ if exists('g:loaded_lamp')
 endif
 let g:loaded_lamp = v:true
 
-if (!has('nvim') && !has('vim-8.1')) || (has('nvim') && !has('nvim-0.4.0'))
+if (!has('nvim') && v:version < 801) || (has('nvim') && !has('nvim-0.4.0'))
   echomsg 'vim-lamp is supported only vim-8.1(later) or nvim-0.4.0(later)'
   finish
 endif
@@ -36,7 +36,7 @@ vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#fea
 
 augroup lamp
   autocmd!
-  autocmd BufEnter * call <SID>on_text_document_did_open()
+  autocmd BufEnter,FileType * call <SID>on_text_document_did_open()
   autocmd TextChanged,InsertLeave * call <SID>on_text_document_did_change()
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
 augroup END
