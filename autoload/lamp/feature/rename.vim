@@ -31,7 +31,7 @@ function! lamp#feature#rename#do() abort
   let l:p = l:p.then({ -> s:request_prepare(l:bufnr, l:server) })
   let l:p = l:p.then({ target -> s:request_rename(l:bufnr, l:server, target) })
   let l:p = l:p.then({ edits -> s:edits(edits) })
-  let l:p = l:p.catch(lamp#rescue(v:null))
+  let l:p = l:p.catch(lamp#rescue())
 endfunction
 
 "

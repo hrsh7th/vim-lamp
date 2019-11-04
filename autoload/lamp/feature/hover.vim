@@ -43,7 +43,7 @@ function! lamp#feature#hover#do() abort
         \ })
   let l:p = s:Promise.all(l:promises)
   let l:p = l:p.then({ res -> s:on_response(l:bufnr, res) })
-  let l:p = l:p.catch(lamp#rescue(v:null))
+  let l:p = l:p.catch(lamp#rescue())
 endfunction
 
 "

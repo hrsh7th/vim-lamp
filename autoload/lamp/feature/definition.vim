@@ -26,7 +26,7 @@ function! lamp#feature#definition#do(command) abort
         \ })
   let l:p = s:Promise.all(l:promises)
   let l:p = l:p.then({ responses -> s:on_response(a:command, l:bufnr, responses) })
-  let l:p = l:p.catch(lamp#rescue(v:null))
+  let l:p = l:p.catch(lamp#rescue())
 endfunction
 
 "

@@ -29,7 +29,7 @@ function! lamp#feature#references#do(include_declaration) abort
         \ })
   let l:p = s:Promise.all(l:promises)
   let l:p = l:p.then({ responses -> s:on_response(l:bufnr, responses) })
-  let l:p = l:p.catch(lamp#rescue(v:null))
+  let l:p = l:p.catch(lamp#rescue())
 endfunction
 
 "
