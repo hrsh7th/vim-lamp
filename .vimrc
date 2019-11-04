@@ -16,9 +16,15 @@ source /tmp/plug.vim
 
 call plug#begin('/tmp/plugged')
 Plug expand('<sfile>:p:h')
+Plug 'gruvbox-community/gruvbox'
 call plug#end()
 
 let g:mapleader = ' '
+
+set hidden
+set ambiwidth=double
+
+colorscheme gruvbox
 
 augroup vimrc
   autocmd!
@@ -26,7 +32,7 @@ augroup END
 
 autocmd! vimrc User lamp#initialized call s:on_lamp_initialized()
 function! s:on_lamp_initialized() abort
-  call lamp#config('logfile', '/tmp/lamp.log')
+  call lamp#config('debug.log', '/tmp/lamp.log')
   call lamp#register('vim-language-server', {
         \   'command': ['vim-language-server', '--stdio'],
         \   'filetypes': ['vim'],
