@@ -15,7 +15,7 @@ endfunction
 function! lamp#feature#hover#init() abort
   augroup lamp#feature#hover
     autocmd!
-    autocmd CursorMoved * call s:close()
+    autocmd InsertEnter,CursorMoved * call s:close()
   augroup END
 endfunction
 
