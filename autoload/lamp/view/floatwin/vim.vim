@@ -34,10 +34,7 @@ endfunction
 " lamp#view#floatwin#vim#enter
 "
 function! lamp#view#floatwin#vim#enter(floatwin) abort
-  if lamp#view#floatwin#vim#is_showing(a:floatwin)
-    call nvim_win_close(a:floatwin.vim_winid, v:true)
-    let a:floatwin.vim_winid = v:null
-  endif
+  " noop
 endfunction
 
 "
@@ -49,7 +46,6 @@ function! lamp#view#floatwin#vim#is_showing(floatwin) abort
   endif
 
   if win_id2win(a:floatwin.vim_winid) == -1
-    let a:floatwin.vim_winid = v:null
     return v:false
   endif
   return v:true

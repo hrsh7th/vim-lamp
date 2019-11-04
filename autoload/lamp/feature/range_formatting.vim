@@ -7,7 +7,6 @@ function! lamp#feature#range_formatting#do() abort
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.documentRangeFormattingProvider') })
   if empty(l:servers)
-    echomsg string(l:servers)
     return
   endif
   let l:p = l:servers[0].request('textDocument/rangeFormatting', {

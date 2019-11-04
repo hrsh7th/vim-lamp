@@ -45,14 +45,20 @@ augroup END
 " textDocument/didOpen
 "
 function! s:on_text_document_did_open() abort
+  let l:fn = {}
+  function! l:fn.debounce(bufnr) abort
+    let l:servers = lamp#server#registry#find_by_filetype(getbufvar(a:bufnr, '&filetype'))
+    for l:server in l:servers
+      call l:server.ensure_document(a:bufnr)
+    endfor
+
+    if !empty(l:servers)
+      doautocmd User lamp#text_document_did_open
+    endif
+  endfunction
+
   let l:bufnr = bufnr('%')
-  let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
-  for l:server in l:servers
-    call l:server.ensure_document(l:bufnr)
-  endfor
-  if !empty(l:servers)
-    doautocmd User lamp#text_document_did_open
-  endif
+  call lamp#debounce('s:on_text_document_did_open:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
 endfunction
 
 "
@@ -72,9 +78,10 @@ endfunction
 
 "
 " textDocument/didClose
+" NOTE: can't debounce because bufname(l:bufnr) returns invalid name after this autocmd.
 "
 function! s:on_text_document_did_close() abort
-  for l:server in lamp#server#registry#find_by_filetype(&filetype)
+  for l:server in lamp#server#registry#find_by_filetype(getbufvar(bufnr('%'), '&filetype'))
     call l:server.ensure_document(bufnr('%'))
   endfor
 endfunction

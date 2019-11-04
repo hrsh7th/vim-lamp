@@ -43,11 +43,11 @@ function! lamp#view#floatwin#nvim#is_showing(floatwin) abort
     return v:false
   endif
 
-  if !nvim_win_is_valid(a:floatwin.nvim_window)
-    let a:floatwin.nvim_window = v:null
-    return v:false
-  endif
-  return v:true
+  try
+    return win_id2win(nvim_win_get_number(a:floatwin.nvim_window)) != -1
+  catch /.*/
+  endtry
+  return v:false
 endfunction
 
 "

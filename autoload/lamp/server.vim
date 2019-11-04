@@ -252,13 +252,13 @@ endfunction
 "
 function! s:Server.close_document(bufnr) abort
   " ignore if buffer is not related file.
-  " if remove this, occure inifinite loop because bufexists always return -1.
+  " if remove this, occurs infinite loop because bufloaded always return -1
   if !filereadable(fnamemodify(bufname(a:bufnr), ':p'))
     return s:Promise.resolve()
   endif
 
   " buffer is not unloaded.
-  if bufexists(a:bufnr)
+  if bufloaded(a:bufnr)
     return s:Promise.resolve()
   endif
 

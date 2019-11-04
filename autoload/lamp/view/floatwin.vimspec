@@ -29,15 +29,26 @@ Describe lamp#view#floatwin
     if has('nvim')
       let s:floatwin = s:Floatwin.new({})
       call s:expect(s:floatwin.is_showing()).to_equal(v:false)
+
       call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
       call s:expect(s:floatwin.is_showing()).to_equal(v:true)
 
-      " force close (no use `s:floatwin.hide()`).
-      call lamp#view#window#do(win_getid(s:floatwin.winnr()), { -> execute('close') })
+      call s:floatwin.hide()
+      call s:expect(s:floatwin.is_showing()).to_equal(v:false)
 
+      " force close (no use `s:floatwin.hide()`).
+      call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
+      call lamp#view#window#do(win_getid(s:floatwin.winnr()), { -> execute('close') })
       call s:expect(s:floatwin.is_showing()).to_equal(v:false)
     else
-      call themis#log('[SKIP] nvim only test.')
+      let s:floatwin = s:Floatwin.new({})
+      call s:expect(s:floatwin.is_showing()).to_equal(v:false)
+
+      call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
+      call s:expect(s:floatwin.is_showing()).to_equal(v:true)
+
+      call s:floatwin.hide()
+      call s:expect(s:floatwin.is_showing()).to_equal(v:false)
     endif
   End
 

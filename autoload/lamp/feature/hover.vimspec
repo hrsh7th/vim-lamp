@@ -14,7 +14,7 @@ Describe lamp#feature#hover
 
   After each
     call lamp#sync(s:server.stop())
-    execute 'bufdo e!'
+    call lamp#view#buffer#reset()
   End
 
   It Should open hover window
