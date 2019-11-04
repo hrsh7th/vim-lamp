@@ -73,6 +73,13 @@ let g:lamp#server#capability#definition = {
       \       'dynamicRegistration': v:false,
       \       'contentFormat': [],
       \     },
+      \     'documentSymbol': {
+      \       'dynamicRegistration': v:false,
+      \       'symbolKind': {
+      \         'valueSet': values(g:lamp#server#capability#symbol_kinds)
+      \       },
+      \       'hierarchicalDocumentSymbolSupport': v:true
+      \     }
       \   },
       \   'experimental': {},
       \ }
