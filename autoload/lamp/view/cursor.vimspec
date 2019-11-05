@@ -1,0 +1,33 @@
+let s:expect = themis#helper('expect')
+
+Describe lamp#view#cursor
+
+  After each
+    call lamp#view#buffer#reset()
+  End
+
+  It Should return before char
+    enew
+    normal! 0i1234567890
+    normal! 0f4
+    call s:expect('3').to_equal(lamp#view#cursor#get_before_char())
+  End
+
+  It Should return before char (skip whitespace)
+    enew
+    normal! 0i123     4567890
+    normal! 0f4
+    call s:expect('3').to_equal(lamp#view#cursor#get_before_char())
+  End
+
+  It Should return before char (in above of line)
+    enew
+    normal! 0i1234567890
+    normal! 0o       f
+    call cursor(2, 1)
+    normal! 0ff
+    call s:expect('0').to_equal(lamp#view#cursor#get_before_char())
+  End
+
+End
+

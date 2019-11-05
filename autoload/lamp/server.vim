@@ -134,14 +134,6 @@ function! s:Server.supports(path) abort
 endfunction
 
 "
-" has document.
-"
-function! s:Server.has_document(bufnr) abort
-  let l:uri = lamp#protocol#document#encode_uri(bufname(a:bufnr))
-  return has_key(self.documents, l:uri)
-endfunction
-
-"
 " Initialize.
 "
 function! s:Server.initialize() abort

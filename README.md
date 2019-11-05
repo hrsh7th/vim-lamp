@@ -126,9 +126,7 @@ endfunction
 - Write `signs/highlight` tests
 - Improve diagnostics handling
 - Create asyncomplete source
-- Floatwin Markdown Syntax
-    - Sometimes miss concealing to end of fenced code block
-    - Automatic fenced language detection
+- Automatic fenced language detection
 - Show message when has no server that supports specific capability
 - Design canceling outdated request
 

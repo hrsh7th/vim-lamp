@@ -107,6 +107,7 @@ function! s:on_complete_done() abort
   " additionalTextEdits.
   let l:additional_text_edits = get(l:completion_item, 'additionalTextEdits', {})
   if !empty(l:additional_text_edits)
+    " apply after inserted last typing character.
     call timer_start(0, { -> lamp#view#edit#apply(bufnr('%'), l:additional_text_edits) }, { 'repeat': 1 })
   endif
 
