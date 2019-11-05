@@ -131,4 +131,5 @@ endfunction
 - Design canceling outdated request
 - ! Keep cursor position after text edit
 - ! Implement text_edit as vscode-languageserver-node
+    - https://github.com/microsoft/vscode-languageserver-node/blob/master/textDocument/src/main.ts#L344
 
