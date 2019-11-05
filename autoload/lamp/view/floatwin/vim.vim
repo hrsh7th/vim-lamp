@@ -52,11 +52,11 @@ function! lamp#view#floatwin#vim#is_showing(floatwin) abort
 endfunction
 
 "
-" lamp#view#floatwin#vim#is_showing
+" lamp#view#floatwin#vim#winid
 "
-function! lamp#view#floatwin#vim#winnr(floatwin) abort
+function! lamp#view#floatwin#vim#winid(floatwin) abort
   if lamp#view#floatwin#vim#is_showing(a:floatwin)
-    return win_id2win(a:floatwin.vim_winid)
+    return a:floatwin.vim_winid
   endif
   return -1
 endfunction

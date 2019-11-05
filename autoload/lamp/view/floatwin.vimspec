@@ -18,7 +18,7 @@ Describe lamp#view#floatwin
             \   'enter': ['floatwin'],
             \   'write': ['floatwin', 'lines'],
             \   'is_showing': ['floatwin'],
-            \   'winnr': ['floatwin']
+            \   'winid': ['floatwin']
             \ })
         call s:expect(printf('*lamp#view#floatwin#%s#%s', s:namespace, s:function)).to_exist()
       endfor
@@ -38,7 +38,7 @@ Describe lamp#view#floatwin
 
       " force close (no use `s:floatwin.hide()`).
       call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
-      call lamp#view#window#do(win_getid(s:floatwin.winnr()), { -> execute('close') })
+      call lamp#view#window#do(s:floatwin.winid(), { -> execute('close') })
       call s:expect(s:floatwin.is_showing()).to_equal(v:false)
     else
       let s:floatwin = s:Floatwin.new({})

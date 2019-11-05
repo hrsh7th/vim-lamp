@@ -94,6 +94,8 @@ function! s:Floatwin.show(screenpos, contents) abort
     endif
   endfor
 
+  call setbufvar(self.bufnr, 'lamp_floatwin_lines', l:lines)
+
   " write lines
   " NOTE: vim's popup window is not display texts if write before show.
   if has('nvim')
@@ -102,8 +104,8 @@ function! s:Floatwin.show(screenpos, contents) abort
 
   " show or move
   call lamp#view#floatwin#{s:namespace}#show(self)
-  call setwinvar(self.winnr(), '&wrap', 1)
-  call setwinvar(self.winnr(), '&conceallevel', 3)
+  call setwinvar(self.winid(), '&wrap', 1)
+  call setwinvar(self.winid(), '&conceallevel', 3)
 
   " write lines
   " NOTE: vim's popup window is not display texts if write before show.
@@ -134,10 +136,10 @@ function! s:Floatwin.is_showing() abort
 endfunction
 
 "
-" winnr
+" winid
 "
-function! s:Floatwin.winnr() abort
-  return lamp#view#floatwin#{s:namespace}#winnr(self)
+function! s:Floatwin.winid() abort
+  return lamp#view#floatwin#{s:namespace}#winid(self)
 endfunction
 
 "

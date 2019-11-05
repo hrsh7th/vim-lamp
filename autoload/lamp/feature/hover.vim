@@ -66,7 +66,7 @@ endfunction
 "
 function! s:close() abort
   if s:floatwin.is_showing()
-    if winnr() != s:floatwin.winnr()
+    if win_getid() != s:floatwin.winid()
       call s:floatwin.hide()
     endif
   endif

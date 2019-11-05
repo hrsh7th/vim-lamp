@@ -14,7 +14,6 @@ function! s:update()
   if &filetype !=# 'lamp_floatwin'
     return
   endif
-  set conceallevel=2
 
   call s:clear()
   syntax clear
@@ -27,11 +26,12 @@ function! s:update()
 
     " include syntax.
     try
-      if l:syntax ==# 'vim'
+      if l:syntax ==# 'vim' && has('nvim')
         execute printf('syntax include %s syntax/vim/generated.vim', l:grouplist)
       else
-        execute printf('syntax include %s syntax/%s.vim', l:grouplist, l:syntax)
-        execute printf('syntax include %s after/syntax/%s.vim', l:grouplist, l:syntax)
+        for l:syntax_file in s:find_syntax_files(l:syntax)
+          execute printf('syntax include %s %s', l:grouplist, l:syntax_file)
+        endfor
       endif
     catch /.*/
       continue
@@ -54,6 +54,20 @@ function! s:update()
 endfunction
 
 "
+" find syntax file.
+"
+function! s:find_syntax_files(name) abort
+  let l:syntax_files = []
+  for l:rtp in split(&runtimepath, ',')
+    let l:syntax_file = printf('%s/syntax/%s.vim', l:rtp, a:name)
+    if filereadable(l:syntax_file)
+      call add(l:syntax_files, l:syntax_file)
+    endif
+  endfor
+  return l:syntax_files
+endfunction
+
+"
 " s:escape
 "
 function! s:escape(group)
@@ -73,3 +87,4 @@ function! s:clear()
   unlet g:main_syntax
 endfunction
 
+call s:update()

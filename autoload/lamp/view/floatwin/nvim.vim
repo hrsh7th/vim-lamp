@@ -31,7 +31,7 @@ endfunction
 "
 function! lamp#view#floatwin#nvim#enter(floatwin) abort
   if lamp#view#floatwin#nvim#is_showing(a:floatwin)
-    execute printf('%swincmd w', lamp#view#floatwin#nvim#winnr(a:floatwin))
+    execute printf('%swincmd w', win_id2win(lamp#view#floatwin#nvim#winid(a:floatwin)))
   endif
 endfunction
 
@@ -51,11 +51,11 @@ function! lamp#view#floatwin#nvim#is_showing(floatwin) abort
 endfunction
 
 "
-" lamp#view#floatwin#nvim#winnr
+" lamp#view#floatwin#nvim#winid
 "
-function! lamp#view#floatwin#nvim#winnr(floatwin) abort
+function! lamp#view#floatwin#nvim#winid(floatwin) abort
   if lamp#view#floatwin#nvim#is_showing(a:floatwin)
-    return nvim_win_get_number(a:floatwin.nvim_window)
+    return win_getid(nvim_win_get_number(a:floatwin.nvim_window))
   endif
   return -1
 endfunction
