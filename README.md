@@ -130,4 +130,5 @@ endfunction
 - Show message when has no server that supports specific capability
 - Design canceling outdated request
 - ! Keep cursor position after text edit
+- ! Implement text_edit as vscode-languageserver-node
 
