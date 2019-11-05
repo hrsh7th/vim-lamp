@@ -1,6 +1,26 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:expect = themis#helper('expect')
 
+function s:edits(defaults, edits, expects)
+  " init buffer.
+  let l:lines = split(a:defaults, "\n", v:true)
+  enew
+  put!=l:lines
+  normal! Gdd
+
+  " apply edits.
+  call lamp#view#edit#apply(bufnr('%'), map(a:edits, { k, v -> {
+        \   'range': {
+        \     'start': { 'line': v.start[0], 'character': v.start[1] },
+        \     'end': { 'line': v.end[0], 'character': v.end[1] },
+        \   },
+        \   'newText': v.text
+        \ } }))
+
+  " check.
+  call s:expect(split(a:expects, "\n", v:true)).to_equal(getline('^', '$'))
+endfunction
+
 Describe lamp#view#edit
 
   After each
@@ -109,4 +129,155 @@ Describe lamp#view#edit
     call s:expect(getbufline(bufnr(s:filepath2), '^', '$')[0]).to_equal("export const module2 = () => {")
   End
 
+  " @see https://github.com/microsoft/vscode-languageserver-node/blob/master/textDocument/src/test/edits.test.ts
+
+
+  It Should inserts 1
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 0],
+          \   'end': [0, 0],
+          \   'text': 'Hello'
+          \ }], "Hello012345678901234567890123456789")
+  End
+
+  It Should inserts 2
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 1],
+          \   'end': [0, 1],
+          \   'text': 'Hello'
+          \ }], "0Hello12345678901234567890123456789")
+  End
+
+  It Should inserts 3
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 1],
+          \   'end': [0, 1],
+          \   'text': 'Hello'
+          \ },{
+          \   'start': [0, 1],
+          \   'end': [0, 1],
+          \   'text': 'World'
+          \ }], "0HelloWorld12345678901234567890123456789")
+  End
+
+  It Should inserts 4
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 2],
+          \   'end': [0, 2],
+          \   'text': 'One'
+          \ },{
+          \   'start': [0, 1],
+          \   'end': [0, 1],
+          \   'text': 'Hello'
+          \ },{
+          \   'start': [0, 1],
+          \   'end': [0, 1],
+          \   'text': 'World'
+          \ },{
+          \   'start': [0, 2],
+          \   'end': [0, 2],
+          \   'text': 'Two'
+          \ },{
+          \   'start': [0, 2],
+          \   'end': [0, 2],
+          \   'text': 'Three'
+          \ }], "0HelloWorld1OneTwoThree2345678901234567890123456789")
+  End
+
+  It Should replaces 1
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 3],
+          \   'end': [0, 6],
+          \   'text': 'Hello'
+          \ }], "012Hello678901234567890123456789")
+  End
+
+  It Should replaces 2
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 3],
+          \   'end': [0, 6],
+          \   'text': 'Hello'
+          \ }, {
+          \   'start': [0, 6],
+          \   'end': [0, 9],
+          \   'text': 'World'
+          \ }], "012HelloWorld901234567890123456789")
+  End
+
+  It Should replaces 3
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 3],
+          \   'end': [0, 6],
+          \   'text': 'Hello'
+          \ }, {
+          \   'start': [0, 6],
+          \   'end': [0, 6],
+          \   'text': 'World'
+          \ }], "012HelloWorld678901234567890123456789")
+  End
+
+  It Should replaces 4
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 6],
+          \   'end': [0, 6],
+          \   'text': 'World'
+          \ }, {
+          \   'start': [0, 3],
+          \   'end': [0, 6],
+          \   'text': 'Hello'
+          \ }], "012HelloWorld678901234567890123456789")
+  End
+
+" TODO: should pass
+"  It Should replaces 5
+"    call s:edits("012345678901234567890123456789", [{
+"          \   'start': [0, 3],
+"          \   'end': [0, 3],
+"          \   'text': 'World'
+"          \ }, {
+"          \   'start': [0, 3],
+"          \   'end': [0, 6],
+"          \   'text': 'Hello'
+"          \ }], "012WorldHello678901234567890123456789")
+"  End
+
+  It Should edit multiline 1
+    call s:edits("0\n1\n2\n3\n4", [{
+          \   'start': [2, 0],
+          \   'end': [3, 0],
+          \   'text': 'Hello'
+          \ }, {
+          \   'start': [1, 1],
+          \   'end': [1, 1],
+          \   'text': 'World'
+          \ }], "0\n1World\nHello3\n4")
+  End
+
+  " TODO: Should throw exception when ranges are overlaped.
+  " It Should overlap 1
+  "   call s:edits("012345678901234567890123456789", [{
+  "         \   'start': [0, 3],
+  "         \   'end': [0, 6],
+  "         \   'text': 'Hello'
+  "         \ }, {
+  "         \   'start': [0, 3],
+  "         \   'end': [0, 3],
+  "         \   'text': 'World'
+  "         \ }], "")
+  " End
+
+  " It Should overlap 2
+  "   call s:edits("012345678901234567890123456789", [{
+  "         \   'start': [0, 3],
+  "         \   'end': [0, 6],
+  "         \   'text': 'Hello'
+  "         \ }, {
+  "         \   'start': [0, 3],
+  "         \   'end': [0, 4],
+  "         \   'text': 'World'
+  "         \ }], "")
+  " End
+
 End
+
+

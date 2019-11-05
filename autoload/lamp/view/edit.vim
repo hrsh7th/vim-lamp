@@ -108,15 +108,15 @@ function! lamp#view#edit#merge(edits) abort
       if l:edit_i.range.start.line == l:edit_j.range.start.line
             \ && l:edit_i.range.start.character == l:edit_j.range.start.character
         let l:edit_i.newText .= l:edit_j.newText
+
         let l:j += 1
       else
-        let l:j -= 1
         break
       endif
     endwhile
 
     let l:edits += [l:edit_i]
-    let l:i = l:j + 1
+    let l:i = l:j
   endwhile
 
   return l:edits
@@ -142,7 +142,7 @@ function! s:edit(bufnr, edit) abort
   while l:i < l:lines_len
     let l:lnum = a:edit.range.start.line + l:i
     if l:i <= l:range_len
-      if get(getbufline(a:bufnr, l:lnum), 0, '') !=# l:lines[l:i]
+      if get(getbufline(a:bufnr, l:lnum), 0) !=# l:lines[l:i]
         call setbufline(a:bufnr, l:lnum, l:lines[l:i])
       endif
     else
