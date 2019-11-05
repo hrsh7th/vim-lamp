@@ -104,7 +104,7 @@ function! s:get_nearest_diagnostic(range, bufnr, server) abort
   let l:diagnostics = copy(a:server.documents[l:uri].diagnostics)
   let l:diagnostics = filter(l:diagnostics, { k, v -> lamp#protocol#range#in_line(v.range) })
   let l:diagnostics = sort(l:diagnostics, { v1, v2 ->
-        \   lamp#protocol#range#compare_nearest(v1, v2, lamp#protocol#position#get())
+        \   lamp#protocol#range#compare_nearest(v1.range, v2.range, lamp#protocol#position#get())
         \ })
   return get(l:diagnostics, 0, {})
 endfunction
