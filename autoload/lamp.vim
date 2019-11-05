@@ -147,7 +147,7 @@ endfunction
 "
 function! lamp#complete(find_start, base) abort
   if a:find_start == 1
-    let l:before_text = getline('.')[0 : col('.') - 1]
+    let l:before_text = getline('.')[0 : col('.') - 2]
     return strlen(substitute(l:before_text, '\k*$', '', 'g'))
   endif
 
