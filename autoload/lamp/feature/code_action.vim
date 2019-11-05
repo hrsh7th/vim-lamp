@@ -79,10 +79,20 @@ function! s:on_responses(responses) abort
 
   let l:code_action = l:code_actions[l:index]
   if has_key(l:code_action.action, 'command')
-    call l:code_action.server.request('workspace/executeCommand', {
-          \   'command': l:code_action.action.command.command,
-          \   'arguments': get(l:code_action.action.command, 'arguments', v:null)
-          \ })
+    " Seems bug of typescript-language-server.
+    " LSP Spec says `CodeAction['command']` is Command type.
+    " But the server response `CodeAction` as Command type.
+    if has_key(l:code_action.action, 'arguments')
+      call l:code_action.server.request('workspace/executeCommand', {
+            \   'command': l:code_action.action.command,
+            \   'arguments': get(l:code_action.action, 'arguments', v:null)
+            \ })
+    else
+      call l:code_action.server.request('workspace/executeCommand', {
+            \   'command': l:code_action.action.command.command,
+            \   'arguments': get(l:code_action.action.command, 'arguments', v:null)
+            \ })
+    endif
   elseif has_key(l:code_action.action, 'edit')
     let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(l:code_action.action.edit)
     call lamp#view#edit#apply_workspace(l:workspace_edit)
