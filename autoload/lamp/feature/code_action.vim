@@ -34,7 +34,8 @@ function! lamp#feature#code_action#do(range) abort
           \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
           \   'range': s:get_range(a:range, l:diagnostic),
           \   'context': {
-          \     'diagnostics': !empty(l:diagnostic) ? [l:diagnostic] : []
+          \     'diagnostics': !empty(l:diagnostic) ? [l:diagnostic] : [],
+          \     'only': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
           \   }
           \ }).then({ data -> { 'server': l:server, 'data': data } }))
   endfor
@@ -79,8 +80,8 @@ function! s:on_responses(responses) abort
   let l:code_action = l:code_actions[l:index]
   if has_key(l:code_action.action, 'command')
     call l:code_action.server.request('workspace/executeCommand', {
-          \   'command': l:code_action.action.command,
-          \   'arguments': get(l:code_action.action, 'arguments', v:null)
+          \   'command': l:code_action.action.command.command,
+          \   'arguments': get(l:code_action.action.command, 'arguments', v:null)
           \ })
   elseif has_key(l:code_action.action, 'edit')
     let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(l:code_action.action.edit)
