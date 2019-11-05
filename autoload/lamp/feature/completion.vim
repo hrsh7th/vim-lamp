@@ -71,6 +71,8 @@ endfunction
 " s:on_complete_done
 "
 function! s:on_complete_done() abort
+  " clear documentation.
+  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 200)
   call s:floatwin.hide()
 
   " clear debounce timer.
