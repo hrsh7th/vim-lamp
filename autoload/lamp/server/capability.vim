@@ -100,6 +100,27 @@ function! s:Capability.new(capability) abort
 endfunction
 
 "
+" merge.
+"
+function! s:Capability.merge(capability) abort
+  let self.capability = s:merge(self.capability, a:capability)
+endfunction
+
+"
+" register.
+"
+function! s:Capability.register(capability) abort
+  " TODO: impl
+endfunction
+
+"
+" unregister.
+"
+function! s:Capability.register(capability) abort
+  " TODO: impl
+endfunction
+
+"
 " supports.
 "
 function! s:Capability.supports(path) abort
@@ -122,5 +143,44 @@ function! s:Capability.get_text_document_sync_kind() abort
     return l:kind_or_option
   endif
   return lamp#get(l:kind_or_option, 'change', 0)
+endfunction
+
+"
+" merge.
+"
+function! s:merge(dict1, dict2) abort
+  try
+    let l:returns = deepcopy(a:dict1)
+
+    " merge same key.
+    for l:key in keys(a:dict1)
+      if !has_key(a:dict2, l:key)
+        continue
+      endif
+
+      " both dict.
+      if type(a:dict1[l:key]) == type({}) && type(a:dict2[l:key]) == type({})
+        let l:returns[l:key] = s:merge(a:dict1[l:key], a:dict2[l:key])
+      endif
+
+      " both list.
+      if type(a:dict1[l:key]) == type([]) && type(a:dict2[l:key]) == type([])
+        let l:returns[l:key] = extend(copy(a:dict1[l:key]), a:dict2[l:key])
+      endif
+    endfor
+
+    " add new key.
+    for l:key in keys(a:dict2)
+      " always have key.
+      if has_key(a:dict1, l:key)
+        continue
+      endif
+      let l:returns[l:key] = a:dict2[l:key]
+    endfor
+  catch /.*/
+    echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+  endtry
+
+  return l:returns
 endfunction
 

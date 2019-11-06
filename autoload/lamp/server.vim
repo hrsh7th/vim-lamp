@@ -23,7 +23,7 @@ function! s:Server.new(name, option) abort
         \   'root_uri': get(a:option, 'root_uri', { -> '' }),
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
         \   'documents': {},
-        \   'capability': v:null,
+        \   'capability': s:Capability.new(get(a:option, 'capability', {})),
         \   'state': {
         \     'started': v:false,
         \     'initialized': v:false,
@@ -127,9 +127,6 @@ endfunction
 " supports.
 "
 function! s:Server.supports(path) abort
-  if empty(self.capability)
-    return v:false
-  endif
   return self.capability.supports(a:path)
 endfunction
 
@@ -145,7 +142,7 @@ function! s:Server.initialize() abort
   " callback
   let l:fn = {}
   function! l:fn.on_initialize(response) abort dict
-    let self.capability = s:Capability.new(a:response)
+    call self.capability.merge(a:response)
     call self.notify('initialized', {})
     return a:response
   endfunction
