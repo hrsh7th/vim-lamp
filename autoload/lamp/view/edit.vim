@@ -34,30 +34,8 @@ function! lamp#view#edit#apply_workspace(workspace_edit) abort
       call bufload(l:bufnr)
       call setbufvar(l:bufnr, '&buflisted', v:true)
     endif
-    try
-      call lamp#view#edit#apply(l:bufnr, l:edits)
-    catch /.*/
-      call lamp#log('[ERROR]', json_encode({ 'exception': v:exception, 'throwpoint': v:throwpoint }))
-    endtry
+    call lamp#view#edit#apply(l:bufnr, l:edits)
   endfor
-endfunction
-
-"
-" lamp#view#edit#apply
-"
-function! lamp#view#edit#apply(bufnr, edits) abort
-  let l:edits = a:edits
-  let l:edits = lamp#view#edit#rangefix(l:edits)
-  let l:edits = lamp#view#edit#sort(l:edits)
-  let l:edits = lamp#view#edit#merge(l:edits)
-
-  for l:edit in l:edits
-    call s:edit(a:bufnr, l:edit)
-  endfor
-
-  if bufnr('%') != a:bufnr
-    call lamp#view#buffer#touch(a:bufnr)
-  endif
 endfunction
 
 "
@@ -66,8 +44,19 @@ endfunction
 function! lamp#view#edit#rangefix(edits) abort
   let l:edits = []
   for l:edit in a:edits
+    let l:range = lamp#protocol#range#to_vim(l:edit.range)
+    if l:range.start.line > l:range.end.line
+          \ || (
+          \   l:range.start.line == l:range.end.line
+          \   && l:range.start.character > l:range.end.character
+          \ )
+      let l:range = {
+            \   'start': l:range.end,
+            \   'end': l:range.start
+            \ }
+    endif
     call add(l:edits, {
-          \   'range': lamp#protocol#range#to_vim(l:edit.range),
+          \   'range': l:range,
           \   'newText': l:edit.newText
           \ })
   endfor
@@ -79,47 +68,48 @@ endfunction
 "
 function! lamp#view#edit#sort(edits) abort
   function! s:compare(edit1, edit2) abort
-    if a:edit1.range.start.line < a:edit2.range.start.line
-      return 1
+    let l:diff = a:edit1.range.start.line - a:edit2.range.start.line
+    if l:diff == 0
+      return a:edit1.range.start.character - a:edit2.range.start.character
     endif
-    if a:edit1.range.start.line == a:edit2.range.start.line
-      if a:edit1.range.start.character < a:edit2.range.start.character
-        return 1
-      endif
-    endif
-    return -1
+    return l:diff
   endfunction
   return sort(copy(a:edits), function('s:compare', [], {}))
 endfunction
 
 "
-" lamp#view#edit#merge
+" lamp#view#edit#apply
 "
-function! lamp#view#edit#merge(edits) abort
-  let l:edits = []
+function! lamp#view#edit#apply(bufnr, edits) abort
+  let l:edits = a:edits
+  let l:edits = lamp#view#edit#rangefix(l:edits)
+  let l:edits = lamp#view#edit#sort(l:edits)
 
-  let l:i = 0
-  while l:i < len(a:edits)
-    let l:edit_i = a:edits[l:i]
-
-    let l:j = l:i + 1
-    while l:j < len(a:edits)
-      let l:edit_j = a:edits[l:j]
-      if l:edit_i.range.start.line == l:edit_j.range.start.line
-            \ && l:edit_i.range.start.character == l:edit_j.range.start.character
-        let l:edit_i.newText .= l:edit_j.newText
-
-        let l:j += 1
-      else
-        break
+  " check overlapped.
+  if len(l:edits) > 1
+    let l:range = l:edits[0].range
+    for l:edit in l:edits[1 : -1]
+      " overlapped.
+      if l:range.end.line > l:edit.range.start.line || (
+            \   l:range.end.line == l:edit.range.start.line
+            \   && l:range.end.character > l:edit.range.start.character
+            \ )
+        throw 'lamp#view#edit#apply: range overlapped.'
       endif
-    endwhile
 
-    let l:edits += [l:edit_i]
-    let l:i = l:j
-  endwhile
+      let l:range = l:edit.range
+    endfor
+  endif
 
-  return l:edits
+  " apply edit.
+  for l:edit in reverse(copy(l:edits))
+    call s:edit(a:bufnr, l:edit)
+  endfor
+
+  " touch.
+  if bufnr('%') != a:bufnr
+    call lamp#view#buffer#touch(a:bufnr)
+  endif
 endfunction
 
 "

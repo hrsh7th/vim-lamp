@@ -1,7 +1,7 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:expect = themis#helper('expect')
 
-function s:edits(defaults, edits, expects)
+function s:edits(defaults, edits, ...)
   " init buffer.
   let l:lines = split(a:defaults, "\n", v:true)
   enew
@@ -18,7 +18,9 @@ function s:edits(defaults, edits, expects)
         \ } }))
 
   " check.
-  call s:expect(split(a:expects, "\n", v:true)).to_equal(getline('^', '$'))
+  if len(a:000) > 0
+    call s:expect(split(a:000[0], "\n", v:true)).to_equal(getline('^', '$'))
+  endif
 endfunction
 
 Describe lamp#view#edit
@@ -27,53 +29,8 @@ Describe lamp#view#edit
     call lamp#view#buffer#reset()
   End
 
-  It Should sort
-    let s:edits = [{
-          \   'range': {
-          \     'start': { 'line': 0, 'character': 0 },
-          \     'end':   { 'line': 1, 'character': 0 },
-          \   },
-          \   'newText': 'def'
-          \ }, {
-          \   'range': {
-          \     'start': { 'line': 1, 'character': 0 },
-          \     'end':   { 'line': 2, 'character': 0 },
-          \   },
-          \   'newText': 'abc'
-          \ }]
-    let s:sorted = lamp#view#edit#sort(s:edits)
-    call s:expect(1).to_equal(s:sorted[0].range.start.line)
-    call s:expect(0).to_equal(s:sorted[1].range.start.line)
-  End
-
-  It Should merge
-    let s:edits = [{
-          \   'range': {
-          \     'start': { 'line': 1, 'character': 0 },
-          \     'end':   { 'line': 2, 'character': 0 },
-          \   },
-          \   'newText': 'abc'
-          \ }, {
-          \   'range': {
-          \     'start': { 'line': 0, 'character': 0 },
-          \     'end':   { 'line': 1, 'character': 0 },
-          \   },
-          \   'newText': 'def'
-          \ }, {
-          \   'range': {
-          \     'start': { 'line': 1, 'character': 0 },
-          \     'end':   { 'line': 2, 'character': 0 },
-          \   },
-          \   'newText': 'ghi'
-          \ }]
-    let s:sorted = lamp#view#edit#sort(s:edits)
-    let s:merged = lamp#view#edit#merge(s:sorted)
-    call s:expect(2).to_equal(len(s:merged))
-    call s:expect(s:edits[1]).to_equal(s:merged[1])
-    call s:expect('abcghi').to_equal(s:merged[0].newText)
-  End
-
   It Should apply workspace edit
+    set hidden
     let s:filepath1 = lamp#config('root') . '/fixture/typescript-fixture/src/index.ts'
     let s:fileuri1 = lamp#protocol#document#encode_uri(s:filepath1)
     let s:filepath2 = lamp#config('root') . '/fixture/typescript-fixture/src/module1.ts'
@@ -131,8 +88,7 @@ Describe lamp#view#edit
 
   " @see https://github.com/microsoft/vscode-languageserver-node/blob/master/textDocument/src/test/edits.test.ts
 
-
-  It Should inserts 1
+  It Should edit inserts 1
     call s:edits("012345678901234567890123456789", [{
           \   'start': [0, 0],
           \   'end': [0, 0],
@@ -140,7 +96,7 @@ Describe lamp#view#edit
           \ }], "Hello012345678901234567890123456789")
   End
 
-  It Should inserts 2
+  It Should edit inserts 2
     call s:edits("012345678901234567890123456789", [{
           \   'start': [0, 1],
           \   'end': [0, 1],
@@ -148,7 +104,7 @@ Describe lamp#view#edit
           \ }], "0Hello12345678901234567890123456789")
   End
 
-  It Should inserts 3
+  It Should edit inserts 3
     call s:edits("012345678901234567890123456789", [{
           \   'start': [0, 1],
           \   'end': [0, 1],
@@ -160,7 +116,7 @@ Describe lamp#view#edit
           \ }], "0HelloWorld12345678901234567890123456789")
   End
 
-  It Should inserts 4
+  It Should edit inserts 4
     call s:edits("012345678901234567890123456789", [{
           \   'start': [0, 2],
           \   'end': [0, 2],
@@ -184,7 +140,7 @@ Describe lamp#view#edit
           \ }], "0HelloWorld1OneTwoThree2345678901234567890123456789")
   End
 
-  It Should replaces 1
+  It Should edit replaces 1
     call s:edits("012345678901234567890123456789", [{
           \   'start': [0, 3],
           \   'end': [0, 6],
@@ -192,7 +148,7 @@ Describe lamp#view#edit
           \ }], "012Hello678901234567890123456789")
   End
 
-  It Should replaces 2
+  It Should edit replaces 2
     call s:edits("012345678901234567890123456789", [{
           \   'start': [0, 3],
           \   'end': [0, 6],
@@ -204,7 +160,7 @@ Describe lamp#view#edit
           \ }], "012HelloWorld901234567890123456789")
   End
 
-  It Should replaces 3
+  It Should edit replaces 3
     call s:edits("012345678901234567890123456789", [{
           \   'start': [0, 3],
           \   'end': [0, 6],
@@ -216,7 +172,7 @@ Describe lamp#view#edit
           \ }], "012HelloWorld678901234567890123456789")
   End
 
-  It Should replaces 4
+  It Should edit replaces 4
     call s:edits("012345678901234567890123456789", [{
           \   'start': [0, 6],
           \   'end': [0, 6],
@@ -228,18 +184,17 @@ Describe lamp#view#edit
           \ }], "012HelloWorld678901234567890123456789")
   End
 
-" TODO: should pass
-"  It Should replaces 5
-"    call s:edits("012345678901234567890123456789", [{
-"          \   'start': [0, 3],
-"          \   'end': [0, 3],
-"          \   'text': 'World'
-"          \ }, {
-"          \   'start': [0, 3],
-"          \   'end': [0, 6],
-"          \   'text': 'Hello'
-"          \ }], "012WorldHello678901234567890123456789")
-"  End
+  It Should edit replaces 5
+    call s:edits("012345678901234567890123456789", [{
+          \   'start': [0, 3],
+          \   'end': [0, 3],
+          \   'text': 'World'
+          \ }, {
+          \   'start': [0, 3],
+          \   'end': [0, 6],
+          \   'text': 'Hello'
+          \ }], "012WorldHello678901234567890123456789")
+  End
 
   It Should edit multiline 1
     call s:edits("0\n1\n2\n3\n4", [{
@@ -253,30 +208,41 @@ Describe lamp#view#edit
           \ }], "0\n1World\nHello3\n4")
   End
 
-  " TODO: Should throw exception when ranges are overlaped.
-  " It Should overlap 1
-  "   call s:edits("012345678901234567890123456789", [{
-  "         \   'start': [0, 3],
-  "         \   'end': [0, 6],
-  "         \   'text': 'Hello'
-  "         \ }, {
-  "         \   'start': [0, 3],
-  "         \   'end': [0, 3],
-  "         \   'text': 'World'
-  "         \ }], "")
-  " End
+  It Should throw overlap error 1
+    let s:catch = v:false
+    try
+      call s:edits("012345678901234567890123456789", [{
+            \   'start': [0, 3],
+            \   'end': [0, 6],
+            \   'text': 'Hello'
+            \ }, {
+            \   'start': [0, 3],
+            \   'end': [0, 3],
+            \   'text': 'World'
+            \ }])
+    catch /.*/
+      let s:catch = v:true
+    endtry
+    call s:expect(s:catch).to_equal(v:true)
+  End
 
-  " It Should overlap 2
-  "   call s:edits("012345678901234567890123456789", [{
-  "         \   'start': [0, 3],
-  "         \   'end': [0, 6],
-  "         \   'text': 'Hello'
-  "         \ }, {
-  "         \   'start': [0, 3],
-  "         \   'end': [0, 4],
-  "         \   'text': 'World'
-  "         \ }], "")
-  " End
+  It Should throw overlap error 2
+    let s:catch = v:false
+    try
+      call s:edits("012345678901234567890123456789", [{
+            \   'start': [0, 3],
+            \   'end': [0, 6],
+            \   'text': 'Hello'
+            \ }, {
+            \   'start': [0, 3],
+            \   'end': [0, 4],
+            \   'text': 'World'
+            \ }])
+    catch /.*/
+      let s:catch = v:true
+    endtry
+    call s:expect(s:catch).to_equal(v:true)
+  End
 
 End
 
