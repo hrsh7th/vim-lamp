@@ -1,12 +1,16 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:expect = themis#helper('expect')
 
-function s:edits(defaults, edits, ...)
-  " init buffer.
-  let l:lines = split(a:defaults, "\n", v:true)
+function! s:buffer(lines) abort
+  let l:lines = split(a:lines, "\n", v:true)
   enew
   put!=l:lines
   normal! Gdd
+endfunction
+
+function! s:edits(lines, edits, ...) abort
+  " init buffer.
+  call s:buffer(a:lines)
 
   " apply edits.
   call lamp#view#edit#apply(bufnr('%'), map(a:edits, { k, v -> {
@@ -85,6 +89,46 @@ Describe lamp#view#edit
     call s:expect(getbufline(bufnr(s:filepath1), '^', '$')[4]).to_equal("module2();")
     call s:expect(getbufline(bufnr(s:filepath2), '^', '$')[0]).to_equal("export const module2 = () => {")
   End
+
+" TODO: Should support
+"  It Should keep cursor position (before)
+"    call s:buffer("abcdefg\nhijklmn\nopqrstu")
+"    call setpos('.', [bufnr('%'), 2, 4, 0])
+"    call lamp#view#edit#apply(bufnr('%'), [{
+"          \   'range': {
+"          \     'start': { 'line': 0, 'character': 0 },
+"          \     'end': { 'line': 1, 'character': 0 }
+"          \   },
+"          \   'newText': "1\n2345"
+"          \ }])
+"    call s:expect(getpos('.')[1 : -1]).to_equal([2, 9, 0])
+"  End
+"
+"  It Should keep cursor position (included cursor oneline)
+"    call s:buffer("abcdefg\nhijklmn\nopqrstu")
+"    call setpos('.', [bufnr('%'), 2, 4, 0])
+"    call lamp#view#edit#apply(bufnr('%'), [{
+"          \   'range': {
+"          \     'start': { 'line': 1, 'character': 0 },
+"          \     'end': { 'line': 1, 'character': 7 }
+"          \   },
+"          \   'newText': "1"
+"          \ }])
+"    call s:expect(getpos('.')[1 : -1]).to_equal([2, 1, 0])
+"  End
+"
+"  It Should keep cursor position (included cursor multiline)
+"    call s:buffer("abcdefg\nhijklmn\nopqrstu")
+"    call setpos('.', [bufnr('%'), 2, 4, 0])
+"    call lamp#view#edit#apply(bufnr('%'), [{
+"          \   'range': {
+"          \     'start': { 'line': 1, 'character': 0 },
+"          \     'end': { 'line': 1, 'character': 7 }
+"          \   },
+"          \   'newText': "1"
+"          \ }])
+"    call s:expect(getpos('.')[1 : -1]).to_equal([2, 1, 0])
+"  End
 
   " @see https://github.com/microsoft/vscode-languageserver-node/blob/master/textDocument/src/test/edits.test.ts
 
@@ -245,5 +289,4 @@ Describe lamp#view#edit
   End
 
 End
-
 
