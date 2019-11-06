@@ -28,6 +28,7 @@ autocmd! vimrc User lamp#initialized * call s:on_initialized()
 function! s:on_initialized()
 
   " NOTE: `capabilities` field to be merged to server's capabilities.
+  " NOTE: you can omit the capability via `v:null`
 
   call lamp#register('typescript-language-server', {
       \   'command': ['typescript-language-server', '--stdio'],
@@ -36,7 +37,7 @@ function! s:on_initialized()
       \   'initialization_options': { -> {} },
       \   'capabilities': {
       \     'completionProvider': {
-      \       'triggerCharacters': [',', '{']
+      \       'triggerCharacters': [',']
       \     }
       \   }
       \ })

@@ -167,6 +167,11 @@ function! s:merge(dict1, dict2) abort
       if type(a:dict1[l:key]) == type([]) && type(a:dict2[l:key]) == type([])
         let l:returns[l:key] = extend(copy(a:dict1[l:key]), a:dict2[l:key])
       endif
+
+      " remove key when v:null provided explicitly.
+      if type(a:dict1[l:key]) != type(v:null) && type(a:dict2[l:key]) == type(v:null)
+        unlet l:returns[l:key]
+      endif
     endfor
 
     " add new key.
