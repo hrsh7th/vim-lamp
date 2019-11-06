@@ -147,8 +147,8 @@ endfunction
 "
 function! lamp#complete(find_start, base) abort
   if a:find_start == 1
-    let l:before_text = getline('.')[0 : col('.') - 2]
-    return strlen(substitute(l:before_text, '\k*$', '', 'g'))
+    let l:before_line = lamp#view#cursor#get_before_line()
+    return strlen(substitute(l:before_line, '\k*$', '', 'g'))
   endif
 
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
