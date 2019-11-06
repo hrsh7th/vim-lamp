@@ -26,11 +26,19 @@ augroup END
 "
 autocmd! vimrc User lamp#initialized * call s:on_initialized()
 function! s:on_initialized()
+
+  " NOTE: `capabilities` field to be merged to server's capabilities.
+
   call lamp#register('typescript-language-server', {
       \   'command': ['typescript-language-server', '--stdio'],
       \   'filetypes': ['typescript', 'javascript', 'typescript.tsx', 'javascript.jsx'],
       \   'root_uri': { -> vimrc#get_project_root() },
       \   'initialization_options': { -> {} },
+      \   'capabilities': {
+      \     'completionProvider': {
+      \       'triggerCharacters': [',', '{']
+      \     }
+      \   }
       \ })
 endfunction
 

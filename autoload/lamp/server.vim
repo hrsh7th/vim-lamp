@@ -23,7 +23,9 @@ function! s:Server.new(name, option) abort
         \   'root_uri': get(a:option, 'root_uri', { -> '' }),
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
         \   'documents': {},
-        \   'capability': s:Capability.new(get(a:option, 'capability', {})),
+        \   'capability': s:Capability.new({
+        \     'capabilities': get(a:option, 'capabilities', {})
+        \   }),
         \   'state': {
         \     'started': v:false,
         \     'initialized': v:false,
