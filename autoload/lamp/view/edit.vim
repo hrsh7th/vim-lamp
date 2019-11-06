@@ -147,4 +147,3 @@ function! s:edit(bufnr, edit) abort
     call deletebufline(a:bufnr, l:start, l:end)
   endif
 endfunction
-
