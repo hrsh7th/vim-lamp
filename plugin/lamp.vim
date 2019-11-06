@@ -36,7 +36,7 @@ vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#fea
 
 augroup lamp
   autocmd!
-  autocmd BufEnter,FileType * call <SID>on_text_document_did_open()
+  autocmd BufWinEnter,FileType * call <SID>on_text_document_did_open()
   autocmd TextChanged,InsertLeave * call <SID>on_text_document_did_change()
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
 augroup END

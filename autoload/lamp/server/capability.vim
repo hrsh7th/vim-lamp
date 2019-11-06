@@ -107,9 +107,9 @@ function! s:Capability.supports(path) abort
 endfunction
 
 "
-" get completion commit characters.
+" get completion trigger characters.
 "
-function! s:Capability.get_completion_commit_characters() abort
+function! s:Capability.get_completion_trigger_characters() abort
   return lamp#get(self.capability, 'capabilities.completionProvider.triggerCharacters', [])
 endfunction
 

@@ -186,10 +186,9 @@ function! lamp#complete(find_start, base) abort
       let s:context.id += 1
       let l:vim_item = {}
       let l:vim_item.word = get(l:item, 'insertText', l:item.label)
-      let l:vim_item.kind = lamp#protocol#completion#get_kind_name(l:item.kind)
+      let l:vim_item.kind = lamp#protocol#completion#get_kind_name(l:item.kind) . ' ' . get(l:item, 'detail', '')
       let l:vim_item.abbr = l:item.label
       let l:vim_item.menu = '[LAMP]'
-      let l:vim_item.info = get(l:item, 'detail', '') . get(l:item, 'documentation', '')
       let l:vim_item.user_data = json_encode({
             \   'lamp': {
             \     'id': s:context.id,
