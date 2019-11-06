@@ -54,7 +54,7 @@ function! s:on_complete_changed() abort
   " already resolve requested.
   let s:item_state[l:item_data.id] = get(s:item_state, l:item_data.id, {})
   if has_key(s:item_state[l:item_data.id], 'resolve')
-    call lamp#debounce('lamp#feature#completion:show_documentation', { -> s:show_documentation(l:event, s:item_state[l:item_data.id]) }, 200)
+    call lamp#debounce('lamp#feature#completion:show_documentation', { -> s:show_documentation(l:event, s:item_state[l:item_data.id]) }, 100)
     return
   endif
 
@@ -64,7 +64,7 @@ function! s:on_complete_changed() abort
     let s:item_state[a:item_data.id].resolve = s:resolve(a:item_data)
     call s:show_documentation(a:event, s:item_state[a:item_data.id])
   endfunction
-  call lamp#debounce('lamp#feature#completion:show_documentation', { -> l:fn.debounce(l:event, l:item_data) }, 200)
+  call lamp#debounce('lamp#feature#completion:show_documentation', { -> l:fn.debounce(l:event, l:item_data) }, 100)
 endfunction
 
 "
@@ -72,7 +72,7 @@ endfunction
 "
 function! s:on_complete_done() abort
   " clear documentation.
-  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 200)
+  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
   call s:floatwin.hide()
 
   " clear debounce timer.

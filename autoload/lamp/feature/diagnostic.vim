@@ -79,7 +79,7 @@ function! s:show_floatwin() abort
   if s:floatwin.is_showing()
     call l:fn.debounce()
   else
-    call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:fn.debounce, 1000)
+    call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:fn.debounce, 800)
   endif
 endfunction
 
