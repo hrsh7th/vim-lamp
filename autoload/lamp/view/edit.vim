@@ -49,7 +49,6 @@ function! lamp#view#edit#apply(bufnr, edits) abort
 
   " apply edit.
   let l:position = lamp#protocol#position#to_vim(lamp#protocol#position#get())
-  echomsg string(l:position)
   for l:edit in reverse(copy(l:edits))
     call s:edit(a:bufnr, l:edit, l:position)
   endfor
@@ -88,6 +87,7 @@ function! s:edit(bufnr, edit, position) abort
     endif
   endif
 
+  " update or append.
   let l:i = 0
   while l:i < l:lines_len
     let l:lnum = a:edit.range.start.line + l:i
@@ -101,6 +101,7 @@ function! s:edit(bufnr, edit, position) abort
     let l:i += 1
   endwhile
 
+  " delete.
   if l:lines_len <= l:range_len
     let l:start = a:edit.range.end.line - (l:range_len - l:lines_len)
     let l:end = a:edit.range.end.line

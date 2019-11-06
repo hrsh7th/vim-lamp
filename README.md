@@ -138,6 +138,4 @@ endfunction
 - Create asyncomplete source
 - Show message when has no server that supports specific capability
 - Design canceling outdated request
-- Refactor lamp#view#edit
-- Add more tests for lamp#view#edit
 
