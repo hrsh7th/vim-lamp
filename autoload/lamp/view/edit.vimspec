@@ -90,45 +90,20 @@ Describe lamp#view#edit
     call s:expect(getbufline(bufnr(s:filepath2), '^', '$')[0]).to_equal("export const module2 = () => {")
   End
 
-" TODO: Should support
-"  It Should keep cursor position (before)
-"    call s:buffer("abcdefg\nhijklmn\nopqrstu")
-"    call setpos('.', [bufnr('%'), 2, 4, 0])
-"    call lamp#view#edit#apply(bufnr('%'), [{
-"          \   'range': {
-"          \     'start': { 'line': 0, 'character': 0 },
-"          \     'end': { 'line': 1, 'character': 0 }
-"          \   },
-"          \   'newText': "1\n2345"
-"          \ }])
-"    call s:expect(getpos('.')[1 : -1]).to_equal([2, 9, 0])
-"  End
-"
-"  It Should keep cursor position (included cursor oneline)
-"    call s:buffer("abcdefg\nhijklmn\nopqrstu")
-"    call setpos('.', [bufnr('%'), 2, 4, 0])
-"    call lamp#view#edit#apply(bufnr('%'), [{
-"          \   'range': {
-"          \     'start': { 'line': 1, 'character': 0 },
-"          \     'end': { 'line': 1, 'character': 7 }
-"          \   },
-"          \   'newText': "1"
-"          \ }])
-"    call s:expect(getpos('.')[1 : -1]).to_equal([2, 1, 0])
-"  End
-"
-"  It Should keep cursor position (included cursor multiline)
-"    call s:buffer("abcdefg\nhijklmn\nopqrstu")
-"    call setpos('.', [bufnr('%'), 2, 4, 0])
-"    call lamp#view#edit#apply(bufnr('%'), [{
-"          \   'range': {
-"          \     'start': { 'line': 1, 'character': 0 },
-"          \     'end': { 'line': 1, 'character': 7 }
-"          \   },
-"          \   'newText': "1"
-"          \ }])
-"    call s:expect(getpos('.')[1 : -1]).to_equal([2, 1, 0])
-"  End
+
+  " TODO: Is this valid test?
+  It Should keep cursor position (before)
+    call s:buffer("abcdefg\nhij_lmn\nopqrstu")
+    call setpos('.', [bufnr('%'), 2, 4, 0])
+    call lamp#view#edit#apply(bufnr('%'), [{
+          \   'range': {
+          \     'start': { 'line': 0, 'character': 0 },
+          \     'end': { 'line': 1, 'character': 0 }
+          \   },
+          \   'newText': "1\n2345"
+          \ }])
+    call s:expect([2, 7, 0]).to_equal(getpos('.')[1 : -1])
+  End
 
   " @see https://github.com/microsoft/vscode-languageserver-node/blob/master/textDocument/src/test/edits.test.ts
 

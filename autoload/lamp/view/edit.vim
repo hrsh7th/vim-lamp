@@ -39,75 +39,26 @@ function! lamp#view#edit#apply_workspace(workspace_edit) abort
 endfunction
 
 "
-" lamp#view#edit#rangefix
-"
-function! lamp#view#edit#rangefix(edits) abort
-  let l:edits = []
-  for l:edit in a:edits
-    let l:range = lamp#protocol#range#to_vim(l:edit.range)
-    if l:range.start.line > l:range.end.line
-          \ || (
-          \   l:range.start.line == l:range.end.line
-          \   && l:range.start.character > l:range.end.character
-          \ )
-      let l:range = {
-            \   'start': l:range.end,
-            \   'end': l:range.start
-            \ }
-    endif
-    call add(l:edits, {
-          \   'range': l:range,
-          \   'newText': l:edit.newText
-          \ })
-  endfor
-  return l:edits
-endfunction
-
-"
-" lamp#view#edit#sort
-"
-function! lamp#view#edit#sort(edits) abort
-  function! s:compare(edit1, edit2) abort
-    let l:diff = a:edit1.range.start.line - a:edit2.range.start.line
-    if l:diff == 0
-      return a:edit1.range.start.character - a:edit2.range.start.character
-    endif
-    return l:diff
-  endfunction
-  return sort(copy(a:edits), function('s:compare', [], {}))
-endfunction
-
-"
 " lamp#view#edit#apply
 "
 function! lamp#view#edit#apply(bufnr, edits) abort
   let l:edits = a:edits
-  let l:edits = lamp#view#edit#rangefix(l:edits)
-  let l:edits = lamp#view#edit#sort(l:edits)
-
-  " check overlapped.
-  if len(l:edits) > 1
-    let l:range = l:edits[0].range
-    for l:edit in l:edits[1 : -1]
-      " overlapped.
-      if l:range.end.line > l:edit.range.start.line || (
-            \   l:range.end.line == l:edit.range.start.line
-            \   && l:range.end.character > l:edit.range.start.character
-            \ )
-        throw 'lamp#view#edit#apply: range overlapped.'
-      endif
-
-      let l:range = l:edit.range
-    endfor
-  endif
+  let l:edits = s:range(l:edits)
+  let l:edits = s:sort(l:edits)
+  let l:edits = s:overlap(l:edits)
 
   " apply edit.
+  let l:position = lamp#protocol#position#to_vim(lamp#protocol#position#get())
+  echomsg string(l:position)
   for l:edit in reverse(copy(l:edits))
-    call s:edit(a:bufnr, l:edit)
+    call s:edit(a:bufnr, l:edit, l:position)
   endfor
 
-  " touch.
-  if bufnr('%') != a:bufnr
+  if bufnr('%') == a:bufnr
+    " adjust curops.
+    call setpos('.', [a:bufnr, l:position.line, l:position.character])
+  else
+    " fire TextChanged.
     call lamp#view#buffer#touch(a:bufnr)
   endif
 endfunction
@@ -115,10 +66,10 @@ endfunction
 "
 " s:edit
 "
-function! s:edit(bufnr, edit) abort
-  let l:start_line = get(getbufline(a:bufnr, a:edit.range.start.line), 0, '')
+function! s:edit(bufnr, edit, position) abort
+  let l:start_line = getbufline(a:bufnr, a:edit.range.start.line)[0]
   let l:before_line = strcharpart(l:start_line, 0, a:edit.range.start.character - 1)
-  let l:end_line = get(getbufline(a:bufnr, a:edit.range.end.line), 0, '')
+  let l:end_line = getbufline(a:bufnr, a:edit.range.end.line)[0]
   let l:after_line = strcharpart(l:end_line, a:edit.range.end.character - 1, strchars(l:end_line) - (a:edit.range.end.character - 1))
 
   let l:lines = split(a:edit.newText, "\n", v:true)
@@ -127,6 +78,15 @@ function! s:edit(bufnr, edit) abort
 
   let l:lines_len = len(l:lines)
   let l:range_len = a:edit.range.end.line - a:edit.range.start.line
+
+  " fix cursor pos
+  let l:after = lamp#protocol#position#after(a:edit.range.end, a:position)
+  if l:after
+    let a:position.line += l:lines_len - l:range_len - 1
+    if a:edit.range.end.line == a:position.line
+      let a:position.character = a:position.character + (strchars(l:lines[-1] - strchars(l:after_line))) - 1
+    endif
+  endif
 
   let l:i = 0
   while l:i < l:lines_len
@@ -147,3 +107,62 @@ function! s:edit(bufnr, edit) abort
     call deletebufline(a:bufnr, l:start, l:end)
   endif
 endfunction
+
+"
+" s:range
+"
+function! s:range(edits) abort
+  let l:edits = []
+  for l:edit in a:edits
+    let l:range = lamp#protocol#range#to_vim(l:edit.range)
+    if l:range.start.line > l:range.end.line || (
+          \   l:range.start.line == l:range.end.line &&
+          \   l:range.start.character > l:range.end.character
+          \ )
+      let l:range = {
+            \   'start': l:range.end,
+            \   'end': l:range.start
+            \ }
+    endif
+    call add(l:edits, {
+          \   'range': l:range,
+          \   'newText': l:edit.newText
+          \ })
+  endfor
+  return l:edits
+endfunction
+
+"
+" s:sort
+"
+function! s:sort(edits) abort
+  function! s:compare(edit1, edit2) abort
+    let l:diff = a:edit1.range.start.line - a:edit2.range.start.line
+    if l:diff == 0
+      return a:edit1.range.start.character - a:edit2.range.start.character
+    endif
+    return l:diff
+  endfunction
+  return sort(copy(a:edits), function('s:compare', [], {}))
+endfunction
+
+"
+" s:overlap
+"
+function! s:overlap(edits) abort
+  if len(a:edits) > 1
+    let l:range = a:edits[0].range
+    for l:edit in a:edits[1 : -1]
+      if l:range.end.line > l:edit.range.start.line || (
+            \   l:range.end.line == l:edit.range.start.line &&
+            \   l:range.end.character > l:edit.range.start.character
+            \ )
+        throw 'lamp#view#edit#apply: range overlapped.'
+      endif
+
+      let l:range = l:edit.range
+    endfor
+  endif
+  return a:edits
+endfunction
+

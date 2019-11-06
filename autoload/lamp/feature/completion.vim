@@ -102,7 +102,7 @@ function! s:on_complete_done() abort
   " textEdit.
   let l:text_edit = get(l:completion_item, 'textEdit', {})
   if !empty(l:text_edit)
-    " TODO: The server that returns textEdit.
+    " TODO: Search the server that returns textEdit.
     call lamp#view#edit#apply(bufnr('%'), [l:text_edit])
   endif
 
@@ -124,8 +124,6 @@ function! s:on_complete_done() abort
           \   'arguments': get(l:completion_item.command, 'arguments')
           \ }).catch(lamp#rescue())
   endif
-
-  " TODO: adjust cursor position
 endfunction
 
 "

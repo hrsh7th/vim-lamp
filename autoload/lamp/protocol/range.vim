@@ -61,6 +61,9 @@ function! lamp#protocol#range#get_current_line() abort
         \ }
 endfunction
 
+"
+" lamp#protocol#range#current_word
+"
 function! lamp#protocol#range#current_word() abort
   let l:line = line('.')
   let l:col = col('.')
@@ -87,6 +90,9 @@ function! lamp#protocol#range#current_word() abort
         \ }
 endfunction
 
+"
+" lamp#protocol#range#has_length
+"
 function! lamp#protocol#range#has_length(range) abort
   return a:range.start.line < a:range.end.line || (
         \   a:range.start.line == a:range.end.line &&
@@ -94,6 +100,9 @@ function! lamp#protocol#range#has_length(range) abort
         \ )
 endfunction
 
+"
+" lamp#protocol#range#to_vim
+"
 function! lamp#protocol#range#to_vim(range) abort
   return {
         \   'start': {
