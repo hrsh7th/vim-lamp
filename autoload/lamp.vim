@@ -14,7 +14,7 @@ let s:config = {
       \   'view.sign.warning.text': '!',
       \   'view.sign.information.text': 'i',
       \   'view.sign.hint.text': '?',
-      \   'view.floatwin.fenced_language': {
+      \   'view.floatwin.fenced_languages': {
       \     'help': ['help'],
       \     'vim': ['vim'],
       \     'typescript': ['ts', 'tsx', 'typescript', 'typescriptreact', 'typescript.tsx'],

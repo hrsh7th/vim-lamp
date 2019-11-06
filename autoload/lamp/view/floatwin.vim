@@ -94,6 +94,7 @@ function! s:Floatwin.show(screenpos, contents) abort
     endif
   endfor
 
+  " @see ftplugin/lamp_floatwin.vim
   call setbufvar(self.bufnr, 'lamp_floatwin_lines', l:lines)
 
   " write lines

@@ -126,7 +126,6 @@ endfunction
 - Write `signs/highlight` tests
 - Improve diagnostics handling
 - Create asyncomplete source
-- Automatic fenced language detection
 - Show message when has no server that supports specific capability
 - Design canceling outdated request
 - ! Keep cursor position after text edit
