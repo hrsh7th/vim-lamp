@@ -97,22 +97,16 @@ function! s:Floatwin.show(screenpos, contents) abort
   " @see ftplugin/lamp_floatwin.vim
   call setbufvar(self.bufnr, 'lamp_floatwin_lines', l:lines)
 
-  " write lines
-  " NOTE: vim's popup window is not display texts if write before show.
-  if has('nvim')
-    call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
-  endif
-
   " show or move
   call lamp#view#floatwin#{s:namespace}#show(self)
   call setwinvar(self.winid(), '&wrap', 1)
   call setwinvar(self.winid(), '&conceallevel', 3)
 
   " write lines
-  " NOTE: vim's popup window is not display texts if write before show.
-  if !has('nvim')
-    call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
-  endif
+  call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
+
+  " update syntax highlight
+  call lamp#view#window#do(self.winid(), { -> LampFloatwinSyntaxUpdate() })
 endfunction
 
 "

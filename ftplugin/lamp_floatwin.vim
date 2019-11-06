@@ -1,7 +1,14 @@
 augroup lamp_floatwin
+  " This autocmd for support vim's popup-window.
   autocmd!
-  autocmd TextChanged,BufWinEnter * call s:update()
+  autocmd BufWinEnter * call s:update()
 augroup END
+
+" This function for support nvim's floatwin.
+" @see lamp#view#floatwin
+function! LampFloatwinSyntaxUpdate()
+  call s:update()
+endfunction
 
 "
 " s:update
@@ -12,7 +19,6 @@ function! s:update()
   endif
 
   call s:clear()
-  syntax clear
   runtime! syntax/markdown.vim
   syntax include @Markdown syntax/markdown.vim
 
@@ -150,4 +156,3 @@ function! s:clear()
   unlet g:main_syntax
 endfunction
 
-call s:update()
