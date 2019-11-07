@@ -15,6 +15,7 @@ function! lamp#feature#references#do(include_declaration) abort
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype', ''))
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.referencesProvider') })
   if empty(l:servers)
+    call lamp#view#notice#add({ 'lines': ['`References`: Has no `References` capability.'] })
     return
   endif
 
@@ -47,6 +48,10 @@ function! s:on_response(bufnr, responses) abort
     endfor
   endfor
 
-  call lamp#config('feature.references.on_references')(l:locations)
+  if len(l:locations) > 0
+    call lamp#config('feature.references.on_references')(l:locations)
+  else
+    call lamp#view#notice#add({ 'lines': ['`References`: No references found.'] })
+  endif
 endfunction
 

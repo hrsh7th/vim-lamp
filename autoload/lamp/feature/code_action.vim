@@ -24,6 +24,7 @@ function! lamp#feature#code_action#do(range) abort
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.codeActionProvider') })
   if empty(l:servers)
+    call lamp#view#notice#add({ 'lines': ['`CodeAction`: Has no `CodeAction` capability.'] })
     return
   endif
 
@@ -62,6 +63,7 @@ function! s:on_responses(responses) abort
   endfor
 
   if empty(l:code_actions)
+    call lamp#view#notice#add({ 'lines': ['`CodeAction`: No code action found.'] })
     return
   endif
 

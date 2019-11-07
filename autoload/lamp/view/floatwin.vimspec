@@ -1,6 +1,8 @@
 let s:Floatwin = lamp#view#floatwin#import()
 let s:expect = themis#helper('expect')
 
+execute printf('source %s/ftplugin/lamp_floatwin.vim', lamp#config('root'))
+
 Describe lamp#view#floatwin
 
   After each

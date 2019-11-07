@@ -23,6 +23,7 @@ function! lamp#feature#rename#do() abort
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.renameProvider') })
   if empty(l:servers)
+    call lamp#view#notice#add({ 'lines': ['`Rename`: has no `Rename` capability.'] })
     return
   endif
   let l:server = l:servers[0]
@@ -81,6 +82,8 @@ function! s:edits(workspace_edit) abort
   let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(a:workspace_edit)
 
   call lamp#view#edit#apply_workspace(l:workspace_edit)
+
+  call lamp#view#notice#add({ 'lines': ['`Rename`: renamed.'] })
 
   " current buffer only.
   let l:current_uri = lamp#protocol#document#encode_uri(bufnr('%'))
