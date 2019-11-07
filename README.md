@@ -135,7 +135,8 @@ endfunction
 # TODO
 - Write `signs/highlight` tests
 - Improve diagnostics handling
+    - update signs/highlights when update diagnostics in insert mode.
 - Create asyncomplete source
-- Show message when has no server that supports specific capability
 - Design canceling outdated request
+- ! Multibyte support
 
