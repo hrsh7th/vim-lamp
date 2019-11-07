@@ -7,6 +7,7 @@ function! lamp#feature#formatting#do() abort
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.documentFormattingProvider') })
   if empty(l:servers)
+    call lamp#view#notice#add({ 'lines': ['`Formatting`: Has no `Formatting` capability.'] })
     return
   endif
   let l:p = l:servers[0].request('textDocument/formatting', {

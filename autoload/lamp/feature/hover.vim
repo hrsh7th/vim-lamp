@@ -31,7 +31,7 @@ function! lamp#feature#hover#do() abort
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.hoverProvider') })
   if empty(l:servers)
-    call lamp#view#notice#add({ 'lines': ['_hover_: has no hover supported servers.'] })
+    call lamp#view#notice#add({ 'lines': ['`Hover`: has no `Hover` capability.'] })
     return
   endif
 
@@ -56,7 +56,7 @@ function! s:on_response(bufnr, responses) abort
   let l:contents = map(l:contents, { k, v -> v.contents })
   let l:contents = lamp#protocol#markup_content#normalize(l:contents)
   if empty(l:contents)
-    call lamp#view#notice#add({ 'lines': ['_hover_: no hover contents.'] })
+    call lamp#view#notice#add({ 'lines': ['`Hover`: No hover content found.'] })
     return
   endif
 

@@ -15,6 +15,7 @@ function! lamp#feature#definition#do(command) abort
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype', ''))
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.definitionProvider') })
   if empty(l:servers)
+    call lamp#view#notice#add({ 'lines': ['`Definition`: Has no `Definition` capability.'] })
     return
   endif
 
@@ -48,6 +49,8 @@ function! s:on_response(command, bufnr, responses) abort
     call lamp#view#buffer#open(a:command, l:locations[0])
   elseif len(l:locations) > 1
     call lamp#config('feature.definition.on_definitions')(l:locations)
+  else
+    call lamp#view#notice#add({ 'lines': ['`Definition`: No definitions found.'] })
   endif
 endfunction
 
