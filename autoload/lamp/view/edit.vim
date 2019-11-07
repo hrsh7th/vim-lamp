@@ -82,9 +82,10 @@ function! s:edit(bufnr, edit, position) abort
   if a:edit.range.end.line <= a:position.line
     if a:edit.range.end.line == a:position.line
       if a:position.character <= a:edit.range.end.character
-        let a:position.character = a:edit.range.end.character
+        " TODO: Is this needed?
+        " let a:position.character = a:edit.range.end.character
       else
-        let a:position.character = a:position.character + (strchars(l:lines[-1]) - strchars(l:after_line))
+        let a:position.character = a:position.character + strchars(l:lines[-1]) - strchars(l:end_line)
       endif
     endif
 
