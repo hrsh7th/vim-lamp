@@ -24,6 +24,8 @@ endfunction
 function! s:on_response(bufnr, response) abort
   if type(a:response) == type([])
     call lamp#view#edit#apply(a:bufnr, a:response)
+  else
+    call lamp#view#notice#add({ 'lines': ['`Formatting`: No formatting response found.'] })
   endif
 endfunction
 
