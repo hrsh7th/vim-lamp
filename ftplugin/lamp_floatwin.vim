@@ -4,7 +4,25 @@ augroup lamp_floatwin
   autocmd BufWinEnter * call s:update()
 augroup END
 
-" This function for support nvim's floatwin.
+" @see lamp#view#floatwin
+function! LampFloatwinSyntaxShouldUpdate(bufnr) abort
+  if !has_key(b:, 'lamp_floatwin_state')
+    return v:true
+  endif
+
+  if !b:lamp_floatwin_state.markdown_syntax
+    return v:true
+  endif
+
+  for [l:mark, l:language] in items(s:get_language_map(s:find_marks(a:bufnr)))
+    if !has_key(b:lamp_floatwin_state.fenced_language_syntaxes, l:language) ||
+          \ !has_key(b:lamp_floatwin_state.fenced_mark_syntaxes, l:mark)
+      return v:true
+    endif
+  endfor
+  return v:false
+endfunction
+
 " @see lamp#view#floatwin
 function! LampFloatwinSyntaxUpdate()
   call s:update()
@@ -18,42 +36,59 @@ function! s:update()
     return
   endif
 
-  call s:clear()
-  runtime! syntax/markdown.vim
-  syntax include @Markdown syntax/markdown.vim
+  " initialize state.
+  let b:lamp_floatwin_state = get(b:, 'lamp_floatwin_state', {
+        \   'markdown_syntax': v:false,
+        \   'fenced_language_syntaxes': {},
+        \   'fenced_mark_syntaxes': {},
+        \ })
 
-  let l:done_syntaxes = []
-  for [l:mark, l:syntax] in items(s:get_syntax_map(s:find_marks()))
+  " include markdown syntax.
+  if !b:lamp_floatwin_state.markdown_syntax
+    let b:lamp_floatwin_state.markdown_syntax = v:true
+
     call s:clear()
-    let l:syntax_group = printf('@LampMarkdownFenced_%s', s:escape(l:syntax))
+    runtime! syntax/markdown.vim
+    syntax include @Markdown syntax/markdown.vim
+  endif
 
-    " include syntax.
-    if index(l:done_syntaxes, l:syntax) == -1
+  for [l:mark, l:language] in items(s:get_language_map(s:find_marks(bufnr('%'))))
+    let l:language_group = printf('@LampMarkdownFenced_%s', s:escape(l:language))
+
+    " include syntax for language.
+    if !has_key(b:lamp_floatwin_state.fenced_language_syntaxes, l:language)
+      let b:lamp_floatwin_state.fenced_language_syntaxes[l:language] = v:true
+
       try
-        if l:syntax ==# 'vim' && has('nvim')
-          execute printf('syntax include %s syntax/vim/generated.vim', l:syntax_group)
+        if l:language ==# 'vim' && has('nvim')
+          call s:clear()
+          execute printf('syntax include %s syntax/vim/generated.vim', l:language_group)
         else
-          for l:syntax_path in s:find_syntax_path(l:syntax)
-            execute printf('syntax include %s %s', l:syntax_group, l:syntax_path)
+          for l:syntax_path in s:find_syntax_path(l:language)
+            call s:clear()
+            execute printf('syntax include %s %s', l:language_group, l:syntax_path)
           endfor
         endif
       catch /.*/
         continue
       endtry
-      let l:done_syntaxes += [l:syntax]
     endif
 
-    " apply '```%mark% ... ```' to the syntax.
-    call s:clear()
-    let l:mark_group = printf('LampMarkdownFencedMark_%s', s:escape(l:mark))
-    let l:start_mark = printf('^\s*```\s*%s\s*', l:mark)
-    let l:end_mark = '\s*```\s*$'
-    execute printf('syntax region %s matchgroup=LampMarkdownFencedStart start="%s" matchgroup=LampMarkdownFencedEnd end="%s" containedin=@Markdown contains=%s concealends',
-          \   l:mark_group,
-          \   l:start_mark,
-          \   l:end_mark,
-          \   l:syntax_group
-          \ )
+    " add highlight and conceal for mark.
+    if !has_key(b:lamp_floatwin_state.fenced_mark_syntaxes, l:mark)
+      let b:lamp_floatwin_state.fenced_mark_syntaxes[l:mark] = v:true
+
+      call s:clear()
+      let l:mark_group = printf('LampMarkdownFencedMark_%s', s:escape(l:mark))
+      let l:start_mark = printf('^\s*```\s*%s\s*', l:mark)
+      let l:end_mark = '\s*```\s*$'
+      execute printf('syntax region %s matchgroup=LampMarkdownFencedStart start="%s" matchgroup=LampMarkdownFencedEnd end="%s" containedin=@Markdown contains=%s concealends',
+            \   l:mark_group,
+            \   l:start_mark,
+            \   l:end_mark,
+            \   l:language_group
+            \ )
+    endif
   endfor
 endfunction
 
@@ -61,8 +96,8 @@ endfunction
 " find marks.
 " @see autoload/lamp/view/floatwin.vim
 "
-function! s:find_marks() abort
-  let l:text = join(getbufvar(bufnr('%'), 'lamp_floatwin_lines', []), "\n")
+function! s:find_marks(bufnr) abort
+  let l:text = join(getbufvar(a:bufnr, 'lamp_floatwin_lines', []), "\n")
 
   let l:marks = {}
   let l:pos = 0
@@ -81,15 +116,15 @@ endfunction
 "
 " get_syntax_map
 "
-function! s:get_syntax_map(marks) abort
-  let l:syntax_map = {}
+function! s:get_language_map(marks) abort
+  let l:language_map = {}
 
   for l:mark in a:marks
 
     " resolve from lamp#config
-    for [l:syntax, l:marks] in items(lamp#config('view.floatwin.fenced_languages'))
+    for [l:language, l:marks] in items(lamp#config('view.floatwin.fenced_languages'))
       if index(l:marks, l:mark) >= 0
-        let l:syntax_map[l:mark] = l:syntax
+        let l:language_map[l:mark] = l:language
         break
       endif
     endfor
@@ -99,7 +134,7 @@ function! s:get_syntax_map(marks) abort
       " Supports `let g:markdown_fenced_languages = ['sh']`
       if l:config !~# '='
         if l:config ==# l:mark
-          let l:syntax_map[l:mark] = l:mark
+          let l:language_map[l:mark] = l:mark
           break
         endif
 
@@ -107,19 +142,19 @@ function! s:get_syntax_map(marks) abort
       else
         let l:config = split(l:config, '=')
         if l:config[1] ==# l:mark
-          let l:syntax_map[l:config[1]] = l:config[0]
+          let l:language_map[l:config[1]] = l:config[0]
           break
         endif
       endif
     endfor
 
     " add as-is if can't resolved.
-    if !has_key(l:syntax_map, l:mark)
-      let l:syntax_map[l:mark] = l:mark
+    if !has_key(l:language_map, l:mark)
+      let l:language_map[l:mark] = l:mark
     endif
   endfor
 
-  return l:syntax_map
+  return l:language_map
 endfunction
 
 "

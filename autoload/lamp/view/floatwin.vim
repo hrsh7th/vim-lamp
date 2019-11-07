@@ -106,7 +106,9 @@ function! s:Floatwin.show(screenpos, contents) abort
   call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
 
   " update syntax highlight
-  call lamp#view#window#do(self.winid(), { -> LampFloatwinSyntaxUpdate() })
+  if LampFloatwinSyntaxShouldUpdate(self.bufnr)
+    call lamp#view#window#do(self.winid(), { -> LampFloatwinSyntaxUpdate() })
+  endif
 endfunction
 
 "
