@@ -45,20 +45,20 @@ augroup END
 " textDocument/didOpen
 "
 function! s:on_text_document_did_open() abort
+  let l:bufnr = bufnr('%')
+  let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
+
+  if !empty(l:servers)
+    doautocmd User lamp#text_document_did_open
+  endif
+
   let l:fn = {}
-  function! l:fn.debounce(bufnr) abort
-    let l:servers = lamp#server#registry#find_by_filetype(getbufvar(a:bufnr, '&filetype'))
-    for l:server in l:servers
+  function! l:fn.debounce(bufnr, servers) abort
+    for l:server in a:servers
       call l:server.ensure_document(a:bufnr)
     endfor
-
-    if !empty(l:servers)
-      doautocmd User lamp#text_document_did_open
-    endif
   endfunction
-
-  let l:bufnr = bufnr('%')
-  call lamp#debounce('s:on_text_document_did_open:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
+  call lamp#debounce('s:on_text_document_did_open:' . l:bufnr, { -> l:fn.debounce(l:bufnr, l:servers) }, 100)
 endfunction
 
 "
