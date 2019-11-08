@@ -155,6 +155,8 @@ endfunction
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
+- Context menu spport?
+- DocumentSymbol as textobject?
 - ! Performance
 - ! Fix bug of s:Server.close_document
 - ! Multibyte support
