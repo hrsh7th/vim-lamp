@@ -69,6 +69,15 @@ let g:lamp#server#capability#definition = {
       \       'deprecatedSupport': v:false,
       \       'preselectSupport': v:false,
       \     },
+      \     'signatureHelp': {
+      \       'dynamicRegistration': v:false,
+      \       'signatureInformation': {
+      \         'documentationFormat': ['plaintext', 'markdown'],
+      \         'parameterInformation': {
+      \           'labelOffsetSupport': v:true
+      \         }
+      \       },
+      \     },
       \     'hoverSupport': {
       \       'dynamicRegistration': v:false,
       \       'contentFormat': [],
@@ -91,7 +100,7 @@ endfunction
 let s:Capability = {}
 
 "
-" new.
+" new
 "
 function! s:Capability.new(capability) abort
   return extend(deepcopy(s:Capability), {
@@ -100,42 +109,49 @@ function! s:Capability.new(capability) abort
 endfunction
 
 "
-" merge.
+" merge
 "
 function! s:Capability.merge(capability) abort
   let self.capability = s:merge(self.capability, a:capability)
 endfunction
 
 "
-" register.
+" register
 "
 function! s:Capability.register(capability) abort
   " TODO: impl
 endfunction
 
 "
-" unregister.
+" unregister
 "
 function! s:Capability.register(capability) abort
   " TODO: impl
 endfunction
 
 "
-" supports.
+" supports
 "
 function! s:Capability.supports(path) abort
   return lamp#get(self.capability, a:path, v:null) isnot v:null
 endfunction
 
 "
-" get completion trigger characters.
+" get_completion_trigger_characters
 "
 function! s:Capability.get_completion_trigger_characters() abort
   return lamp#get(self.capability, 'capabilities.completionProvider.triggerCharacters', [])
 endfunction
 
 "
-" get_text_document_sync_kind.
+" get_signature_help_trigger_characters characters
+"
+function! s:Capability.get_signature_help_trigger_characters() abort
+  return lamp#get(self.capability, 'capabilities.signatureHelpProvider.triggerCharacters', [])
+endfunction
+
+"
+" get_text_document_sync_kind
 "
 function! s:Capability.get_text_document_sync_kind() abort
   let l:kind_or_option = lamp#get(self.capability, 'capabilities.textDocumentSync', 0)

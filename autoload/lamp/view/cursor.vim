@@ -1,3 +1,6 @@
+"
+" lamp#view#cursor#get_before_char_skip_white
+"
 function! lamp#view#cursor#get_before_char_skip_white() abort
   let l:current_lnum = line('.')
 
@@ -17,8 +20,22 @@ function! lamp#view#cursor#get_before_char_skip_white() abort
   return ''
 endfunction
 
+"
+" lamp#view#cursor#get_before_line
+"
 function! lamp#view#cursor#get_before_line() abort
   let l:text = getline('.')
   return l:text[0 : min([strlen(l:text), col('.') - 2])]
+endfunction
+
+"
+" lamp#view#cursor#get_before_char
+"
+function! lamp#view#cursor#get_before_char() abort
+  let l:before_line = lamp#view#cursor#get_before_line()
+  if strlen(l:before_line) > 0
+    return l:before_line[-1:-1]
+  endif
+  return ''
 endfunction
 

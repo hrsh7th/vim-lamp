@@ -97,9 +97,10 @@ endfunction
 " @see autoload/lamp/view/floatwin.vim
 "
 function! s:find_marks(bufnr) abort
-  let l:text = join(getbufvar(a:bufnr, 'lamp_floatwin_lines', []), "\n")
-
   let l:marks = {}
+
+  " find from buffer contents.
+  let l:text = join(getbufvar(a:bufnr, 'lamp_floatwin_lines', []), "\n")
   let l:pos = 0
   while 1
     let l:match = matchlist(l:text, '```\s*\(\w\+\)', l:pos, 1)
@@ -109,6 +110,15 @@ function! s:find_marks(bufnr) abort
     let l:marks[l:match[1]] = v:true
     let l:pos = matchend(l:text, '```\s*\(\w\+\)', l:pos, 1)
   endwhile
+
+  " find from server definition.
+  for l:server in lamp#server#registry#all()
+    for l:filetype in l:server.filetypes
+      for l:part in split(l:filetype, '\.')
+        let l:marks[l:part] = v:true
+      endfor
+    endfor
+  endfor
 
   return keys(l:marks)
 endfunction

@@ -110,7 +110,7 @@ endfunction
     - [x] textDocument/completion
     - [x] completionItem/resolve
     - [x] textDocument/hover
-    - [ ] textDocument/signatureHelp
+    - [x] textDocument/signatureHelp
     - [ ] textDocument/declaration
     - [x] textDocument/definition
     - [ ] textDocument/typeDefinition
