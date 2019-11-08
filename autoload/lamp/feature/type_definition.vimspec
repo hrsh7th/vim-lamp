@@ -1,0 +1,63 @@
+let s:expect = themis#helper('expect')
+
+Describe lamp#feature#type_definition
+
+  Before each
+    let s:server = lamp#register('typescript-language-server', {
+          \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
+          \   'filetypes': ['typescript', 'typescript.tsx'],
+          \   'root_uri': { -> lamp#config('root') . '/fixture/typescript-fixture/' }
+          \ })
+    call lamp#sync(s:server.start())
+    call lamp#sync(s:server.initialize())
+  End
+
+  After each
+    call lamp#sync(s:server.stop())
+    call lamp#view#buffer#reset()
+  End
+
+  It Should retrieve one type_definitions
+    call lamp#view#buffer#open('vsplit', {
+          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+          \   'lnum': 1,
+          \   'col': 10
+          \ })
+    set filetype=typescript
+
+    let l:bufnr = bufnr('%')
+    call lamp#feature#type_definition#do('edit')
+    call lamp#sync({ -> l:bufnr != bufnr('%') })
+  End
+
+  It Should retrieve multiple type_definitions
+    call lamp#view#buffer#open('vsplit', {
+          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+          \   'lnum': 3,
+          \   'col': 29
+          \ })
+    set filetype=typescript
+
+    let l:buftype = getbufvar('%', '&buftype')
+    call lamp#feature#type_definition#do('edit')
+    call lamp#sync({ -> l:buftype != getbufvar('%', '&buftype') })
+    call s:expect(getbufvar(bufnr('%'), '&buftype')).to_equal('quickfix')
+  End
+
+  It Should retrieve multiple type_definitions for custom handler
+    call lamp#view#buffer#open('vsplit', {
+          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+          \   'lnum': 3,
+          \   'col': 29
+          \ })
+    set filetype=typescript
+
+    let s:called = v:false
+    call lamp#config('feature.type_definition.on_type_definitions', { -> execute('let s:called = v:true') })
+    call lamp#feature#type_definition#do('edit')
+    call lamp#sync({ -> s:called })
+    call lamp#config('feature.type_definition.on_type_definitions', { -> execute('copen') })
+  End
+
+End
+

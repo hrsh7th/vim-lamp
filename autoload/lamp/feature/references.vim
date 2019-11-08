@@ -39,13 +39,7 @@ endfunction
 function! s:on_response(bufnr, responses) abort
   let l:locations = []
   for l:response in a:responses
-    for l:location in l:response
-      call add(l:locations, {
-            \   'filename': lamp#protocol#document#decode_uri(l:location.uri),
-            \   'lnum': (l:location.range.start.line) + 1,
-            \   'col': (l:location.range.start.character) + 1,
-            \ })
-    endfor
+    let l:locations += lamp#protocol#location#normalize(l:response)
   endfor
 
   if len(l:locations) > 0

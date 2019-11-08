@@ -52,11 +52,28 @@ function! s:on_text_document_did_open() abort
   nmap <buffer> gf<CR>       <Plug>(lamp-definition)
   nmap <buffer> gfs          <Plug>(lamp-definition-split)
   nmap <buffer> gfv          <Plug>(lamp-definition-vsplit)
+
+  nmap <buffer> tgf<CR>      <Plug>(lamp-type-definition)
+  nmap <buffer> tgfs         <Plug>(lamp-type-definition-split)
+  nmap <buffer> tgfv         <Plug>(lamp-type-definition-vsplit)
+
+  nmap <buffer> dgf<CR>      <Plug>(lamp-declaration)
+  nmap <buffer> dgfs         <Plug>(lamp-declaration-split)
+  nmap <buffer> dgfv         <Plug>(lamp-declaration-vsplit)
+
+  nmap <buffer> igf<CR>      <Plug>(lamp-implementation)
+  nmap <buffer> igfs         <Plug>(lamp-implementation-split)
+  nmap <buffer> igfv         <Plug>(lamp-implementation-vsplit)
+
   nmap <buffer> <Leader>i    <Plug>(lamp-hover)
+
   nmap <buffer> <Leader>r    <Plug>(lamp-rename)
+
   nmap <buffer> <Leader>g    <Plug>(lamp-references)
+
   nmap <buffer> <Leader>f    <Plug>(lamp-formatting)
   vmap <buffer> <Leader>f    <Plug>(lamp-range-formatting)
+
   nmap <buffer> <Leader><CR> <Plug>(lamp-code-action)
   vmap <buffer> <Leader><CR> <Plug>(lamp-code-action)
 
@@ -111,10 +128,10 @@ endfunction
     - [x] completionItem/resolve
     - [x] textDocument/hover
     - [x] textDocument/signatureHelp
-    - [ ] textDocument/declaration
+    - [x] textDocument/declaration
     - [x] textDocument/definition
-    - [ ] textDocument/typeDefinition
-    - [ ] textDocument/implementation
+    - [x] textDocument/typeDefinition
+    - [x] textDocument/implementation
     - [x] textDocument/references
     - [ ] textDocument/documentHighlight
     - [ ] textDocument/documentSymbol
@@ -137,6 +154,7 @@ endfunction
 - Create asyncomplete source
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
+- Should be abstracted location's feature?
 - ! Performance
 - ! Fix bug of s:Server.close_document
 - ! Multibyte support

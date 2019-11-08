@@ -21,6 +21,18 @@ nnoremap <silent><Plug>(lamp-definition)                     :<C-u>call lamp#fea
 nnoremap <silent><Plug>(lamp-definition-split)               :<C-u>call lamp#feature#definition#do('split')<CR>
 nnoremap <silent><Plug>(lamp-definition-vsplit)              :<C-u>call lamp#feature#definition#do('vsplit')<CR>
 
+nnoremap <silent><Plug>(lamp-type-definition)                :<C-u>call lamp#feature#type_definition#do('edit')<CR>
+nnoremap <silent><Plug>(lamp-type-definition-split)          :<C-u>call lamp#feature#type_definition#do('split')<CR>
+nnoremap <silent><Plug>(lamp-type-definition-vsplit)         :<C-u>call lamp#feature#type_definition#do('vsplit')<CR>
+
+nnoremap <silent><Plug>(lamp-declaration)                    :<C-u>call lamp#feature#declaration#do('edit')<CR>
+nnoremap <silent><Plug>(lamp-declaration-split)              :<C-u>call lamp#feature#declaration#do('split')<CR>
+nnoremap <silent><Plug>(lamp-declaration-vsplit)             :<C-u>call lamp#feature#declaration#do('vsplit')<CR>
+
+nnoremap <silent><Plug>(lamp-implementation)                 :<C-u>call lamp#feature#implementation#do('edit')<CR>
+nnoremap <silent><Plug>(lamp-implementation-split)           :<C-u>call lamp#feature#implementation#do('split')<CR>
+nnoremap <silent><Plug>(lamp-implementation-vsplit)          :<C-u>call lamp#feature#implementation#do('vsplit')<CR>
+
 nnoremap <silent><Plug>(lamp-rename)                         :<C-u>call lamp#feature#rename#do()<CR>
 
 nnoremap <silent><Plug>(lamp-hover)                          :<C-u>call lamp#feature#hover#do()<CR>

@@ -1,26 +1,26 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 
 "
-" lamp#feature#definition#init
+" lamp#feature#type_definition#init
 "
-function! lamp#feature#definition#init() abort
+function! lamp#feature#type_definition#init() abort
   " noop.
 endfunction
 
 "
-" lamp#feature#definition#do
+" lamp#feature#type_definition#do
 "
-function! lamp#feature#definition#do(command) abort
+function! lamp#feature#type_definition#do(command) abort
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype', ''))
-  let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.definitionProvider') })
+  let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.typeDefinitionProvider') })
   if empty(l:servers)
-    call lamp#view#notice#add({ 'lines': ['`Definition`: Has no `Definition` capability.'] })
+    call lamp#view#notice#add({ 'lines': ['`TypeDefinition`: Has no `TypeDefinition` capability.'] })
     return
   endif
 
   let l:promises = map(l:servers, { k, v ->
-        \   v.request('textDocument/definition', {
+        \   v.request('textDocument/typeDefinition', {
         \     'textDocument': lamp#protocol#document#identifier(bufnr('%')),
         \     'position': lamp#protocol#position#get(),
         \   }).catch(lamp#rescue([]))
@@ -42,9 +42,10 @@ function! s:on_response(command, bufnr, responses) abort
   if len(l:locations) == 1
     call lamp#view#buffer#open(a:command, l:locations[0])
   elseif len(l:locations) > 1
-    call lamp#config('feature.definition.on_definitions')(l:locations)
+    call lamp#config('feature.type_definition.on_type_definitions')(l:locations)
   else
-    call lamp#view#notice#add({ 'lines': ['`Definition`: No definitions found.'] })
+    call lamp#view#notice#add({ 'lines': ['`TypeDefinition`: No type definitions found.'] })
   endif
 endfunction
+
 
