@@ -138,5 +138,6 @@ endfunction
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
 - ! Performance
+- ! Fix bug of s:Server.close_document
 - ! Multibyte support
 
