@@ -80,21 +80,20 @@ function! s:on_responses(responses) abort
   endif
 
   let l:code_action = l:code_actions[l:index]
-  if has_key(l:code_action.action, 'command')
-    " Seems bug of typescript-language-server.
-    " LSP Spec says `CodeAction['command']` is Command type.
-    " But the server response `CodeAction` as Command type.
-    if has_key(l:code_action.action, 'arguments')
-      call l:code_action.server.request('workspace/executeCommand', {
-            \   'command': l:code_action.action.command,
-            \   'arguments': get(l:code_action.action, 'arguments', v:null)
-            \ })
-    else
-      call l:code_action.server.request('workspace/executeCommand', {
-            \   'command': l:code_action.action.command.command,
-            \   'arguments': get(l:code_action.action.command, 'arguments', v:null)
-            \ })
-    endif
+  " Command
+  if has_key(l:code_action.action, 'command') && type(l:code_action.action.command) == type('')
+    call l:code_action.server.request('workspace/executeCommand', {
+          \   'command': l:code_action.action.command,
+          \   'arguments': get(l:code_action.action, 'arguments', v:null)
+          \ })
+  
+  " has Command
+  elseif has_key(l:code_action.action, 'command') && type(l:code_action.action.command) == type({})
+    call l:code_action.server.request('workspace/executeCommand', {
+          \   'command': l:code_action.action.command.command,
+          \   'arguments': get(l:code_action.action.command, 'arguments', v:null)
+          \ })
+  " has edit.
   elseif has_key(l:code_action.action, 'edit')
     let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(l:code_action.action.edit)
     call lamp#view#edit#apply_workspace(l:workspace_edit)
