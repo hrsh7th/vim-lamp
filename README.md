@@ -99,8 +99,8 @@ endfunction
     - [ ] telemetry/event
 
 - Client
-    - [ ] client/registerCapability
-    - [ ] client/unregisterCapability
+    - [ ] ~~client/registerCapability~~
+    - [ ] ~~client/unregisterCapability~~
 
 - Workspace
     - [ ] workspace/workspaceFolders
