@@ -18,8 +18,8 @@ function! lamp#feature#diagnostic#init() abort
     autocmd!
 
     " update tooltip.
-    autocmd CursorMoved * call s:show_floatwin()
-    autocmd InsertEnter * call s:clear_for_insertmode()
+    autocmd CursorMoved * call s:on_cursor_moved()
+    autocmd InsertEnter * call s:on_insert_enter()
 
     " update signs & highlights.
     autocmd BufWinEnter,InsertLeave,BufWritePost * call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 500)
@@ -37,7 +37,7 @@ function! lamp#feature#diagnostic#update() abort
   let l:fn = {}
   function! l:fn.debounce() abort
     call s:update()
-    call s:show_floatwin()
+    call s:on_cursor_moved()
   endfunction
   call lamp#debounce('lamp#feature#diagnostic#update', l:fn.debounce, 100)
 endfunction
@@ -45,9 +45,11 @@ endfunction
 "
 " lamp#feature#diagnostic#show_floatwin
 "
-function! s:show_floatwin() abort
-  if mode() !=# 'n' || empty(lamp#view#sign#get_line(bufnr('%'), line('.')))
-    call s:floatwin.hide()
+function! s:on_cursor_moved() abort
+  if s:floatwin.is_showing()
+    if empty(lamp#view#sign#get_line(bufnr('%'), line('.')))
+      call s:floatwin.hide()
+    endif
     return
   endif
 
@@ -94,7 +96,7 @@ endfunction
 "
 " s:clear_for_insertmode
 "
-function! s:clear_for_insertmode() abort
+function! s:on_insert_enter() abort
   call s:floatwin.hide()
   call lamp#view#highlight#remove(bufnr('%'))
 endfunction

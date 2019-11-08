@@ -39,13 +39,14 @@ endfunction
 " lamp#view#floatwin#nvim#is_showing
 "
 function! lamp#view#floatwin#nvim#is_showing(floatwin) abort
-  if empty(get(a:floatwin, 'nvim_window', v:null))
+  if !has_key(a:floatwin,'nvim_window') || a:floatwin.nvim_window is v:null
     return v:false
   endif
 
   try
     return nvim_win_get_number(a:floatwin.nvim_window) != -1
   catch /.*/
+    let a:floatwin.nvim_window = v:null
   endtry
   return v:false
 endfunction

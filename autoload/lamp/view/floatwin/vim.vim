@@ -41,11 +41,12 @@ endfunction
 " lamp#view#floatwin#vim#is_showing
 "
 function! lamp#view#floatwin#vim#is_showing(floatwin) abort
-  if empty(get(a:floatwin, 'vim_winid', v:null))
+  if !has_key(a:floatwin, 'vim_winid') || a:floatwin.vim_winid is v:null
     return v:false
   endif
 
   if win_id2win(a:floatwin.vim_winid) == -1
+    let a:floatwin.vim_winid = v:null
     return v:false
   endif
   return v:true
