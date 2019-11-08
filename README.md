@@ -134,9 +134,9 @@ endfunction
 
 # TODO
 - Write `signs/highlight` tests
-- Improve diagnostics handling
-    - update signs/highlights when update diagnostics in insert mode.
 - Create asyncomplete source
 - Design canceling outdated request
+- Design event handling (like vim-lsc's once)
+- ! Performance
 - ! Multibyte support
 

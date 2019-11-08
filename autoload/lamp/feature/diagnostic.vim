@@ -1,6 +1,14 @@
 let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({})
 
+"
+" {
+"   'server_name': {
+"     'document_uri': [number]
+"   }
+" }
+"
+let s:diagnostics_versions = {} 
 
 "
 " init
@@ -14,7 +22,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd InsertEnter * call s:clear_for_insertmode()
 
     " update signs & highlights.
-    autocmd WinEnter,BufEnter,BufWritePost * call s:update()
+    autocmd BufWinEnter,InsertLeave,BufWritePost * call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 500)
   augroup END
 endfunction
 
@@ -99,15 +107,44 @@ function! s:update() abort
     return
   endif
 
+  let l:updated_bufnrs = {}
   for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
     let l:bufnr = winbufnr(l:winnr)
+    if has_key(l:updated_bufnrs, l:bufnr)
+      continue
+    endif
+    let l:updated_bufnrs[l:bufnr] = v:true
 
+    let l:uri = lamp#protocol#document#encode_uri(l:bufnr)
+
+    " find updated document.
+    let l:updated_documents = []
+    for [l:server_name, l:document] in items(s:get_document_map(l:uri))
+      if !has_key(s:diagnostics_versions, l:server_name)
+        let s:diagnostics_versions[l:server_name] = {}
+      endif
+      if !has_key(s:diagnostics_versions[l:server_name], l:uri)
+        let s:diagnostics_versions[l:server_name][l:uri] = l:document.diagnostics_version - 1 " should update first.
+      endif
+
+      if s:diagnostics_versions[l:server_name][l:uri] != l:document.diagnostics_version
+        call add(l:updated_documents, l:document)
+        let s:diagnostics_versions[l:server_name][l:uri] = l:document.diagnostics_version
+      endif
+    endfor
+
+    " no update.
+    if empty(l:updated_documents)
+      continue
+    endif
+
+    " clear.
     call lamp#view#sign#remove(l:bufnr)
     call lamp#view#highlight#remove(l:bufnr)
 
     " update.
-    for [l:server_name, l:diagnostics] in items(s:get_diagnostic_map(lamp#protocol#document#encode_uri(l:bufnr)))
-      for l:diagnostic in l:diagnostics
+    for [l:server_name, l:document] in items(s:get_document_map(l:uri))
+      for l:diagnostic in l:document.diagnostics
         let l:severity = get(l:diagnostic, 'severity', 1)
         if l:severity == 1
           call lamp#view#sign#error(l:bufnr, l:diagnostic.range.start.line + 1)
@@ -128,19 +165,18 @@ function! s:update() abort
 endfunction
 
 "
-" s:get_diagnostic_map
+" s:get_document_map
 "
-function! s:get_diagnostic_map(uri) abort
+function! s:get_document_map(uri) abort
   let l:servers = lamp#server#registry#all()
   let l:servers = filter(l:servers, { k, v -> has_key(v.documents, a:uri) })
   if empty(l:servers)
     return {}
   endif
-
-  let l:diagnostic_map = {}
+  let l:document_map = {}
   for l:server in l:servers
-    let l:diagnostic_map[l:server.name] = l:server.documents[a:uri].diagnostics
+    let l:document_map[l:server.name] = l:server.documents[a:uri]
   endfor
-  return l:diagnostic_map
+  return l:document_map
 endfunction
 

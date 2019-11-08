@@ -18,6 +18,7 @@ function! s:Document.new(bufnr) abort
         \   'filetype': getbufvar(a:bufnr, '&filetype'),
         \   'language_id': lamp#protocol#document#language_id(a:bufnr),
         \   'changedtick': getbufvar(a:bufnr, 'changedtick'),
+        \   'diagnostics_version': 0,
         \   'diagnostics': [],
         \ })
 endfunction
@@ -50,6 +51,7 @@ endfunction
 " set_diagnostics.
 "
 function! s:Document.set_diagnostics(diagnostics) abort
+  let self.diagnostics_version += 1
   let self.diagnostics = a:diagnostics
 endfunction
 
