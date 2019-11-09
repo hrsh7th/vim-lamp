@@ -1,4 +1,15 @@
 "
+" lamp#view#buffer#append_line
+"
+function! lamp#view#buffer#append_line(bufnr, start, line) abort
+  if has('nvim')
+    call nvim_buf_set_lines(a:bufnr, a:start, a:start, v:false, [a:line])
+  else
+    call appendbufline(a:bufnr, a:start, a:line)
+  endif
+endfunction
+
+"
 " lamp#view#buffer#open
 "
 function! lamp#view#buffer#open(command, location) abort

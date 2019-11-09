@@ -101,7 +101,7 @@ function! s:edit(bufnr, edit, position) abort
         call setbufline(a:bufnr, l:lnum, l:lines[l:i])
       endif
     else
-      call appendbufline(a:bufnr, l:lnum - 1, l:lines[l:i])
+      call lamp#view#buffer#append_line(a:bufnr, l:lnum - 1, l:lines[l:i])
     endif
     let l:i += 1
   endwhile
