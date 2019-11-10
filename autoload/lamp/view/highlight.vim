@@ -1,57 +1,108 @@
 let s:initialized = v:false
-let s:highlights = {}
+let s:buf_highlights = {}
+let s:win_highlights = {}
 
 "
 " remove.
 "
-function! lamp#view#highlight#remove(bufnr) abort
-  for l:winid in win_findbuf(a:bufnr)
-    call lamp#view#window#do(l:winid, { -> clearmatches() })
-  endfor
+function! lamp#view#highlight#remove(namespace, ...) abort
+  if len(a:000) > 0
+    if has_key(s:buf_highlights, a:namespace) && has_key(s:buf_highlights[a:namespace], a:000[0])
+      let s:buf_highlights[a:namespace][a:000[0]] = []
+    endif
+  else
+    if has_key(s:buf_highlights, a:namespace)
+      let s:buf_highlights[a:namespace] = {}
+    endif
+  endif
+  call s:update()
+endfunction
+
+"
+" attention.
+"
+function! lamp#view#highlight#attention(namespace, bufnr, range) abort
+  call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampAttention')
 endfunction
 
 "
 " error.
 "
-function! lamp#view#highlight#error(bufnr, range) abort
-  call s:add_highlight('LampError', a:bufnr, a:range)
+function! lamp#view#highlight#error(namespace, bufnr, range) abort
+  call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampError')
 endfunction
 
 "
 " warning.
 "
-function! lamp#view#highlight#warning(bufnr, range) abort
-  call s:add_highlight('LampWarning', a:bufnr, a:range)
+function! lamp#view#highlight#warning(namespace, bufnr, range) abort
+  call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampWarning')
 endfunction
 
 "
 " information.
 "
-function! lamp#view#highlight#information(bufnr, range) abort
-  call s:add_highlight('LampInformation', a:bufnr, a:range)
+function! lamp#view#highlight#information(namespace, bufnr, range) abort
+  call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampInformation')
 endfunction
 
 "
 " hint.
 "
-function! lamp#view#highlight#hint(bufnr, range) abort
-  call s:add_highlight('LampHint', a:bufnr, a:range)
+function! lamp#view#highlight#hint(namespace, bufnr, range) abort
+  call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampHint')
 endfunction
 
 
 "
 " s:add_highlight
 "
-function! s:add_highlight(highlight, bufnr, range) abort
+function! s:add_highlight(namespace, bufnr, range, highlight) abort
   call s:initialize()
 
   if !lamp#protocol#range#has_length(a:range)
     return
   endif
 
-  for l:winid in win_findbuf(a:bufnr)
-    call matchaddpos(a:highlight, s:positions(a:bufnr, a:range), 100, -1, { 'window': l:winid })
-  endfor
+  if !has_key(s:buf_highlights, a:namespace)
+    let s:buf_highlights[a:namespace] = {}
+  endif
+  if !has_key(s:buf_highlights[a:namespace], a:bufnr)
+    let s:buf_highlights[a:namespace][a:bufnr] = []
+  endif
+  let s:buf_highlights[a:namespace][a:bufnr] += [{ 'highlight': a:highlight, 'range': a:range }]
+
+  call s:update()
+endfunction
+
+"
+" s:update
+"
+function! s:update() abort
+  let l:fn = {}
+  function! l:fn.debounce() abort
+    for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
+      " clear current highlight
+      let l:winid = win_getid(l:winnr)
+      if has_key(s:win_highlights, l:winid)
+        call lamp#view#window#do(l:winid, { -> map(copy(s:win_highlights[l:winid]), { k, v -> matchdelete(v) }) })
+        let s:win_highlights[l:winid] = []
+      else
+        let s:win_highlights[l:winid] = []
+      endif
+
+      " add new highlights
+      let l:bufnr = winbufnr(l:winnr)
+      for [l:namespace, l:buf_highlight] in items(s:buf_highlights)
+        if has_key(l:buf_highlight, l:bufnr)
+          for l:highlight in l:buf_highlight[l:bufnr]
+            let s:win_highlights[l:winid] += [matchaddpos(l:highlight.highlight, s:positions(l:bufnr, l:highlight.range), 100, -1, { 'window': l:winid })]
+          endfor
+        endif
+      endfor
+    endfor
+  endfunction
+  call lamp#debounce('lamp#view#highlight:update', { -> l:fn.debounce() }, 0)
 endfunction
 
 "
@@ -90,9 +141,15 @@ function! s:initialize() abort
   endif
   let s:initialized = v:true
 
+  execute printf('highlight! LampAttention guibg=darkyellow')
   execute printf('highlight! LampError guibg=darkred')
   execute printf('highlight! LampWarning guibg=darkmagenta')
   execute printf('highlight! LampInformation gui=underline')
   execute printf('highlight! LampHint gui=underline')
+
+  augroup lamp#view#highlight
+    autocmd!
+    autocmd BufWinEnter,WinNew * call s:update()
+  augroup END
 endfunction
 

@@ -1,6 +1,8 @@
 let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({})
 
+let s:highlight_namespace = 'lamp#feature#diagnostic'
+
 "
 " {
 "   'server_name': {
@@ -16,13 +18,8 @@ let s:diagnostics_versions = {}
 function! lamp#feature#diagnostic#init() abort
   augroup lamp#feature#diagnostic
     autocmd!
-
-    " update tooltip.
-    autocmd CursorMoved * call s:on_cursor_moved()
+    autocmd CursorMoved * call s:show_floatwin()
     autocmd InsertEnter * call s:on_insert_enter()
-
-    " update signs & highlights.
-    autocmd BufWinEnter,InsertLeave,BufWritePost * call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 500)
   augroup END
 endfunction
 
@@ -37,7 +34,7 @@ function! lamp#feature#diagnostic#update() abort
   let l:fn = {}
   function! l:fn.debounce() abort
     call s:update()
-    call s:on_cursor_moved()
+    call s:show_floatwin()
   endfunction
   call lamp#debounce('lamp#feature#diagnostic#update', l:fn.debounce, 100)
 endfunction
@@ -45,7 +42,7 @@ endfunction
 "
 " lamp#feature#diagnostic#show_floatwin
 "
-function! s:on_cursor_moved() abort
+function! s:show_floatwin() abort
   if s:floatwin.is_showing()
     if empty(lamp#view#sign#get_line(bufnr('%'), line('.')))
       call s:floatwin.hide()
@@ -98,7 +95,7 @@ endfunction
 "
 function! s:on_insert_enter() abort
   call s:floatwin.hide()
-  call lamp#view#highlight#remove(bufnr('%'))
+  call lamp#view#highlight#remove(s:highlight_namespace, bufnr('%'))
 endfunction
 
 "
@@ -142,7 +139,7 @@ function! s:update() abort
 
     " clear.
     call lamp#view#sign#remove(l:bufnr)
-    call lamp#view#highlight#remove(l:bufnr)
+    call lamp#view#highlight#remove(s:highlight_namespace, l:bufnr)
 
     " update.
     for [l:server_name, l:document] in items(s:get_document_map(l:uri))
@@ -150,16 +147,16 @@ function! s:update() abort
         let l:severity = get(l:diagnostic, 'severity', 1)
         if l:severity == 1
           call lamp#view#sign#error(l:bufnr, l:diagnostic.range.start.line + 1)
-          call lamp#view#highlight#error(l:bufnr, l:diagnostic.range)
+          call lamp#view#highlight#error(s:highlight_namespace, l:bufnr, l:diagnostic.range)
         elseif l:severity == 2
           call lamp#view#sign#warning(l:bufnr, l:diagnostic.range.start.line + 1)
-          call lamp#view#highlight#error(l:bufnr, l:diagnostic.range)
+          call lamp#view#highlight#warning(s:highlight_namespace, l:bufnr, l:diagnostic.range)
         elseif l:severity == 3
           call lamp#view#sign#information(l:bufnr, l:diagnostic.range.start.line + 1)
-          call lamp#view#highlight#error(l:bufnr, l:diagnostic.range)
+          call lamp#view#highlight#information(s:highlight_namespace, l:bufnr, l:diagnostic.range)
         elseif l:severity == 4
           call lamp#view#sign#hint(l:bufnr, l:diagnostic.range.start.line + 1)
-          call lamp#view#highlight#error(l:bufnr, l:diagnostic.range)
+          call lamp#view#highlight#hint(s:highlight_namespace, l:bufnr, l:diagnostic.range)
         endif
       endfor
     endfor

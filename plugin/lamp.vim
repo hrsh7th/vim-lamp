@@ -20,29 +20,23 @@ endfor
 nnoremap <silent><Plug>(lamp-definition)                     :<C-u>call lamp#feature#definition#do('edit')<CR>
 nnoremap <silent><Plug>(lamp-definition-split)               :<C-u>call lamp#feature#definition#do('split')<CR>
 nnoremap <silent><Plug>(lamp-definition-vsplit)              :<C-u>call lamp#feature#definition#do('vsplit')<CR>
-
 nnoremap <silent><Plug>(lamp-type-definition)                :<C-u>call lamp#feature#type_definition#do('edit')<CR>
 nnoremap <silent><Plug>(lamp-type-definition-split)          :<C-u>call lamp#feature#type_definition#do('split')<CR>
 nnoremap <silent><Plug>(lamp-type-definition-vsplit)         :<C-u>call lamp#feature#type_definition#do('vsplit')<CR>
-
 nnoremap <silent><Plug>(lamp-declaration)                    :<C-u>call lamp#feature#declaration#do('edit')<CR>
 nnoremap <silent><Plug>(lamp-declaration-split)              :<C-u>call lamp#feature#declaration#do('split')<CR>
 nnoremap <silent><Plug>(lamp-declaration-vsplit)             :<C-u>call lamp#feature#declaration#do('vsplit')<CR>
-
 nnoremap <silent><Plug>(lamp-implementation)                 :<C-u>call lamp#feature#implementation#do('edit')<CR>
 nnoremap <silent><Plug>(lamp-implementation-split)           :<C-u>call lamp#feature#implementation#do('split')<CR>
 nnoremap <silent><Plug>(lamp-implementation-vsplit)          :<C-u>call lamp#feature#implementation#do('vsplit')<CR>
-
 nnoremap <silent><Plug>(lamp-rename)                         :<C-u>call lamp#feature#rename#do()<CR>
-
 nnoremap <silent><Plug>(lamp-hover)                          :<C-u>call lamp#feature#hover#do()<CR>
-
+nnoremap <silent><Plug>(lamp-document-highlight)             :<C-u>call lamp#feature#document_highlight#do()<CR>
+nnoremap <silent><Plug>(lamp-document-highlight-clear)       :<C-u>call lamp#feature#document_highlight#clear()<CR>
 nnoremap <silent><Plug>(lamp-references)                     :<C-u>call lamp#feature#references#do(v:false)<CR>
 nnoremap <silent><Plug>(lamp-references-include-declaration) :<C-u>call lamp#feature#references#do(v:true)<CR>
-
 nnoremap <silent><Plug>(lamp-formatting)                     :<C-u>call lamp#feature#formatting#do()<CR>
 vnoremap <silent><Plug>(lamp-range-formatting)               :<C-u>call lamp#feature#range_formatting#do()<CR>
-
 nnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(0)<CR>
 vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(2)<CR>
 
