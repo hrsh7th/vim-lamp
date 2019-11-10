@@ -212,29 +212,30 @@ function! s:Server.change_document(bufnr) abort
 
   let l:sync_kind  = self.capability.get_text_document_sync_kind()
 
+  let l:p = s:Promise.resolve()
+
   " full sync.
   if l:sync_kind == 1
-    if !l:doc.out_of_date()
-      return s:Promise.resolve()
+    if l:doc.out_of_date()
+      call l:doc.sync()
+      let l:p = self.notify('textDocument/didChange', {
+            \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
+            \   'contentChanges': [{ 'text': join(l:doc.buffer, "\n") }]
+            \ })
     endif
-    call l:doc.sync()
-    let l:p = self.notify('textDocument/didChange', {
-          \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-          \   'contentChanges': [{ 'text': join(l:doc.buffer, "\n") }]
-          \ })
 
   " incremental sync.
   elseif l:sync_kind == 2
     let l:diff = l:doc.diff()
-    if l:diff.rangeLength == 0 && l:diff.text ==# '' 
-      return s:Promise.resolve()
+    if l:diff.rangeLength != 0 || l:diff.text !=# '' 
+      call l:doc.sync()
+      let l:p = self.notify('textDocument/didChange', {
+            \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
+            \   'contentChanges': [l:diff]
+            \ })
     endif
-    call l:doc.sync()
-    let l:p = self.notify('textDocument/didChange', {
-          \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-          \   'contentChanges': [l:diff]
-          \ })
   endif
+
   return l:p.finally({ -> self.finally(l:p) })
 endfunction
 

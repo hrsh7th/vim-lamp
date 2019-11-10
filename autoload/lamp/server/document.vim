@@ -33,10 +33,8 @@ endfunction
 " Sync.
 "
 function! s:Document.sync() abort
-  if self.out_of_date()
-    let self.buffer = getbufline(self.bufnr, '^', '$')
-    let self.changedtick = getbufvar(self.bufnr, 'changedtick')
-  endif
+  let self.buffer = getbufline(self.bufnr, '^', '$')
+  let self.changedtick = getbufvar(self.bufnr, 'changedtick')
 endfunction
 
 "
