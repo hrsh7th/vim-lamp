@@ -95,18 +95,23 @@ function! s:get_contents(response) abort
   endif
 
   " signature label.
-  let l:signature_label = l:signature.label
+  let l:signature_label = l:signature.label . "\n"
   if !empty(l:parameter)
-    let l:signature_label = s:mark_active_parameter(l:signature.label, s:get_parameter_label(l:signature, l:parameter)) 
+    let l:signature_label = s:mark_active_parameter(l:signature.label, s:get_parameter_label(l:signature, l:parameter))
+  endif
+
+  let l:signature_doc = ''
+  if has_key(l:signature, 'documentation')
+    let l:signature_doc .= lamp#protocol#markup_content#to_string(l:signature.documentation) . "\n"
   endif
 
   " signature_help
   let l:signature_help = ''
-  let l:signature_help .= lamp#protocol#markup_content#to_string(l:signature_label) . "\n"
+  let l:signature_help .= lamp#protocol#markup_content#to_string(l:signature_label)
   let l:signature_help .= "\n"
   let l:signature_help .= l:parameter_doc
   let l:signature_help .= "\n"
-  let l:signature_help .= lamp#protocol#markup_content#to_string(get(l:signature, 'documentation')) . "\n"
+  let l:signature_help .= l:signature_doc
 
   return lamp#protocol#markup_content#normalize(l:signature_help)
 endfunction
