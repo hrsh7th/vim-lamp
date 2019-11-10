@@ -29,7 +29,7 @@ endfunction
 "
 function! lamp#view#buffer#touch(expr) abort
   let l:bufnr = bufnr(a:expr, v:true)
-  if !bufexists(l:bufnr)
+  if !bufloaded(l:bufnr)
     return
   endif
 
@@ -50,7 +50,7 @@ function! lamp#view#buffer#do(bufnr, fn) abort
   endif
 
   try
-    execute printf('noautocmd keepalt keepjumps %sbufdo! call a:fn()', a:bufnr)
+    execute printf('keepalt keepjumps %sbufdo! call a:fn()', a:bufnr)
   catch /.*/
     echomsg string({ 'e': v:exception, 't': v:throwpoint })
   endtry
