@@ -26,11 +26,6 @@ augroup END
 "
 autocmd! vimrc User lamp#initialized * call s:on_initialized()
 function! s:on_initialized()
-
-  " This is experimental feature.
-  " NOTE: `capabilities` field to be merged to server's capabilities.
-  " NOTE: you can omit the capability via `v:null`
-
   call lamp#register('typescript-language-server', {
       \   'command': ['typescript-language-server', '--stdio'],
       \   'filetypes': ['typescript', 'javascript', 'typescript.tsx', 'javascript.jsx'],
