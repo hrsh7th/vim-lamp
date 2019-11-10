@@ -4,15 +4,6 @@ let s:floatwin = s:Floatwin.new({})
 let s:highlight_namespace = 'lamp#feature#diagnostic'
 
 "
-" {
-"   'server_name': {
-"     'document_uri': [number]
-"   }
-" }
-"
-let s:diagnostics_versions = {} 
-
-"
 " init
 "
 function! lamp#feature#diagnostic#init() abort
@@ -20,6 +11,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd!
     autocmd CursorMoved * call s:show_floatwin()
     autocmd InsertEnter * call s:on_insert_enter()
+    autocmd InsertLeave * call lamp#feature#diagnostic#update()
   augroup END
 endfunction
 
@@ -114,35 +106,12 @@ function! s:update() abort
     endif
     let l:updated_bufnrs[l:bufnr] = v:true
 
-    let l:uri = lamp#protocol#document#encode_uri(l:bufnr)
-
-    " find updated document.
-    let l:updated_documents = []
-    for [l:server_name, l:document] in items(s:get_document_map(l:uri))
-      if !has_key(s:diagnostics_versions, l:server_name)
-        let s:diagnostics_versions[l:server_name] = {}
-      endif
-      if !has_key(s:diagnostics_versions[l:server_name], l:uri)
-        let s:diagnostics_versions[l:server_name][l:uri] = l:document.diagnostics_version - 1 " should update first.
-      endif
-
-      if s:diagnostics_versions[l:server_name][l:uri] != l:document.diagnostics_version
-        call add(l:updated_documents, l:document)
-        let s:diagnostics_versions[l:server_name][l:uri] = l:document.diagnostics_version
-      endif
-    endfor
-
-    " no update.
-    if empty(l:updated_documents)
-      continue
-    endif
-
     " clear.
     call lamp#view#sign#remove(l:bufnr)
     call lamp#view#highlight#remove(s:highlight_namespace, l:bufnr)
 
     " update.
-    for [l:server_name, l:document] in items(s:get_document_map(l:uri))
+    for [l:server_name, l:document] in items(s:get_document_map(lamp#protocol#document#encode_uri(l:bufnr)))
       for l:diagnostic in l:document.diagnostics
         let l:severity = get(l:diagnostic, 'severity', 1)
         if l:severity == 1

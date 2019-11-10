@@ -17,15 +17,11 @@ function! s:trigger_signature_help() abort
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.signatureHelpProvider') })
   if empty(l:servers)
+    call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
     return
   endif
 
   call s:floatwin.hide()
-
-  if mode()[0] !=# 'i'
-    call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
-    return
-  endif
 
   " gather trigger characters.
   let l:trigger_chars = []
@@ -37,11 +33,17 @@ function! s:trigger_signature_help() abort
   " check trigger character.
   let l:charinfo = lamp#view#cursor#search_before_char(l:trigger_chars + [')'], 2)
   if index(l:trigger_chars, l:charinfo[0]) == -1
+    call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
     return
   endif
 
   let l:fn = {}
   function! l:fn.debounce(bufnr, servers) abort
+    if mode()[0] !=# 'i'
+      call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
+      return
+    endif
+
     let l:promises = map(a:servers, { k, v -> v.request('textDocument/signatureHelp', {
           \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
           \   'position': lamp#protocol#position#get()
