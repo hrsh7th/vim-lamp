@@ -29,5 +29,17 @@ Describe lamp#view#cursor
     call s:expect('0').to_equal(lamp#view#cursor#get_before_char_skip_white())
   End
 
+  It Should return found char
+    enew
+    put!=[
+          \ 'console.log(',
+          \ '  foo,',
+          \ '  bar#',
+          \ '  baz',
+          \ ')']
+    call cursor(3, 6)
+    call s:expect([',', 2, 7]).to_equal(lamp#view#cursor#search_before_char([','], 2))
+  End
+
 End
 
