@@ -67,8 +67,8 @@ let g:lamp#server#capability#definition = {
       \         'snippetSupport': v:false,
       \         'commitCharacterSupports': v:false,
       \         'documentationFormat': ['plaintext', 'markdown'],
-      \         'deprecatedSupport': v:false,
-      \         'preselectSupport': v:false,
+      \         'deprecatedSupport': v:true,
+      \         'preselectSupport': v:true,
       \       },
       \       'completionItemKind': {
       \         'valueSet': keys(lamp#protocol#completion#get_kind_map())
