@@ -26,6 +26,10 @@ let s:kind_map = {
       \   '25': 'TypeParameter',
       \ }
 
+function! lamp#protocol#completion#get_kind_map() abort
+  return copy(s:kind_map)
+endfunction
+
 function! lamp#protocol#completion#get_kind_name(kind) abort
   return get(s:kind_map, '' . a:kind, '')
 endfunction

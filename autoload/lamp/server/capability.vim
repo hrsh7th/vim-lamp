@@ -63,11 +63,16 @@ let g:lamp#server#capability#definition = {
       \     },
       \     'completion': {
       \       'dynamicRegistration': v:false,
-      \       'snippetSupport': v:false,
-      \       'commitCharacterSupports': v:false,
-      \       'documentationFormat': ['plaintext', 'markdown'],
-      \       'deprecatedSupport': v:false,
-      \       'preselectSupport': v:false,
+      \       'completionItem': {
+      \         'snippetSupport': v:false,
+      \         'commitCharacterSupports': v:false,
+      \         'documentationFormat': ['plaintext', 'markdown'],
+      \         'deprecatedSupport': v:false,
+      \         'preselectSupport': v:false,
+      \       },
+      \       'completionItemKind': {
+      \         'valueSet': keys(lamp#protocol#completion#get_kind_map())
+      \       }
       \     },
       \     'signatureHelp': {
       \       'dynamicRegistration': v:false,
