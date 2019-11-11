@@ -98,8 +98,8 @@ endfunction
     - [ ] telemetry/event
 
 - Client
-    - [ ] ~~client/registerCapability~~
-    - [ ] ~~client/unregisterCapability~~
+    - [ ] ~~client/registerCapability~~ (maybe unneeded)
+    - [ ] ~~client/unregisterCapability~~ (maybe unneeded)
 
 - Workspace
     - [ ] workspace/workspaceFolders
@@ -143,7 +143,7 @@ endfunction
     - [ ] textDocument/colorPresentation
     - [x] textDocument/formatting
     - [x] textDocument/rangeFormatting
-    - [ ] textDocument/onTypeFormatting
+    - [ ] ~~textDocument/onTypeFormatting~~ (No supported server found.)
     - [x] textDocument/rename
     - [x] textDocument/prepareRename
     - [ ] textDocument/foldingRange

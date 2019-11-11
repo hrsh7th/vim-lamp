@@ -72,7 +72,8 @@ let g:lamp#server#capability#definition = {
       \       },
       \       'completionItemKind': {
       \         'valueSet': keys(lamp#protocol#completion#get_kind_map())
-      \       }
+      \       },
+      \       'contextSupport': v:true
       \     },
       \     'signatureHelp': {
       \       'dynamicRegistration': v:false,
@@ -85,7 +86,7 @@ let g:lamp#server#capability#definition = {
       \     },
       \     'hoverSupport': {
       \       'dynamicRegistration': v:false,
-      \       'contentFormat': [],
+      \       'contentFormat': ['plaintext', 'markdown'],
       \     },
       \     'documentSymbol': {
       \       'dynamicRegistration': v:false,
