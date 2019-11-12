@@ -114,10 +114,15 @@ function! s:on_complete_done() abort
   if get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
     let l:fn = {}
     function! l:fn.next_tick(recent_current_line, completion_item) abort
+      " check <BS> like behavior.
       if strlen(getline('.')) < strlen(a:recent_current_line)
         return
       endif
+
+      " remove last inserted character.
       call setline('.', a:recent_current_line)
+
+      " remove snippet prefix text.
       let l:start_position = [line('.'), col('.') - strlen(a:completion_item.label)]
       call lamp#view#edit#apply(bufnr('%'), [{
             \   'range': {
@@ -134,6 +139,7 @@ function! s:on_complete_done() abort
             \ }])
       call cursor(l:start_position)
 
+      " expand snippet.
       call lamp#config('feature.completion.snippet.expand')({
             \   'body': split(a:completion_item.insertText, "\n\|\r", v:true)
             \ })
