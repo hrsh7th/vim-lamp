@@ -88,42 +88,49 @@ function! s:on_complete_done() abort
   " clear debounce timer.
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
 
-  " check managed item.
-  let l:item_data = s:get_item_data(v:completed_item)
-  if empty(l:item_data)
-    let s:item_state = {}
-    return
-  endif
+  let l:fn = {}
+  function! l:fn.next_tick(position, recent_current_line, completed_item) abort
+    " check managed item.
+    let l:item_data = s:get_item_data(a:completed_item)
+    if empty(l:item_data)
+      let s:item_state = {}
+      return
+    endif
 
-  " get item state.
-  let l:item_state = get(s:item_state, l:item_data.id, {})
+    " get item state.
+    let l:item_state = get(s:item_state, l:item_data.id, {})
 
-  " resolve if needed.
-  let l:promise = get(l:item_state, 'resolve', {})
-  if empty(l:promise)
-    let l:promise = s:resolve(l:item_data)
-  endif
+    " resolve if needed.
+    let l:promise = get(l:item_state, 'resolve', {})
+    if empty(l:promise)
+      let l:promise = s:resolve(l:item_data)
+    endif
 
-  " resolve data.
-  let l:completion_item = lamp#sync(l:promise)
-  if empty(l:completion_item)
-    let l:completion_item = l:item_data.completion_item
-  endif
+    " resolve data.
+    let l:completion_item = lamp#sync(l:promise)
+    if empty(l:completion_item)
+      let l:completion_item = l:item_data.completion_item
+    endif
 
-  " Snippet.
-  if get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
-    let l:fn = {}
-    function! l:fn.next_tick(position, recent_current_line, completion_item) abort
-      " check <BS> like behavior.
-      if strlen(getline('.')) < strlen(a:recent_current_line)
-        return
+    " check <BS> like behavior.
+    if strlen(getline('.')) < strlen(a:recent_current_line)
+      return
+    endif
+
+    let l:is_snippet = get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
+    let l:has_text_edit = !empty(get(l:completion_item, 'textEdit', {}))
+
+    " remove completed string if need.
+    if l:has_text_edit || l:is_snippet
+      if l:is_snippet
+        " remove last inserted character.
+        call setline('.', a:recent_current_line)
+      else
+        let l:off = strlen(getline('.')) - strlen(a:recent_current_line)
       endif
 
-      " remove last inserted character.
-      call setline('.', a:recent_current_line)
-
-      " remove snippet prefix text.
-      let l:start_position = [a:position[0], a:position[1] - strlen(a:completion_item.label)]
+      " remove completed string.
+      let l:start_position = [a:position[1], (a:position[2] + a:position[3]) - strlen(l:completion_item.label)]
       call lamp#view#edit#apply(bufnr('%'), [{
             \   'range': {
             \     'start': {
@@ -131,52 +138,52 @@ function! s:on_complete_done() abort
             \       'character': l:start_position[1] - 1
             \     },
             \     'end': {
-            \       'line': a:position[0] - 1,
-            \       'character': a:position[1] - 1,
+            \       'line': a:position[1] - 1,
+            \       'character': (a:position[2] + a:position[3]) - 1,
             \     }
             \   },
             \   'newText': ''
             \ }])
       call cursor(l:start_position)
+    endif
 
-      " expand snippet.
+    " textEdit or Snippet.
+    if l:has_text_edit
+      call lamp#view#edit#apply(bufnr('%'), [l:completion_item.textEdit])
+      call cursor([
+            \   l:completion_item.textEdit.range.start.line + 1,
+            \   l:completion_item.textEdit.range.start.character + 1 + strlen(l:completion_item.textEdit.newText),
+            \   l:off
+            \ ])
+    elseif l:is_snippet
       call lamp#config('feature.completion.snippet.expand')({
-            \   'body': split(a:completion_item.insertText, "\n\|\r", v:true)
+            \   'body': split(l:completion_item.insertText, "\n\|\r", v:true)
             \ })
-    endfunction
-
-    let l:position = getpos('.')
-    call timer_start(0, { -> l:fn.next_tick([l:position[1], l:position[2] + l:position[3]], s:recent_current_line, l:completion_item) }, { 'repeat': 1 })
-
-  " textEdit.
-  else
-    let l:text_edit = get(l:completion_item, 'textEdit', {})
-    if !empty(l:text_edit)
-      " TODO: Search the server that returns textEdit.
-      call lamp#view#edit#apply(bufnr('%'), [l:text_edit])
     endif
-  endif
 
-  " additionalTextEdits.
-  let l:additional_text_edits = get(l:completion_item, 'additionalTextEdits', {})
-  if !empty(l:additional_text_edits)
-    " apply after inserted last typing character.
-    call timer_start(0, { -> lamp#view#edit#apply(bufnr('%'), l:additional_text_edits) }, { 'repeat': 1 })
-  endif
-
-  " executeCommand.
-  if has_key(l:completion_item, 'command')
-    let l:server = lamp#server#registry#get_by_name(l:item_data.server_name)
-    if empty(l:server)
-      return
+    " additionalTextEdits.
+    let l:additional_text_edits = get(l:completion_item, 'additionalTextEdits', {})
+    if !empty(l:additional_text_edits)
+      " apply after inserted last typing character.
+      call lamp#view#edit#apply(bufnr('%'), l:additional_text_edits)
     endif
-    call l:server.request('workspace/executeCommand', {
-          \   'command': l:completion_item.command.command,
-          \   'arguments': get(l:completion_item.command, 'arguments')
-          \ }).catch(lamp#rescue())
-  endif
+
+    " executeCommand.
+    if has_key(l:completion_item, 'command')
+      let l:server = lamp#server#registry#get_by_name(l:item_data.server_name)
+      if empty(l:server)
+        return
+      endif
+      call l:server.request('workspace/executeCommand', {
+            \   'command': l:completion_item.command.command,
+            \   'arguments': get(l:completion_item.command, 'arguments')
+            \ }).catch(lamp#rescue())
+    endif
+  endfunction
 
   let s:item_state = {}
+  let l:position = getpos('.')
+  call timer_start(0, { -> l:fn.next_tick(l:position, s:recent_current_line, v:completed_item) }, { 'repeat': 1 })
 endfunction
 
 "
