@@ -98,8 +98,8 @@ endfunction
     - [ ] telemetry/event
 
 - Client
-    - [ ] ~~client/registerCapability~~
-    - [ ] ~~client/unregisterCapability~~
+    - [ ] ~~client/registerCapability~~ (Maybe unneeded)
+    - [ ] ~~client/unregisterCapability~~ (Maybe unneeded)
 
 - Workspace
     - [ ] workspace/workspaceFolders
@@ -123,7 +123,7 @@ endfunction
     - [x] textDocument/publishDiagnostics
 
 - Language Features
-    - [x] textDocument/completion
+    - [x] textDocument/completion (Snippet/Documentation/AdditionalTextEdits are supported!)
     - [x] completionItem/resolve
     - [x] textDocument/hover
     - [x] textDocument/signatureHelp
@@ -143,7 +143,7 @@ endfunction
     - [ ] textDocument/colorPresentation
     - [x] textDocument/formatting
     - [x] textDocument/rangeFormatting
-    - [ ] textDocument/onTypeFormatting
+    - [ ] ~~textDocument/onTypeFormatting~~ (No supported server found.)
     - [x] textDocument/rename
     - [x] textDocument/prepareRename
     - [ ] textDocument/foldingRange
@@ -154,7 +154,7 @@ endfunction
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
-- Support snippet
+- Problems of snippet with lexima.
 - ! Refactor signatureHelp
 - ! Improve diagnostic handling 2
     - Improve textDocument/didChange handling
