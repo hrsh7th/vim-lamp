@@ -113,7 +113,7 @@ function! s:on_complete_done() abort
   " Snippet.
   if get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
     let l:fn = {}
-    function! l:fn.next_tick(recent_current_line, completion_item) abort
+    function! l:fn.next_tick(position, recent_current_line, completion_item) abort
       " check <BS> like behavior.
       if strlen(getline('.')) < strlen(a:recent_current_line)
         return
@@ -123,7 +123,7 @@ function! s:on_complete_done() abort
       call setline('.', a:recent_current_line)
 
       " remove snippet prefix text.
-      let l:start_position = [line('.'), col('.') - strlen(a:completion_item.label)]
+      let l:start_position = [a:position[0], a:position[1] - strlen(a:completion_item.label)]
       call lamp#view#edit#apply(bufnr('%'), [{
             \   'range': {
             \     'start': {
@@ -131,8 +131,8 @@ function! s:on_complete_done() abort
             \       'character': l:start_position[1] - 1
             \     },
             \     'end': {
-            \       'line': line('.') - 1,
-            \       'character': col('.'),
+            \       'line': a:position[0] - 1,
+            \       'character': a:position[1] - 1,
             \     }
             \   },
             \   'newText': ''
@@ -144,7 +144,9 @@ function! s:on_complete_done() abort
             \   'body': split(a:completion_item.insertText, "\n\|\r", v:true)
             \ })
     endfunction
-    call timer_start(0, { -> l:fn.next_tick(s:recent_current_line, l:completion_item) }, { 'repeat': 1 })
+
+    let l:position = getpos('.')
+    call timer_start(0, { -> l:fn.next_tick([l:position[1], l:position[2] + l:position[3]], s:recent_current_line, l:completion_item) }, { 'repeat': 1 })
 
   " textEdit.
   else
