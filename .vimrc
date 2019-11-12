@@ -16,6 +16,7 @@ source /tmp/plug.vim
 
 call plug#begin('/tmp/plugged')
 Plug expand('<sfile>:p:h')
+Plug 'hrsh7th/vim-vsnip'
 Plug 'gruvbox-community/gruvbox'
 call plug#end()
 
@@ -23,6 +24,7 @@ let g:mapleader = ' '
 
 set hidden
 set ambiwidth=double
+set completeopt+=noselect
 
 colorscheme gruvbox
 
@@ -33,6 +35,7 @@ augroup END
 autocmd! vimrc User lamp#initialized call s:on_lamp_initialized()
 function! s:on_lamp_initialized() abort
   call lamp#config('debug.log', '/tmp/lamp.log')
+  call lamp#config('feature.completion.snippet.expand', { option -> vsnip#anonymous(option.body) })
   call lamp#register('vim-language-server', {
         \   'command': ['vim-language-server', '--stdio'],
         \   'filetypes': ['vim'],
@@ -48,6 +51,9 @@ function! s:on_lamp_text_document_did_open() abort
   nmap <buffer> <Leader>r <Plug>(lamp-rename)
   setlocal omnifunc=lamp#complete
 endfunction
+
+imap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
+smap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
 
 nnoremap H 20h
 nnoremap J 10j

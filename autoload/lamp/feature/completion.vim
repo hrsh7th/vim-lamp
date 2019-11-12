@@ -14,6 +14,12 @@ let s:floatwin = s:Floatwin.new({})
 let s:user_data_key = 'lamp'
 
 "
+" This value update at every TextChangedP.
+" Uses canceling typed character when expand snippet.
+"
+let s:recent_current_line = ''
+
+"
 " {
 "   [id]: {
 "     'resolve': Promise;
@@ -25,18 +31,10 @@ let s:item_state = {}
 function! lamp#feature#completion#init() abort
   augroup lamp#feature#completion
     autocmd!
-    autocmd MenuPopup * call s:on_menu_popup()
     autocmd CompleteChanged * call s:on_complete_changed()
-    autocmd InsertCharPre * call s:on_insert_char_pre()
+    autocmd TextChangedP * call s:on_text_changed_p()
     autocmd CompleteDone * call s:on_complete_done()
   augroup END
-endfunction
-
-"
-" s:on_menu_popup
-"
-function! s:on_menu_popup() abort
-  let s:item_state = {}
 endfunction
 
 "
@@ -69,22 +67,14 @@ function! s:on_complete_changed() abort
 endfunction
 
 "
-" s:on_insert_char_pre
+" s:on_text_changed_p
 "
-function! s:on_insert_char_pre() abort
-  if empty(v:completed_item)
-    return
-  endif
-
-  let l:item_data = s:get_item_data(v:completed_item)
-  if empty(l:item_data)
-    return
-  endif
-
-  let l:completion_item = l:item_data.completion_item
-  if get(l:completion_item, 'insertTextFormat') == 2 && has_key(l:completion_item, 'insertText')
-    let v:char = ''
-  endif
+function! s:on_text_changed_p() abort
+  let l:fn = {}
+  function! l:fn.next_tick() abort
+    let s:recent_current_line = getline('.')
+  endfunction
+  call timer_start(0, { -> l:fn.next_tick() }, { 'repeat': 1 })
 endfunction
 
 "
@@ -101,6 +91,7 @@ function! s:on_complete_done() abort
   " check managed item.
   let l:item_data = s:get_item_data(v:completed_item)
   if empty(l:item_data)
+    let s:item_state = {}
     return
   endif
 
@@ -121,27 +112,33 @@ function! s:on_complete_done() abort
 
   " Snippet.
   if get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
-    let l:start_position = [line('.'), col('.') - strlen(l:completion_item.label)]
-    call lamp#view#edit#apply(bufnr('%'), [{
-          \   'range': {
-          \     'start': {
-          \       'line': l:start_position[0] - 1,
-          \       'character': l:start_position[1] - 1
-          \     },
-          \     'end': {
-          \       'line': line('.') - 1,
-          \       'character': col('.'),
-          \     }
-          \   },
-          \   'newText': ''
-          \ }])
+    let l:fn = {}
+    function! l:fn.next_tick(recent_current_line, completion_item) abort
+      if strlen(getline('.')) < strlen(a:recent_current_line)
+        return
+      endif
+      call setline('.', a:recent_current_line)
+      let l:start_position = [line('.'), col('.') - strlen(a:completion_item.label)]
+      call lamp#view#edit#apply(bufnr('%'), [{
+            \   'range': {
+            \     'start': {
+            \       'line': l:start_position[0] - 1,
+            \       'character': l:start_position[1] - 1
+            \     },
+            \     'end': {
+            \       'line': line('.') - 1,
+            \       'character': col('.'),
+            \     }
+            \   },
+            \   'newText': ''
+            \ }])
+      call cursor(l:start_position)
 
-    call cursor(l:start_position)
-    call timer_start(0, { ->
-          \   lamp#config('feature.completion.snippet.expand')({
-          \     'body': split(l:completion_item.insertText, "\n\|\r", v:true)
-          \   })
-          \ })
+      call lamp#config('feature.completion.snippet.expand')({
+            \   'body': split(a:completion_item.insertText, "\n\|\r", v:true)
+            \ })
+    endfunction
+    call timer_start(0, { -> l:fn.next_tick(s:recent_current_line, l:completion_item) }, { 'repeat': 1 })
 
   " textEdit.
   else
@@ -170,6 +167,8 @@ function! s:on_complete_done() abort
           \   'arguments': get(l:completion_item.command, 'arguments')
           \ }).catch(lamp#rescue())
   endif
+
+  let s:item_state = {}
 endfunction
 
 "

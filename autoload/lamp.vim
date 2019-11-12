@@ -187,11 +187,18 @@ function! lamp#complete(find_start, base) abort
         continue
       endif
 
+      let l:word = get(l:item, 'insertText', l:item.label)
+      let l:is_snippet = v:false
+      if get(l:item, 'insertTextFormat', 1) == 2 && has_key(l:item, 'insertText')
+        let l:word = l:item.label
+        let l:is_snippet = v:true
+      endif
+
       let s:context.id += 1
       let l:vim_item = {}
-      let l:vim_item.word = get(l:item, 'insertText', l:item.label)
+      let l:vim_item.word = l:word
       let l:vim_item.kind = lamp#protocol#completion#get_kind_name(l:item.kind) . ' ' . get(l:item, 'detail', '')
-      let l:vim_item.abbr = l:item.label
+      let l:vim_item.abbr = l:is_snippet ? l:word . '~' : l:word
       let l:vim_item.menu = '[LAMP]'
       let l:vim_item.user_data = json_encode({
             \   'lamp': {
