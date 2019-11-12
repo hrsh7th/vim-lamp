@@ -27,6 +27,7 @@ function! lamp#feature#completion#init() abort
     autocmd!
     autocmd MenuPopup * call s:on_menu_popup()
     autocmd CompleteChanged * call s:on_complete_changed()
+    autocmd InsertCharPre * call s:on_insert_char_pre()
     autocmd CompleteDone * call s:on_complete_done()
   augroup END
 endfunction
@@ -68,6 +69,25 @@ function! s:on_complete_changed() abort
 endfunction
 
 "
+" s:on_insert_char_pre
+"
+function! s:on_insert_char_pre() abort
+  if empty(v:completed_item)
+    return
+  endif
+
+  let l:item_data = s:get_item_data(v:completed_item)
+  if empty(l:item_data)
+    return
+  endif
+
+  let l:completion_item = l:item_data.completion_item
+  if get(l:completion_item, 'insertTextFormat') == 2 && has_key(l:completion_item, 'insertText')
+    let v:char = ''
+  endif
+endfunction
+
+"
 " s:on_complete_done
 "
 function! s:on_complete_done() abort
@@ -96,14 +116,40 @@ function! s:on_complete_done() abort
   " resolve data.
   let l:completion_item = lamp#sync(l:promise)
   if empty(l:completion_item)
-    return
+    let l:completion_item = l:item_data.completion_item
   endif
 
+  " Snippet.
+  if get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
+    let l:start_position = [line('.'), col('.') - strlen(l:completion_item.label)]
+    call lamp#view#edit#apply(bufnr('%'), [{
+          \   'range': {
+          \     'start': {
+          \       'line': l:start_position[0] - 1,
+          \       'character': l:start_position[1] - 1
+          \     },
+          \     'end': {
+          \       'line': line('.') - 1,
+          \       'character': col('.'),
+          \     }
+          \   },
+          \   'newText': ''
+          \ }])
+
+    call cursor(l:start_position)
+    call timer_start(0, { ->
+          \   lamp#config('feature.completion.snippet.expand')({
+          \     'body': split(l:completion_item.insertText, "\n\|\r", v:true)
+          \   })
+          \ })
+
   " textEdit.
-  let l:text_edit = get(l:completion_item, 'textEdit', {})
-  if !empty(l:text_edit)
-    " TODO: Search the server that returns textEdit.
-    call lamp#view#edit#apply(bufnr('%'), [l:text_edit])
+  else
+    let l:text_edit = get(l:completion_item, 'textEdit', {})
+    if !empty(l:text_edit)
+      " TODO: Search the server that returns textEdit.
+      call lamp#view#edit#apply(bufnr('%'), [l:text_edit])
+    endif
   endif
 
   " additionalTextEdits.

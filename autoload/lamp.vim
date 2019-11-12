@@ -13,6 +13,7 @@ let s:config = {
       \   'feature.implementation.on_implementations': s:on_locations,
       \   'feature.references.on_references': s:on_locations,
       \   'feature.rename.on_renamed': s:on_locations,
+      \   'feature.completion.snippet.expand': v:null,
       \   'view.sign.error.text': 'x',
       \   'view.sign.warning.text': '!',
       \   'view.sign.information.text': 'i',

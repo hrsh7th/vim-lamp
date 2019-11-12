@@ -154,7 +154,7 @@ function! s:Server.initialize() abort
         \   'processId': v:null,
         \   'rootUri': lamp#protocol#document#encode_uri(self.root_uri()),
         \   'initializationOptions': self.initialization_options(),
-        \   'capabilities': g:lamp#server#capability#definition,
+        \   'capabilities': lamp#server#capability#get_default_capability(),
         \ }).then(function(l:fn.on_initialize, [], self))
 endfunction
 

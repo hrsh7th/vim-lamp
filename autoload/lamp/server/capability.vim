@@ -27,77 +27,79 @@ let g:lamp#server#capability#symbol_kinds = {
       \   'TypeParameter': 26,
       \ }
 
-let g:lamp#server#capability#definition = {
-      \   'workspace': {
-      \     'applyEdit': v:true,
-      \     'workspaceEdit': {
-      \       'documentChanges': v:true,
-      \       'resourceOperations': [],
-      \       'failureHandling': 'abort',
-      \     },
-      \     'didChangeConfiguration': {
-      \       'dynamicRegistration': v:false
-      \     },
-      \     'didChangeWatchedFiles': {
-      \       'dynamicRegistration': v:false
-      \     },
-      \     'symbol': {
-      \       'dynamicRegistration': v:false,
-      \       'valueSet': values(g:lamp#server#capability#symbol_kinds)
-      \     },
-      \     'executeCommand': {
-      \       'dynamicRegistration': v:false,
-      \     },
-      \     'workspaceFolders': v:false,
-      \     'configuration': v:false,
-      \   },
-      \   'textDocument': {
-      \     'synchronization': {
-      \       'dynamicRegistration': v:false,
-      \       'willSave': v:false,
-      \       'willSaveDidUntil': v:false,
-      \       'didSave': v:false
-      \     },
-      \     'rename': {
-      \       'prepareSupport': v:true
-      \     },
-      \     'completion': {
-      \       'dynamicRegistration': v:false,
-      \       'completionItem': {
-      \         'snippetSupport': v:false,
-      \         'commitCharacterSupports': v:false,
-      \         'documentationFormat': ['plaintext', 'markdown'],
-      \         'deprecatedSupport': v:true,
-      \         'preselectSupport': v:true,
-      \       },
-      \       'completionItemKind': {
-      \         'valueSet': keys(lamp#protocol#completion#get_kind_map())
-      \       },
-      \       'contextSupport': v:true
-      \     },
-      \     'signatureHelp': {
-      \       'dynamicRegistration': v:false,
-      \       'signatureInformation': {
-      \         'documentationFormat': ['plaintext', 'markdown'],
-      \         'parameterInformation': {
-      \           'labelOffsetSupport': v:true
-      \         }
-      \       },
-      \     },
-      \     'hoverSupport': {
-      \       'dynamicRegistration': v:false,
-      \       'contentFormat': ['plaintext', 'markdown'],
-      \     },
-      \     'documentSymbol': {
-      \       'dynamicRegistration': v:false,
-      \       'symbolKind': {
-      \         'valueSet': values(g:lamp#server#capability#symbol_kinds)
-      \       },
-      \       'hierarchicalDocumentSymbolSupport': v:true
-      \     }
-      \   },
-      \   'experimental': {},
-      \ }
+function! lamp#server#capability#get_default_capability() abort
+  return {
+        \   'workspace': {
+        \     'applyEdit': v:true,
+        \     'workspaceEdit': {
+        \       'documentChanges': v:true,
+        \       'resourceOperations': [],
+        \       'failureHandling': 'abort',
+        \     },
+        \     'didChangeConfiguration': {
+        \       'dynamicRegistration': v:false
+        \     },
+        \     'didChangeWatchedFiles': {
+        \       'dynamicRegistration': v:false
+        \     },
+        \     'symbol': {
+        \       'dynamicRegistration': v:false,
+        \       'valueSet': values(g:lamp#server#capability#symbol_kinds)
+        \     },
+        \     'executeCommand': {
+        \       'dynamicRegistration': v:false,
+        \     },
+        \     'workspaceFolders': v:false,
+        \     'configuration': v:false,
+        \   },
+        \   'textDocument': {
+        \     'synchronization': {
+        \       'dynamicRegistration': v:false,
+        \       'willSave': v:false,
+        \       'willSaveDidUntil': v:false,
+        \       'didSave': v:false
+        \     },
+        \     'rename': {
+        \       'prepareSupport': v:true
+        \     },
+        \     'completion': {
+        \       'dynamicRegistration': v:false,
+        \       'completionItem': {
+        \         'snippetSupport': !empty(lamp#config('feature.completion.snippet.expand')) ? v:true : v:false,
+        \         'commitCharacterSupports': v:false,
+        \         'documentationFormat': ['plaintext', 'markdown'],
+        \         'deprecatedSupport': v:true,
+        \         'preselectSupport': v:true,
+        \       },
+        \       'completionItemKind': {
+        \         'valueSet': keys(lamp#protocol#completion#get_kind_map())
+        \       },
+        \       'contextSupport': v:true
+        \     },
+        \     'signatureHelp': {
+        \       'dynamicRegistration': v:false,
+        \       'signatureInformation': {
+        \         'documentationFormat': ['plaintext', 'markdown'],
+        \         'parameterInformation': {
+        \           'labelOffsetSupport': v:true
+        \         }
+        \       },
+        \     },
+        \     'hoverSupport': {
+        \       'dynamicRegistration': v:false,
+        \       'contentFormat': ['plaintext', 'markdown'],
+        \     },
+        \     'documentSymbol': {
+        \       'dynamicRegistration': v:false,
+        \       'symbolKind': {
+        \         'valueSet': values(g:lamp#server#capability#symbol_kinds)
+        \       },
+        \       'hierarchicalDocumentSymbolSupport': v:true
+        \     }
+        \   },
+        \   'experimental': {},
+        \ }
+endfunction
 
 function! lamp#server#capability#import() abort
   return s:Capability
