@@ -41,6 +41,7 @@ function! s:Server.start() abort
     let self.state.started = v:true
     call self.channel.start(function(s:Server.on_notification, [], self))
   endif
+  return s:Promise.resolve()
 endfunction
 
 "
