@@ -154,12 +154,10 @@ endfunction
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
-- Problems of snippet with lexima.
 - !!! Refactor completion.vim
 - ! Refactor signatureHelp
 - ! Improve diagnostic handling 2
     - Improve textDocument/didChange handling
 - ! Performance
-- ! Fix bug of s:Server.close_document
 - ! Multibyte support
 

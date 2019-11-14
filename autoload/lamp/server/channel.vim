@@ -25,6 +25,7 @@ endfunction
 " Start process.
 "
 function! s:Channel.start(on_notification) abort
+  echomsg 'start'
   let self.job = s:Job.new(self.command, {
         \   'on_stdout': function(s:Channel.on_stdout, [], self),
         \   'on_stderr': function(s:Channel.on_stderr, [], self),
@@ -60,6 +61,7 @@ function! s:Channel.request(method, params) abort
 
   let l:fn = {}
   function! l:fn.executor(method, params, resolve, reject) abort dict
+    call lamp#log(' -> [REQUEST]', self.request_id, a:method, a:params)
     let self.requests[self.request_id] = {
           \   'resolve': a:resolve,
           \   'reject': a:reject
@@ -74,6 +76,7 @@ endfunction
 " Send response.
 "
 function! s:Channel.response(id, data) abort
+  call lamp#log(' -> [RESPONSE]', a:id, a:data)
   call self.job.send(self.to_message(extend({ 'id': a:id }, a:data)))
 endfunction
 
@@ -81,6 +84,7 @@ endfunction
 " Send notify.
 "
 function! s:Channel.notify(method, params) abort
+  call lamp#log(' -> [NOTIFY]', a:method, a:params)
   call self.job.send(self.to_message({ 'method': a:method, 'params': a:params }))
 endfunction
 
@@ -96,19 +100,28 @@ endfunction
 " on message.
 "
 function! s:Channel.on_message(message) abort
-  " Response.
-  if has_key(a:message, 'id') && has_key(self.requests, a:message.id)
-    if has_key(a:message, 'error')
-      call self.requests[a:message.id].reject(a:message.error)
+  if has_key(a:message, 'id')
+    " Response.
+    if has_key(self.requests, a:message.id)
+      call lamp#log(' <- [RESPONSE]', a:message.id, a:message)
+      if has_key(a:message, 'error')
+        call self.requests[a:message.id].reject(a:message.error)
+      else
+        call self.requests[a:message.id].resolve(get(a:message, 'result', v:null))
+      endif
+      call remove(self.requests, a:message.id)
+
+    " Request.
     else
-      call self.requests[a:message.id].resolve(get(a:message, 'result', v:null))
+      call lamp#log(' <- [REQUEST]', a:message)
+      call self.on_notification(a:message)
     endif
-    call remove(self.requests, a:message.id)
     return
   endif
 
   " Notification.
   if has_key(a:message, 'method')
+    call lamp#log(' <- [NOTIFY]', a:message)
     call self.on_notification(a:message)
   endif
 endfunction

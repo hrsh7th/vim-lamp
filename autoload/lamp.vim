@@ -51,7 +51,7 @@ function! lamp#log(...) abort
     call lamp#config('debug.log', '/tmp/lamp.log')
   endif
   if !empty(lamp#config('debug.log'))
-    call writefile([strcharpart(join(a:000, "\t"), 0, 512)], lamp#config('debug.log'), 'a')
+    call writefile([strcharpart(join([strftime('%H:%M:%S')] + a:000, "\t"), 0, 512)], lamp#config('debug.log'), 'a')
   endif
 endfunction
 

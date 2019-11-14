@@ -84,12 +84,17 @@ endfunction
 
 "
 " textDocument/didClose
-" NOTE: can't debounce because bufname(l:bufnr) returns invalid name after this autocmd.
 "
 function! s:on_text_document_did_close() abort
-  for l:server in lamp#server#registry#find_by_filetype(getbufvar(bufnr('%'), '&filetype'))
-    call l:server.ensure_document(bufnr('%'))
-  endfor
+  let l:fn = {}
+  function! l:fn.debounce(bufnr) abort
+    for l:server in lamp#server#registry#find_by_filetype(getbufvar(a:bufnr, '&filetype'))
+      call l:server.ensure_document(a:bufnr)
+    endfor
+  endfunction
+
+  let l:bufnr = bufnr('%')
+  call lamp#debounce('s:on_text_document_did_change:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
 endfunction
 
 doautocmd User lamp#initialized

@@ -29,25 +29,22 @@ function! s:Server.new(name, option) abort
         \   'state': {
         \     'started': v:false,
         \     'initialized': v:false,
-        \     'result': v:null,
-        \     'error': v:null
         \   },
         \ })
 endfunction
 
 "
-" Start server process.
+" start.
 "
 function! s:Server.start() abort
   if !self.state.started
-    call self.channel.start(function(s:Server.on_notification, [], self))
     let self.state.started = v:true
+    call self.channel.start(function(s:Server.on_notification, [], self))
   endif
-  return s:Promise.resolve()
 endfunction
 
 "
-" Stop server process.
+" stop.
 "
 function! s:Server.stop() abort
   if self.state.started
@@ -58,82 +55,14 @@ function! s:Server.stop() abort
 endfunction
 
 "
-" Get current process status.
+" is_running.
 "
 function! s:Server.is_running() abort
   return self.channel.is_running()
 endfunction
 
 "
-" Request for language server.
-"
-function! s:Server.request(method, params) abort
-  let l:fn = {}
-  function! l:fn.on_response(promise, method, params, data) abort dict
-    if a:promise._state == 2
-      call lamp#log('[ERROR]', a:data)
-      let self.state.error = a:data
-      return s:Promise.reject(a:data)
-    else
-      call lamp#log('<- [RESPONSE]', a:method, a:data)
-      return a:data
-    endif
-  endfunction
-
-  " request.
-  let l:p = s:Promise.resolve()
-  if !self.state.started
-    let l:p = l:p.then({ -> self.start() })
-  endif
-  if !self.state.initialized
-    let l:p = l:p.then({ -> self.initialize() })
-  endif
-  let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> lamp#log('-> [REQUEST]', a:method, a:params) })
-  let l:p = l:p.then({ -> self.channel.request(a:method, a:params) })
-  let l:p = l:p.then(
-        \ function(l:fn.on_response, [l:p, a:method, a:params], self),
-        \ function(l:fn.on_response, [l:p, a:method, a:params], self))
-  return l:p.finally({ -> self.finally(l:p) })
-endfunction
-
-"
-" Response for language server.
-"
-function! s:Server.response(id, data) abort
-  let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> lamp#log('-> [RESPONSE]', a:id, a:data) })
-  let l:p = l:p.then({ -> self.channel.response(a:id, a:data) })
-  let l:p = l:p.finally({ -> self.finally(l:p) })
-  return l:p
-endfunction
-
-"
-" Notify for language server.
-"
-function! s:Server.notify(method, params) abort
-  let l:p = s:Promise.resolve()
-  if !self.state.started
-    let l:p = l:p.then({ -> self.start() })
-  endif
-  if !self.state.initialized
-    let l:p = l:p.then({ -> self.initialize() })
-  endif
-  let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> lamp#log('  -> [NOTIFY]', a:method, a:params) })
-  let l:p = l:p.then({ -> self.channel.notify(a:method, a:params) })
-  return l:p.finally({ -> self.finally(l:p) })
-endfunction
-
-"
-" supports.
-"
-function! s:Server.supports(path) abort
-  return self.capability.supports(a:path)
-endfunction
-
-"
-" Initialize.
+" initialize.
 "
 function! s:Server.initialize() abort
   if self.state.initialized
@@ -145,12 +74,12 @@ function! s:Server.initialize() abort
   let l:fn = {}
   function! l:fn.on_initialize(response) abort dict
     call self.capability.merge(a:response)
-    call self.notify('initialized', {})
+    call self.channel.notify('initialized', {})
     return a:response
   endfunction
 
   " request.
-  return self.request('initialize', {
+  return self.channel.request('initialize', {
         \   'processId': v:null,
         \   'rootUri': lamp#protocol#document#encode_uri(self.root_uri()),
         \   'initializationOptions': self.initialization_options(),
@@ -159,153 +88,144 @@ function! s:Server.initialize() abort
 endfunction
 
 "
-" Ensure document from request or notify params.
+" request.
+"
+function! s:Server.request(method, params) abort
+  let l:p = s:Promise.resolve()
+  let l:p = l:p.then({ -> self.start() })
+  let l:p = l:p.then({ -> self.initialize() })
+  let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
+  let l:p = l:p.then({ -> self.channel.request(a:method, a:params) })
+  return l:p
+endfunction
+
+"
+" response.
+"
+function! s:Server.response(id, data) abort
+  let l:p = s:Promise.resolve()
+  let l:p = l:p.then({ -> self.channel.response(a:id, a:data) })
+  return l:p
+endfunction
+
+"
+" notify.
+"
+function! s:Server.notify(method, params) abort
+  let l:p = s:Promise.resolve()
+  let l:p = l:p.then({ -> self.start() })
+  let l:p = l:p.then({ -> self.initialize() })
+  let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
+  let l:p = l:p.then({ -> self.channel.notify(a:method, a:params) })
+  return l:p
+endfunction
+
+"
+" supports.
+"
+function! s:Server.supports(path) abort
+  return self.capability.supports(a:path)
+endfunction
+
+"
+" ensure_document_from_params.
 "
 function! s:Server.ensure_document_from_params(params) abort
-  if !has_key(a:params, 'textDocument')
-    return s:Promise.resolve()
+  if has_key(a:params, 'textDocument') && has_key(a:params.textDocument, 'uri')
+    return self.ensure_document(bufnr(lamp#protocol#document#decode_uri(a:params.textDocument.uri)))
   endif
-  return self.ensure_document(bufnr(lamp#protocol#document#decode_uri(a:params.textDocument.uri)))
 endfunction
 
 "
-" Ensure document.
+" ensure_document.
 "
 function! s:Server.ensure_document(bufnr) abort
-  let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> self.open_document(a:bufnr) })
-  let l:p = l:p.then({ -> self.close_document(a:bufnr) })
-  let l:p = l:p.then({ -> self.change_document(a:bufnr) })
-  return l:p.finally({ -> self.finally(l:p) })
+  call self.start()
+  return self.initialize().then({ -> [
+        \   self.open_document(a:bufnr),
+        \   self.close_document(a:bufnr),
+        \   self.change_document(a:bufnr)
+        \ ] })
 endfunction
 
 "
-" Open document.
+" open_document.
 "
 function! s:Server.open_document(bufnr) abort
-  " check managed document.
   let l:uri = lamp#protocol#document#encode_uri(bufname(a:bufnr))
   if has_key(self.documents, l:uri)
-    return s:Promise.resolve()
+    return
   endif
-  let self.documents[l:uri] = s:Document.new(a:bufnr)
 
   " create document.
-  let l:p = self.notify('textDocument/didOpen', {
+  let self.documents[l:uri] = s:Document.new(a:bufnr)
+  call self.channel.notify('textDocument/didOpen', {
         \   'textDocument': lamp#protocol#document#item(a:bufnr),
         \ })
-  return l:p.finally({ -> self.finally(l:p) })
 endfunction
 
 "
-" Change document.
+" change_document.
 "
 function! s:Server.change_document(bufnr) abort
-  " check managed document.
   let l:uri = lamp#protocol#document#encode_uri(bufname(a:bufnr))
   if !has_key(self.documents, l:uri)
-    return s:Promise.resolve()
+    return
   endif
 
-  " document is not change.
   let l:doc = self.documents[l:uri]
-
-  let l:sync_kind  = self.capability.get_text_document_sync_kind()
-
-  let l:p = s:Promise.resolve()
+  if !l:doc.out_of_date()
+    return
+  endif
 
   " full sync.
-  if l:sync_kind == 1
-    if l:doc.out_of_date()
-      call l:doc.sync()
-      let l:p = self.notify('textDocument/didChange', {
-            \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-            \   'contentChanges': [{ 'text': join(l:doc.buffer, "\n") }]
-            \ })
-    endif
+  if self.capability.get_text_document_sync_kind() == 1
+    call l:doc.sync()
+    call self.channel.notify('textDocument/didChange', {
+          \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
+          \   'contentChanges': [{ 'text': join(l:doc.buffer, "\n") }]
+          \ })
 
   " incremental sync.
-  elseif l:sync_kind == 2
+  elseif self.capability.get_text_document_sync_kind() == 2
     let l:diff = l:doc.diff()
+    call l:doc.sync()
     if l:diff.rangeLength != 0 || l:diff.text !=# '' 
-      call l:doc.sync()
-      let l:p = self.notify('textDocument/didChange', {
+      call self.channel.notify('textDocument/didChange', {
             \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
             \   'contentChanges': [l:diff]
             \ })
     endif
   endif
-
-  return l:p.finally({ -> self.finally(l:p) })
 endfunction
 
 "
-" Close document.
+" close_document.
 "
 function! s:Server.close_document(bufnr) abort
   " ignore if buffer is not related file.
   " if remove this, occurs infinite loop because bufloaded always return -1
   if !filereadable(fnamemodify(bufname(a:bufnr), ':p'))
-    return s:Promise.resolve()
+    return
   endif
 
   " buffer is not unloaded.
   if bufloaded(a:bufnr)
-    return s:Promise.resolve()
+    return
   endif
 
   " remove managed document.
-  let l:uri = lamp#protocol#document#encode_uri(bufname(a:bufnr))
-  if !has_key(self.documents, l:uri)
-    return s:Promise.resolve()
-  endif
-  call remove(self.documents, l:uri)
+  call remove(self.documents, lamp#protocol#document#encode_uri(bufname(a:bufnr)))
 
-  let l:p = self.notify('textDocument/didClose', {
+  call self.channel.notify('textDocument/didClose', {
         \   'textDocument': lamp#protocol#document#identifier(a:bufnr)
         \ })
-  return l:p.finally({ -> self.finally(l:p) })
 endfunction
 
 "
-" On notification from server.
+" on_notification.
 "
 function! s:Server.on_notification(notification) abort
-  try
-    if has_key(a:notification, 'id')
-      call lamp#log('<- [REQUEST]', a:notification)
-    else
-      call lamp#log('  <- [NOTIFY]', a:notification)
-    endif
-    call lamp#server#notification#on(self, a:notification)
-  catch /.*/
-    call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
-  endtry
-endfunction
-
-"
-" Rejected promise handling.
-"
-function! s:Server.finally(promise) abort
-  if a:promise._state != 2
-    return
-  endif
-
-  let l:result = a:promise._result
-
-
-  " result is error.
-  if !(has_key(l:result, 'exception') && has_key(l:result, 'throwpoint'))
-    return
-  endif
-
-  " the error is logged.
-  if l:result isnot self.state.error
-    return
-  endif
-
-  " log error.
-  call lamp#log('[ERROR]', l:result)
-  let self.state.error = l:result
+  call lamp#server#notification#on(self, a:notification)
 endfunction
 

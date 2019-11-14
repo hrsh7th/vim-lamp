@@ -80,7 +80,7 @@ function! s:get_contents(response) abort
   let l:active_parameter = get(a:response, 'activeParameter', 0)
   let l:signature = get(a:response.signatures, l:active_signature, v:null)
   if empty(l:signature)
-    return
+    return []
   endif
   let l:parameter = get(get(l:signature, 'parameters', []), l:active_parameter, {})
 
