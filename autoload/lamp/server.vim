@@ -28,7 +28,7 @@ function! s:Server.new(name, option) abort
         \   }),
         \   'state': {
         \     'started': v:false,
-        \     'initialized': v:false,
+        \     'initialized': v:null,
         \   },
         \ })
 endfunction
@@ -51,6 +51,7 @@ function! s:Server.stop() abort
   if self.state.started
    call self.channel.stop()
     let self.state.started = v:false
+    let self.initialized = v:null
   endif
   return s:Promise.resolve()
 endfunction
@@ -66,10 +67,9 @@ endfunction
 " initialize.
 "
 function! s:Server.initialize() abort
-  if self.state.initialized
-    return s:Promise.resolve()
+  if !empty(self.state.initialized)
+    return self.state.initialized
   endif
-  let self.state.initialized = v:true
 
   " callback
   let l:fn = {}
@@ -80,12 +80,13 @@ function! s:Server.initialize() abort
   endfunction
 
   " request.
-  return self.channel.request('initialize', {
+  let self.state.initialized = self.channel.request('initialize', {
         \   'processId': v:null,
         \   'rootUri': lamp#protocol#document#encode_uri(self.root_uri()),
         \   'initializationOptions': self.initialization_options(),
         \   'capabilities': lamp#server#capability#get_default_capability(),
         \ }).then(function(l:fn.on_initialize, [], self))
+  return self.state.initialized
 endfunction
 
 "

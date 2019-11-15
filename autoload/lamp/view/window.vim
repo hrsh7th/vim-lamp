@@ -12,11 +12,15 @@ function! lamp#view#window#do(winid, fn) abort
     return
   endif
 
+  let l:mode = mode()
   try
     execute printf('noautocmd keepalt keepjumps %swindo call a:fn()', win_id2win(a:winid))
   catch /.*/
     echomsg string({ 'e': v:exception, 't': v:throwpoint })
   endtry
   execute printf('noautocmd keepalt keepjumps %swincmd w', win_id2win(l:current_winid))
+  if index(['v', 'V', '<C-v>'], l:mode) >= 0
+    normal! gv
+  endif
 endfunction
 

@@ -14,6 +14,7 @@ let s:config = {
       \   'feature.references.on_references': s:on_locations,
       \   'feature.rename.on_renamed': s:on_locations,
       \   'feature.completion.snippet.expand': v:null,
+      \   'feature.completion.commit_chars': ["\<C-]>", "\<Tab>"],
       \   'view.sign.error.text': 'x',
       \   'view.sign.warning.text': '!',
       \   'view.sign.information.text': 'i',
@@ -180,7 +181,7 @@ function! lamp#complete(find_start, base) abort
   for [l:server_name, l:request] in items(s:context.requests)
     let l:response = lamp#sync(l:request)
 
-    let l:items = type(l:response) == type({}) ? l:response.items : l:response
+    let l:items = type(l:response) == type({}) ? get(l:response, 'items', []) : l:response
     for l:item in l:items
       let l:filter_text = get(l:item, 'filterText', get(l:item, 'insertText', l:item.label))
       if l:filter_text !~ '^' . a:base

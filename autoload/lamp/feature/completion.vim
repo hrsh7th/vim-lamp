@@ -100,7 +100,7 @@ function! s:on_complete_done() abort
       return
     endif
 
-    let l:is_snippet = get(l:completion_item, 'insertTextFormat', 1) == 2
+    let l:is_snippet = get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
     let l:has_text_edit = !empty(get(l:completion_item, 'textEdit', {}))
 
     " remove completed string if need.
@@ -123,25 +123,23 @@ function! s:on_complete_done() abort
             \   },
             \   'newText': ''
             \ }])
-      call cursor(l:start_position)
     endif
 
     " Snippet or textEdit.
     if l:is_snippet
-      if has_key(l:completion_item, 'insertText')
-        let l:text = l:completion_item.insertText
-      else
-        let l:text = get(get(l:completion_item, 'textEdit'), 'newText', '')
-      endif
+      call cursor(l:start_position)
       call lamp#config('feature.completion.snippet.expand')({
-            \   'body': split(l:text, "\n\|\r", v:true)
+            \   'body': split(l:completion_item.insertText, "\n\|\r", v:true)
             \ })
     elseif l:has_text_edit
-      call lamp#view#edit#apply(bufnr('%'), [l:completion_item.textEdit])
-      call cursor([
-            \   l:completion_item.textEdit.range.start.line + 1,
-            \   l:completion_item.textEdit.range.start.character + 1 + strlen(l:completion_item.textEdit.newText)
-            \ ])
+      call lamp#view#edit#apply(bufnr('%'), [{
+            \   'range': l:completion_item.textEdit.range,
+            \   'newText': ''
+            \ }])
+      call cursor(l:start_position)
+      call lamp#config('feature.completion.snippet.expand')({
+            \   'body': split(l:completion_item.textEdit.newText, "\n\|\r", v:true)
+            \ })
     endif
 
     " additionalTextEdits.
@@ -176,7 +174,7 @@ function! s:resolve(item_data) abort
   endif
 
   let l:server = lamp#server#registry#get_by_name(a:item_data.server_name)
-  if empty(l:server)
+  if empty(l:server) || !l:server.supports('capabilities.completionItem.resolveProvider')
     return s:Promise.resolve({})
   endif
 
@@ -225,7 +223,7 @@ endfunction
 " s:get_commit_characters
 "
 function! s:get_commit_characters(item_data, completion_item) abort
-  let l:commit_chars = ["\<C-]>", "\<Tab>"]
+  let l:commit_chars = lamp#config('feature.completion.commit_chars')
   let l:commit_chars += get(a:completion_item, 'commitCharacters', [])
   let l:server = lamp#server#registry#get_by_name(a:item_data.server_name)
   if !empty(l:server)
