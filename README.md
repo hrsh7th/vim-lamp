@@ -1,6 +1,9 @@
 # vim-lamp
 Language Server Protocol Client for Vim.
 
+# Status
+Yet not stable.
+
 # Requirement
 
 - vim
@@ -154,6 +157,7 @@ endfunction
 - Design canceling outdated request
     - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
+- Waiting server.initialize() more strictly
 - !!! Re-thinking completionProvider.commitCharacters
 - !!! Refactor completion.vim
 - ! Refactor signatureHelp
