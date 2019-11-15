@@ -14,10 +14,10 @@ let s:floatwin = s:Floatwin.new({})
 let s:user_data_key = 'lamp'
 
 "
-" This value update at every TextChangedP.
-" Uses canceling typed character when expand snippet.
+" Last inserted character.
+" This use to check commitCharacters.
 "
-let s:recent_current_line = ''
+let s:recent_inserted_char = ''
 
 "
 " {
@@ -32,7 +32,7 @@ function! lamp#feature#completion#init() abort
   augroup lamp#feature#completion
     autocmd!
     autocmd CompleteChanged * call s:on_complete_changed()
-    autocmd TextChangedP * call s:on_text_changed_p()
+    autocmd InsertCharPre * call s:on_insert_char_pre()
     autocmd CompleteDone * call s:on_complete_done()
   augroup END
 endfunction
@@ -48,89 +48,68 @@ function! s:on_complete_changed() abort
     return
   endif
 
-  let l:event = copy(v:event)
-
-  " already resolve requested.
-  let s:item_state[l:item_data.id] = get(s:item_state, l:item_data.id, {})
-  if has_key(s:item_state[l:item_data.id], 'resolve')
-    call lamp#debounce('lamp#feature#completion:show_documentation', { -> s:show_documentation(l:event, s:item_state[l:item_data.id]) }, 100)
-    return
-  endif
-
-  " request resolve.
   let l:fn = {}
   function! l:fn.debounce(event, item_data) abort
-    let s:item_state[a:item_data.id].resolve = s:resolve(a:item_data)
-    call s:show_documentation(a:event, s:item_state[a:item_data.id])
+    call s:resolve(a:item_data).then({ completion_item -> s:show_documentation(a:event, completion_item) })
   endfunction
+
+  let l:event = copy(v:event)
   call lamp#debounce('lamp#feature#completion:show_documentation', { -> l:fn.debounce(l:event, l:item_data) }, 100)
 endfunction
 
 "
-" s:on_text_changed_p
+" s:on_insert_char_pre
 "
-function! s:on_text_changed_p() abort
-  let l:fn = {}
-  function! l:fn.next_tick() abort
-    let s:recent_current_line = getline('.')
-  endfunction
-  call timer_start(0, { -> l:fn.next_tick() }, { 'repeat': 1 })
+function! s:on_insert_char_pre() abort
+  let s:recent_inserted_char = v:char
 endfunction
 
 "
 " s:on_complete_done
 "
 function! s:on_complete_done() abort
-  " clear documentation.
+  " clear.
   call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
+  call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
   call s:floatwin.hide()
 
-  " clear debounce timer.
-  call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
-
   let l:fn = {}
-  function! l:fn.next_tick(position, recent_current_line, completed_item) abort
-    " check managed item.
+  function! l:fn.next_tick(recent_position, recent_line, completed_item) abort
     let l:item_data = s:get_item_data(a:completed_item)
     if empty(l:item_data)
       let s:item_state = {}
       return
     endif
-
-    " get item state.
     let l:item_state = get(s:item_state, l:item_data.id, {})
+    let s:item_state = {}
 
-    " resolve if needed.
-    let l:promise = get(l:item_state, 'resolve', {})
-    if empty(l:promise)
-      let l:promise = s:resolve(l:item_data)
+    " <BS>, <C-w> etc.
+    if strlen(getline('.')) < strlen(a:recent_line)
+      return
     endif
 
-    " resolve data.
-    let l:completion_item = lamp#sync(l:promise)
+    " resolve completion item.
+    let l:completion_item = lamp#sync(s:resolve(l:item_data))
     if empty(l:completion_item)
       let l:completion_item = l:item_data.completion_item
     endif
 
-    " check <BS> like behavior.
-    if strlen(getline('.')) < strlen(a:recent_current_line)
+    " check commit character.
+    let l:commit_chars = s:get_commit_characters(l:item_data, l:completion_item)
+    if index(l:commit_chars, s:recent_inserted_char) == -1
       return
     endif
 
-    let l:is_snippet = get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
+    let l:is_snippet = get(l:completion_item, 'insertTextFormat', 1) == 2
     let l:has_text_edit = !empty(get(l:completion_item, 'textEdit', {}))
 
     " remove completed string if need.
     if l:has_text_edit || l:is_snippet
-      if l:is_snippet
-        " remove last inserted character.
-        call setline('.', a:recent_current_line)
-      else
-        let l:off = strlen(getline('.')) - strlen(a:recent_current_line)
-      endif
+      " Remove last inserted character.
+      call setline('.', a:recent_line)
 
       " remove completed string.
-      let l:start_position = [a:position[1], (a:position[2] + a:position[3]) - strlen(l:completion_item.label)]
+      let l:start_position = [a:recent_position[1], (a:recent_position[2] + a:recent_position[3]) - strlen(l:completion_item.label)]
       call lamp#view#edit#apply(bufnr('%'), [{
             \   'range': {
             \     'start': {
@@ -138,8 +117,8 @@ function! s:on_complete_done() abort
             \       'character': l:start_position[1] - 1
             \     },
             \     'end': {
-            \       'line': a:position[1] - 1,
-            \       'character': (a:position[2] + a:position[3]) - 1,
+            \       'line': a:recent_position[1] - 1,
+            \       'character': (a:recent_position[2] + a:recent_position[3]) - 1,
             \     }
             \   },
             \   'newText': ''
@@ -147,57 +126,62 @@ function! s:on_complete_done() abort
       call cursor(l:start_position)
     endif
 
-    " textEdit or Snippet.
-    if l:has_text_edit
+    " Snippet or textEdit.
+    if l:is_snippet
+      if has_key(l:completion_item, 'insertText')
+        let l:text = l:completion_item.insertText
+      else
+        let l:text = get(get(l:completion_item, 'textEdit'), 'newText', '')
+      endif
+      call lamp#config('feature.completion.snippet.expand')({
+            \   'body': split(l:text, "\n\|\r", v:true)
+            \ })
+    elseif l:has_text_edit
       call lamp#view#edit#apply(bufnr('%'), [l:completion_item.textEdit])
       call cursor([
             \   l:completion_item.textEdit.range.start.line + 1,
-            \   l:completion_item.textEdit.range.start.character + 1 + strlen(l:completion_item.textEdit.newText),
-            \   l:off
+            \   l:completion_item.textEdit.range.start.character + 1 + strlen(l:completion_item.textEdit.newText)
             \ ])
-    elseif l:is_snippet
-      call lamp#config('feature.completion.snippet.expand')({
-            \   'body': split(l:completion_item.insertText, "\n\|\r", v:true)
-            \ })
     endif
 
     " additionalTextEdits.
-    let l:additional_text_edits = get(l:completion_item, 'additionalTextEdits', {})
-    if !empty(l:additional_text_edits)
-      " apply after inserted last typing character.
-      call lamp#view#edit#apply(bufnr('%'), l:additional_text_edits)
+    if has_key(l:completion_item, 'additionalTextEdits')
+      call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
     endif
 
     " executeCommand.
     if has_key(l:completion_item, 'command')
       let l:server = lamp#server#registry#get_by_name(l:item_data.server_name)
-      if empty(l:server)
-        return
+      if !empty(l:server)
+        call l:server.request('workspace/executeCommand', {
+              \   'command': l:completion_item.command.command,
+              \   'arguments': get(l:completion_item.command, 'arguments')
+              \ }).catch(lamp#rescue())
       endif
-      call l:server.request('workspace/executeCommand', {
-            \   'command': l:completion_item.command.command,
-            \   'arguments': get(l:completion_item.command, 'arguments')
-            \ }).catch(lamp#rescue())
     endif
   endfunction
 
-  let s:item_state = {}
-  let l:position = getpos('.')
-  call timer_start(0, { -> l:fn.next_tick(l:position, s:recent_current_line, v:completed_item) }, { 'repeat': 1 })
+  let l:recent_position = getpos('.')
+  let l:recent_line = getline('.')
+  call timer_start(0, { -> l:fn.next_tick(l:recent_position, l:recent_line, v:completed_item) }, { 'repeat': 1 })
 endfunction
 
 "
 " s:resolve
 "
-function! s:resolve(item_user_data) abort
-  let l:server_name = a:item_user_data.server_name
-  let l:completion_item = a:item_user_data.completion_item
+function! s:resolve(item_data) abort
+  let s:item_state[a:item_data.id] = get(s:item_state, a:item_data.id, {})
+  if has_key(s:item_state[a:item_data.id], 'resolve')
+    return s:item_state[a:item_data.id].resolve
+  endif
 
-  let l:server = lamp#server#registry#get_by_name(l:server_name)
+  let l:server = lamp#server#registry#get_by_name(a:item_data.server_name)
   if empty(l:server)
     return s:Promise.resolve({})
   endif
-  return l:server.request('completionItem/resolve', l:completion_item).catch(lamp#rescue({}))
+
+  let s:item_state[a:item_data.id].resolve = l:server.request('completionItem/resolve', a:item_data.completion_item).catch(lamp#rescue({}))
+  return s:item_state[a:item_data.id].resolve
 endfunction
 
 "
@@ -225,12 +209,10 @@ function! s:get_item_data(completed_item) abort
     endtry
   endif
 
-  " if user_data has not `lamp` key.
   if !has_key(l:user_data, s:user_data_key)
     return {}
   endif
 
-  " check values in user_data.
   let l:item_data = l:user_data[s:user_data_key]
   if !has_key(l:item_data, 'id') || !has_key(l:item_data, 'server_name') || !has_key(l:item_data, 'completion_item')
     return {}
@@ -240,29 +222,36 @@ function! s:get_item_data(completed_item) abort
 endfunction
 
 "
+" s:get_commit_characters
+"
+function! s:get_commit_characters(item_data, completion_item) abort
+  let l:commit_chars = ["\<C-]>", "\<Tab>"]
+  let l:commit_chars += get(a:completion_item, 'commitCharacters', [])
+  let l:server = lamp#server#registry#get_by_name(a:item_data.server_name)
+  if !empty(l:server)
+    let l:commit_chars += l:server.capability.get_completion_all_commit_characters()
+  endif
+  return l:commit_chars
+endfunction
+
+"
 " s:show_documentation.
 "
-function! s:show_documentation(event, item_state) abort
-  let l:resolve = get(a:item_state, 'resolve', {})
-  if empty(l:resolve)
-    return
-  endif
-
-  let l:completion_item = lamp#sync(l:resolve)
-  if empty(l:completion_item)
+function! s:show_documentation(event, completion_item) abort
+  if mode()[0] !=# 'i'
     return
   endif
 
   let l:contents = []
-  if has_key(l:completion_item, 'detail')
+  if has_key(a:completion_item, 'detail')
     let l:contents += lamp#protocol#markup_content#normalize({
           \   'language': &filetype,
-          \   'value': l:completion_item.detail
+          \   'value': a:completion_item.detail
           \ })
   endif
 
-  if has_key(l:completion_item, 'documentation')
-    let l:contents += lamp#protocol#markup_content#normalize(l:completion_item.documentation)
+  if has_key(a:completion_item, 'documentation')
+    let l:contents += lamp#protocol#markup_content#normalize(a:completion_item.documentation)
   endif
 
   if !empty(l:contents)

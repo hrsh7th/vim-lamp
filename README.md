@@ -152,12 +152,11 @@ endfunction
 - Write `signs/highlight` tests
 - Create asyncomplete source
 - Design canceling outdated request
-- Design event handling (like vim-lsc's once)
+    - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
+- !!! Re-thinking completionProvider.commitCharacters
 - !!! Refactor completion.vim
 - ! Refactor signatureHelp
-- ! Improve diagnostic handling 2
-    - Improve textDocument/didChange handling
 - ! Performance
 - ! Multibyte support
 

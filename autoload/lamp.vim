@@ -189,7 +189,7 @@ function! lamp#complete(find_start, base) abort
 
       let l:word = get(l:item, 'insertText', l:item.label)
       let l:is_snippet = v:false
-      if get(l:item, 'insertTextFormat', 1) == 2 && has_key(l:item, 'insertText')
+      if get(l:item, 'insertTextFormat', 1) == 2
         let l:word = l:item.label
         let l:is_snippet = v:true
       endif

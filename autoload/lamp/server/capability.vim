@@ -66,7 +66,7 @@ function! lamp#server#capability#get_default_capability() abort
         \       'dynamicRegistration': v:false,
         \       'completionItem': {
         \         'snippetSupport': !empty(lamp#config('feature.completion.snippet.expand')) ? v:true : v:false,
-        \         'commitCharacterSupports': v:false,
+        \         'commitCharactersSupport': v:true,
         \         'documentationFormat': ['plaintext', 'markdown'],
         \         'deprecatedSupport': v:true,
         \         'preselectSupport': v:true,
@@ -142,6 +142,13 @@ endfunction
 "
 function! s:Capability.supports(path) abort
   return lamp#get(self.capability, a:path, v:null) isnot v:null
+endfunction
+
+"
+" get_completion_commit_characters
+"
+function! s:Capability.get_completion_all_commit_characters() abort
+  return lamp#get(self.capability, 'capabilities.completionProvider.allCommitCharacters', [])
 endfunction
 
 "
