@@ -207,9 +207,11 @@ function! lamp#complete(find_start, base) abort
 
       let l:word = get(l:item, 'insertText', l:item.label)
       let l:is_expandable = v:false
-      if get(l:item, 'insertTextFormat', 1) == 2 || has_key(l:item, 'textEdit')
+      if get(l:item, 'insertTextFormat', 1) == 2
         let l:word = l:item.label
         let l:is_expandable = v:true
+      elseif has_key(l:item, 'textEdit')
+        let l:word = l:item.label
       endif
 
       let s:context.id += 1

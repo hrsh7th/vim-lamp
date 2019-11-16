@@ -59,6 +59,10 @@ endfunction
 " s:on_responses
 "
 function! s:on_responses(bufnr, responses) abort
+  if mode()[0] !=# 'i'
+    return
+  endif
+
   let l:lines = []
   for l:response in filter(a:responses, { k, v -> !empty(v) })
     for l:content in s:get_contents(l:response)
