@@ -49,37 +49,39 @@ autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open
 function! s:on_text_document_did_open() abort
   setlocal omnifunc=lamp#complete
 
-  nmap <buffer> gf<CR>        <Plug>(lamp-definition)
-  nmap <buffer> gfs           <Plug>(lamp-definition-split)
-  nmap <buffer> gfv           <Plug>(lamp-definition-vsplit)
+  noremap <buffer><expr> <Tab> lamp#complete_select('<Tab>')
 
-  nmap <buffer> tgf<CR>       <Plug>(lamp-type-definition)
-  nmap <buffer> tgfs          <Plug>(lamp-type-definition-split)
-  nmap <buffer> tgfv          <Plug>(lamp-type-definition-vsplit)
+  nmap <buffer> gf<CR>         <Plug>(lamp-definition)
+  nmap <buffer> gfs            <Plug>(lamp-definition-split)
+  nmap <buffer> gfv            <Plug>(lamp-definition-vsplit)
 
-  nmap <buffer> dgf<CR>       <Plug>(lamp-declaration)
-  nmap <buffer> dgfs          <Plug>(lamp-declaration-split)
-  nmap <buffer> dgfv          <Plug>(lamp-declaration-vsplit)
+  nmap <buffer> tgf<CR>        <Plug>(lamp-type-definition)
+  nmap <buffer> tgfs           <Plug>(lamp-type-definition-split)
+  nmap <buffer> tgfv           <Plug>(lamp-type-definition-vsplit)
 
-  nmap <buffer> igf<CR>       <Plug>(lamp-implementation)
-  nmap <buffer> igfs          <Plug>(lamp-implementation-split)
-  nmap <buffer> igfv          <Plug>(lamp-implementation-vsplit)
+  nmap <buffer> dgf<CR>        <Plug>(lamp-declaration)
+  nmap <buffer> dgfs           <Plug>(lamp-declaration-split)
+  nmap <buffer> dgfv           <Plug>(lamp-declaration-vsplit)
 
-  nmap <buffer> <Leader>i     <Plug>(lamp-hover)
+  nmap <buffer> igf<CR>        <Plug>(lamp-implementation)
+  nmap <buffer> igfs           <Plug>(lamp-implementation-split)
+  nmap <buffer> igfv           <Plug>(lamp-implementation-vsplit)
 
-  nmap <buffer> <Leader>r     <Plug>(lamp-rename)
+  nmap <buffer> <Leader>i      <Plug>(lamp-hover)
 
-  nmap <buffer> <Leader>g     <Plug>(lamp-references)
+  nmap <buffer> <Leader>r      <Plug>(lamp-rename)
 
-  nmap <buffer> <Leader>f     <Plug>(lamp-formatting)
-  vmap <buffer> <Leader>f     <Plug>(lamp-range-formatting)
+  nmap <buffer> <Leader>g      <Plug>(lamp-references)
 
-  nmap <buffer> <Leader><CR>  <Plug>(lamp-code-action)
-  vmap <buffer> <Leader><CR>  <Plug>(lamp-code-action)
+  nmap <buffer> <Leader>f      <Plug>(lamp-formatting)
+  vmap <buffer> <Leader>f      <Plug>(lamp-range-formatting)
+
+  nmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
+  vmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
 
   " experimental
-  nmap <buffer> <Leader>@     <Plug>(lamp-document-highlight)
-  nmap <buffer> <Leader><Esc> <Plug>(lamp-document-highlight-clear)
+  nmap <buffer> <Leader>@      <Plug>(lamp-document-highlight)
+  nmap <buffer> <Leader><Esc>  <Plug>(lamp-document-highlight-clear)
 endfunction
 ```
 
@@ -158,7 +160,6 @@ endfunction
     - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
 - Waiting server.initialize() more strictly
-- !!! Re-thinking completionProvider.commitCharacters
 - !!! Refactor completion.vim
 - ! Refactor signatureHelp
 - ! Performance

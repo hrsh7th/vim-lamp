@@ -94,11 +94,12 @@ function! s:on_complete_done() abort
       let l:completion_item = l:item_data.completion_item
     endif
 
-    " check commit character.
-    let l:commit_chars = s:get_commit_characters(l:item_data, l:completion_item)
-    if index(l:commit_chars, s:recent_inserted_char) == -1
+    " check `lamp#complete_select` or `commitCharacters`
+    if !g:lamp#private_context['feature.completion.selected'] &&
+          \ index(s:get_commit_characters(l:item_data, l:completion_item), s:recent_inserted_char) == -1
       return
     endif
+    let g:lamp#private_context['feature.completion.selected'] = v:false
 
     let l:is_snippet = get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
     let l:has_text_edit = !empty(get(l:completion_item, 'textEdit', {}))
@@ -223,7 +224,7 @@ endfunction
 " s:get_commit_characters
 "
 function! s:get_commit_characters(item_data, completion_item) abort
-  let l:commit_chars = lamp#config('feature.completion.commit_chars')
+  let l:commit_chars = []
   let l:commit_chars += get(a:completion_item, 'commitCharacters', [])
   let l:server = lamp#server#registry#get_by_name(a:item_data.server_name)
   if !empty(l:server)

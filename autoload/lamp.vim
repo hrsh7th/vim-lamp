@@ -1,5 +1,10 @@
+let g:lamp#private_context = {
+      \   'feature.completion.selected': v:false
+      \ }
+
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Server = lamp#server#import()
+
 
 let s:debounce_ids = {}
 
@@ -14,7 +19,6 @@ let s:config = {
       \   'feature.references.on_references': s:on_locations,
       \   'feature.rename.on_renamed': s:on_locations,
       \   'feature.completion.snippet.expand': v:null,
-      \   'feature.completion.commit_chars': ["\<C-]>", "\<Tab>"],
       \   'view.sign.error.text': 'x',
       \   'view.sign.warning.text': '!',
       \   'view.sign.information.text': 'i',
@@ -148,6 +152,19 @@ function! lamp#get(dict, path, default) abort
 endfunction
 
 "
+" lamp#complete_select
+"
+function! lamp#complete_select(default) abort
+  if complete_info(['selected']).selected != -1
+    let g:lamp#private_context = {
+          \   'feature.completion.selected': v:true
+          \ }
+    return "\<C-y>"
+  endif
+  return a:default
+endfunction
+
+"
 " complete.
 "
 function! lamp#complete(find_start, base) abort
@@ -189,17 +206,17 @@ function! lamp#complete(find_start, base) abort
       endif
 
       let l:word = get(l:item, 'insertText', l:item.label)
-      let l:is_snippet = v:false
-      if get(l:item, 'insertTextFormat', 1) == 2
+      let l:is_expandable = v:false
+      if get(l:item, 'insertTextFormat', 1) == 2 || has_key(l:item, 'textEdit')
         let l:word = l:item.label
-        let l:is_snippet = v:true
+        let l:is_expandable = v:true
       endif
 
       let s:context.id += 1
       let l:vim_item = {}
       let l:vim_item.word = l:word
       let l:vim_item.kind = lamp#protocol#completion#get_kind_name(l:item.kind) . ' ' . get(l:item, 'detail', '')
-      let l:vim_item.abbr = l:is_snippet ? l:word . '~' : l:word
+      let l:vim_item.abbr = l:is_expandable ? l:word . '~' : l:word
       let l:vim_item.menu = '[LAMP]'
       let l:vim_item.user_data = json_encode({
             \   'lamp': {

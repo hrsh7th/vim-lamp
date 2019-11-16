@@ -35,9 +35,9 @@ Describe lamp#view#edit
 
   It Should apply workspace edit
     set hidden
-    let s:filepath1 = lamp#config('root') . '/fixture/typescript-fixture/src/index.ts'
+    let s:filepath1 = lamp#config('root') . '/misc/typescript-fixture/src/index.ts'
     let s:fileuri1 = lamp#protocol#document#encode_uri(s:filepath1)
-    let s:filepath2 = lamp#config('root') . '/fixture/typescript-fixture/src/module1.ts'
+    let s:filepath2 = lamp#config('root') . '/misc/typescript-fixture/src/module1.ts'
     let s:fileuri2 = lamp#protocol#document#encode_uri(s:filepath2)
     let s:workspace_edit = {
           \   'changes': {},

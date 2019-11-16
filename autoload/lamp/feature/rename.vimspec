@@ -6,7 +6,7 @@ Describe lamp#feature#rename
     let s:server = lamp#register('typescript-language-server', {
           \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
           \   'filetypes': ['typescript', 'typescript.tsx'],
-          \   'root_uri': { -> lamp#config('root') . '/fixture/typescript-fixture/' }
+          \   'root_uri': { -> lamp#config('root') . '/misc/typescript-fixture/' }
           \ })
     call lamp#sync(s:server.start())
     call lamp#sync(s:server.initialize())
@@ -19,7 +19,7 @@ Describe lamp#feature#rename
 
   It Should rename
     call lamp#view#buffer#open('vsplit', {
-          \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+          \   'filename': lamp#config('root') . '/misc/typescript-fixture/src/index.ts',
           \   'lnum': 5,
           \   'col': 2
           \ })

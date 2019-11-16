@@ -25,7 +25,6 @@ endfunction
 " Start process.
 "
 function! s:Channel.start(on_notification) abort
-  echomsg 'start'
   let self.job = s:Job.new(self.command, {
         \   'on_stdout': function(s:Channel.on_stdout, [], self),
         \   'on_stderr': function(s:Channel.on_stderr, [], self),

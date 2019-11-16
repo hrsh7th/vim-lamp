@@ -7,7 +7,7 @@ let s:expect = themis#helper('expect')
 "     let s:server = lamp#register('typescript-language-server', {
 "           \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
 "           \   'filetypes': ['typescript', 'typescript.tsx'],
-"           \   'root_uri': { -> lamp#config('root') . '/fixture/typescript-fixture/' }
+"           \   'root_uri': { -> lamp#config('root') . '/misc/typescript-fixture/' }
 "           \ })
 "     call lamp#sync(s:server.start())
 "     call lamp#sync(s:server.initialize())
@@ -21,7 +21,7 @@ let s:expect = themis#helper('expect')
 "
 "   It Should retrieve one declarations
 "     call lamp#view#buffer#open('vsplit', {
-"           \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+"           \   'filename': lamp#config('root') . '/misc/typescript-fixture/src/index.ts',
 "           \   'lnum': 1,
 "           \   'col': 10
 "           \ })
@@ -34,7 +34,7 @@ let s:expect = themis#helper('expect')
 "
 "   It Should retrieve multiple declarations
 "     call lamp#view#buffer#open('vsplit', {
-"           \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+"           \   'filename': lamp#config('root') . '/misc/typescript-fixture/src/index.ts',
 "           \   'lnum': 3,
 "           \   'col': 37
 "           \ })
@@ -48,7 +48,7 @@ let s:expect = themis#helper('expect')
 "
 "   It Should retrieve multiple declarations for custom handler
 "     call lamp#view#buffer#open('vsplit', {
-"           \   'filename': lamp#config('root') . '/fixture/typescript-fixture/src/index.ts',
+"           \   'filename': lamp#config('root') . '/misc/typescript-fixture/src/index.ts',
 "           \   'lnum': 3,
 "           \   'col': 37
 "           \ })
