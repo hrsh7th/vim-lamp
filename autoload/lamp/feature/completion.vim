@@ -74,7 +74,7 @@ function! s:on_complete_done() abort
   call s:floatwin.hide()
 
   let l:fn = {}
-  function! l:fn.next_tick(recent_position, recent_line, completed_item) abort
+  function! l:fn.next_tick(recent_selected, recent_position, recent_line, completed_item) abort
     let l:item_data = s:get_item_data(a:completed_item)
     if empty(l:item_data)
       let s:item_state = {}
@@ -95,11 +95,9 @@ function! s:on_complete_done() abort
     endif
 
     " check `lamp#complete_select` or `commitCharacters`
-    if !g:lamp#private_context['feature.completion.selected'] &&
-          \ index(s:get_commit_characters(l:item_data, l:completion_item), s:recent_inserted_char) == -1
+    if !a:recent_selected && index(s:get_commit_characters(l:item_data, l:completion_item), s:recent_inserted_char) == -1
       return
     endif
-    let g:lamp#private_context['feature.completion.selected'] = v:false
 
     let l:is_snippet = get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
     let l:has_text_edit = !empty(get(l:completion_item, 'textEdit', {}))
@@ -160,9 +158,13 @@ function! s:on_complete_done() abort
     endif
   endfunction
 
+  let l:recent_selected = g:lamp#state['feature.completion.selected']
   let l:recent_position = getpos('.')
   let l:recent_line = getline('.')
-  call timer_start(0, { -> l:fn.next_tick(l:recent_position, l:recent_line, v:completed_item) }, { 'repeat': 1 })
+
+  call timer_start(0, { -> l:fn.next_tick(l:recent_selected, l:recent_position, l:recent_line, v:completed_item) }, { 'repeat': 1 })
+
+  let g:lamp#state['feature.completion.selected'] = v:false
 endfunction
 
 "

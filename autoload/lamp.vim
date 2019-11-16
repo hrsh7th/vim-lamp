@@ -1,4 +1,4 @@
-let g:lamp#private_context = {
+let g:lamp#state = {
       \   'feature.completion.selected': v:false
       \ }
 
@@ -156,9 +156,7 @@ endfunction
 "
 function! lamp#complete_select(default) abort
   if complete_info(['selected']).selected != -1
-    let g:lamp#private_context = {
-          \   'feature.completion.selected': v:true
-          \ }
+    let g:lamp#state['feature.completion.selected'] = v:true
     return "\<C-y>"
   endif
   return a:default
