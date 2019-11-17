@@ -24,7 +24,7 @@ let g:mapleader = ' '
 
 set hidden
 set ambiwidth=double
-set completeopt+=noselect
+set completeopt=menu,menuone,noselect
 
 colorscheme gruvbox
 
@@ -44,7 +44,7 @@ function! s:on_lamp_initialized() abort
 
   call lamp#register('html-languageserver', {
         \   'command': ['html-languageserver', '--stdio'],
-        \   'filetypes': ['html', 'css', 'scss'],
+        \   'filetypes': ['html', 'css'],
         \   'initialization_options': { -> {
         \     'embeddedLanguages': []
         \   } },
@@ -63,13 +63,13 @@ endfunction
 
 autocmd! vimrc User lamp#text_document_did_open call s:on_lamp_text_document_did_open()
 function! s:on_lamp_text_document_did_open() abort
-  imap <buffer><expr>     <Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#complete_select('<Tab>')
-  smap <buffer><expr>     <Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#complete_select('<Tab>')
-  nmap <buffer> gf<CR>    <Plug>(lamp-definition)
-  nmap <buffer> gfs       <Plug>(lamp-definition-split)
-  nmap <buffer> gfv       <Plug>(lamp-definition-vsplit)
-  nmap <buffer> <Leader>i <Plug>(lamp-hover)
-  nmap <buffer> <Leader>r <Plug>(lamp-rename)
+  imap <buffer><expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#complete_select('<Tab>')
+  smap <buffer><expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#complete_select('<Tab>')
+  nmap <buffer> gf<CR>     <Plug>(lamp-definition)
+  nmap <buffer> gfs        <Plug>(lamp-definition-split)
+  nmap <buffer> gfv        <Plug>(lamp-definition-vsplit)
+  nmap <buffer> <Leader>i  <Plug>(lamp-hover)
+  nmap <buffer> <Leader>r  <Plug>(lamp-rename)
   setlocal omnifunc=lamp#complete
 endfunction
 

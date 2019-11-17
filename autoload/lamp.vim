@@ -186,7 +186,11 @@ function! lamp#complete(find_start, base) abort
   for l:server in l:servers
     let s:context.requests[l:server.name] = l:server.request('textDocument/completion', {
           \   'textDocument': lamp#protocol#document#identifier(bufnr('%')),
-          \   'position': lamp#protocol#position#get()
+          \   'position': lamp#protocol#position#get(),
+          \   'context': {
+          \     'triggerKind': 2,
+          \     'triggerCharacter': lamp#view#cursor#get_before_char_skip_white()
+          \   }
           \ }).catch(lamp#rescue([]))
   endfor
 
@@ -198,8 +202,8 @@ function! lamp#complete(find_start, base) abort
 
     let l:items = type(l:response) == type({}) ? get(l:response, 'items', []) : l:response
     for l:item in l:items
-      let l:filter_text = get(l:item, 'filterText', get(l:item, 'insertText', l:item.label))
-      if l:filter_text !~ '^' . a:base
+      let l:filter_text = get(l:item, 'filterText', l:item.label)
+      if l:filter_text !~ '^' . a:base && strlen(a:base) >= 1
         continue
       endif
 
