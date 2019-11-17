@@ -1,8 +1,8 @@
 # vim-lamp
-Language Server Protocol Client for Vim.
+Language Server Protocol client for Vim.
 
 # Status
-Yet not stable.
+Well works but APIs aren't stable.
 
 # Requirement
 
@@ -13,7 +13,17 @@ Yet not stable.
 
 # Setting
 
-```viml
+```vim
+if !isdirectory(expand('~/.vim/plugged/vim-plug'))
+  silent !curl -fLo ~/.vim/plugged/vim-plug/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+end
+execute printf('source %s', expand('~/.vim/plugged/vim-plug/plug.vim'))
+
+call plug#begin('~/.vim/plugged')
+Plug 'https://github.com/hrsh7th/vim-lamp'
+Plug 'https://github.com/hrsh7th/vim-vsinp'
+call plug#end()
+
 "
 " required options.
 "
@@ -29,6 +39,8 @@ augroup END
 "
 autocmd! vimrc User lamp#initialized * call s:on_initialized()
 function! s:on_initialized()
+  call lamp#config('feature.completion.snippet.expand', { option -> vsnip#anonymous(option.body) })
+
   call lamp#register('typescript-language-server', {
       \   'command': ['typescript-language-server', '--stdio'],
       \   'filetypes': ['typescript', 'javascript', 'typescript.tsx', 'javascript.jsx'],
