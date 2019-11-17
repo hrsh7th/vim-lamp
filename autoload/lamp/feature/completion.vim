@@ -50,7 +50,7 @@ function! s:on_complete_changed() abort
 
   let l:fn = {}
   function! l:fn.debounce(event, item_data) abort
-    call s:resolve(a:item_data).then({ completion_item -> s:show_documentation(a:event, completion_item) })
+    call s:resolve_completion_item(a:item_data).then({ completion_item -> s:show_documentation(a:event, completion_item) })
   endfunction
 
   let l:event = copy(v:event)
@@ -74,65 +74,38 @@ function! s:on_complete_done() abort
   call s:floatwin.hide()
 
   let l:fn = {}
-  function! l:fn.next_tick(recent_selected, recent_position, recent_line, completed_item) abort
+  function! l:fn.next_tick(is_selected, position_before_complete_done, line_before_complete_done, completed_item) abort
     let l:item_data = s:get_item_data(a:completed_item)
     if empty(l:item_data)
-      let s:item_state = {}
       return
     endif
-    let l:item_state = get(s:item_state, l:item_data.id, {})
-    let s:item_state = {}
 
     " <BS>, <C-w> etc.
-    if strlen(getline('.')) < strlen(a:recent_line)
+    if strlen(getline('.')) < strlen(a:line_before_complete_done)
       return
     endif
 
-    " resolve completion item.
-    let l:completion_item = lamp#sync(s:resolve(l:item_data))
+    " completionItem/resolve
+    let l:completion_item = lamp#sync(s:resolve_completion_item(l:item_data))
     if empty(l:completion_item)
       let l:completion_item = l:item_data.completion_item
     endif
 
     " check `lamp#complete_select` or `commitCharacters`
-    if !a:recent_selected && index(s:get_commit_characters(l:item_data, l:completion_item), s:recent_inserted_char) == -1
+    if !a:is_selected && index(s:get_commit_characters(l:item_data, l:completion_item), s:recent_inserted_char) == -1
       return
     endif
 
-    let l:is_snippet = get(l:completion_item, 'insertTextFormat', 1) == 2 && has_key(l:completion_item, 'insertText')
-    let l:has_text_edit = !empty(get(l:completion_item, 'textEdit', {}))
-
-    " remove completed string if need.
-    if l:has_text_edit || l:is_snippet
-      " Remove last inserted character.
-      call setline('.', a:recent_line)
-
-      " remove completed string.
-      let l:start_position = [a:recent_position[1], (a:recent_position[2] + a:recent_position[3]) - strlen(l:completion_item.label)]
-      call lamp#view#edit#apply(bufnr('%'), [{
-            \   'range': {
-            \     'start': {
-            \       'line': l:start_position[0] - 1,
-            \       'character': l:start_position[1] - 1
-            \     },
-            \     'end': {
-            \       'line': a:recent_position[1] - 1,
-            \       'character': (a:recent_position[2] + a:recent_position[3]) - 1,
-            \     }
-            \   },
-            \   'newText': ''
-            \ }])
-    endif
-    call cursor(l:start_position)
-
-    " Snippet or textEdit.
-    if l:is_snippet
+    " snippet or textEdit.
+    let l:expandable_state = s:get_expandable_state(l:completion_item)
+    if !empty(l:expandable_state)
+      call s:clear_completed_string(
+            \   a:position_before_complete_done,
+            \   a:line_before_complete_done,
+            \   l:completion_item
+            \ )
       call lamp#config('feature.completion.snippet.expand')({
-            \   'body': split(l:completion_item.insertText, "\n\|\r", v:true)
-            \ })
-    elseif l:has_text_edit
-      call lamp#config('feature.completion.snippet.expand')({
-            \   'body': split(l:completion_item.textEdit.newText, "\n\|\r", v:true)
+            \   'body': split(l:expandable_state.text, "\n\|\r", v:true)
             \ })
     endif
 
@@ -153,19 +126,24 @@ function! s:on_complete_done() abort
     endif
   endfunction
 
-  let l:recent_selected = g:lamp#state['feature.completion.selected']
-  let l:recent_position = getpos('.')
-  let l:recent_line = getline('.')
+  let l:is_selected = g:lamp#state['feature.completion.is_selected']
+  let l:position_before_complete_done = getpos('.')
+  let l:line_before_complete_done = getline('.')
 
-  call timer_start(0, { -> l:fn.next_tick(l:recent_selected, l:recent_position, l:recent_line, v:completed_item) }, { 'repeat': 1 })
+  call timer_start(0, { -> l:fn.next_tick(
+        \   l:is_selected,
+        \   l:position_before_complete_done,
+        \   l:line_before_complete_done,
+        \   v:completed_item
+        \ ) }, { 'repeat': 1 })
 
-  let g:lamp#state['feature.completion.selected'] = v:false
+  let g:lamp#state['feature.completion.is_selected'] = v:false
 endfunction
 
 "
-" s:resolve
+" s:resolve_completion_item
 "
-function! s:resolve(item_data) abort
+function! s:resolve_completion_item(item_data) abort
   let s:item_state[a:item_data.id] = get(s:item_state, a:item_data.id, {})
   if has_key(s:item_state[a:item_data.id], 'resolve')
     return s:item_state[a:item_data.id].resolve
@@ -178,6 +156,49 @@ function! s:resolve(item_data) abort
 
   let s:item_state[a:item_data.id].resolve = l:server.request('completionItem/resolve', a:item_data.completion_item).catch(lamp#rescue({}))
   return s:item_state[a:item_data.id].resolve
+endfunction
+
+"
+" s:get_expandable_state
+"
+function! s:get_expandable_state(completion_item) abort
+  if has_key(a:completion_item, 'textEdit') && a:completion_item.label !=# a:completion_item.textEdit.newText
+    return {
+          \   'text': a:completion_item.textEdit.newText
+          \ }
+  endif
+
+  if get(a:completion_item, 'insertTextFormat', 1) == 2 && a:completion_item.label !=# get(a:completion_item, 'insertText', '')
+    return {
+          \   'text': a:completion_item.insertText
+          \ }
+  endif
+  return {}
+endfunction
+
+"
+" s:clear_completed_string
+"
+function! s:clear_completed_string(position_before_complete_done, line_before_complete_done, completion_item) abort
+  " Remove last typed characters.
+  call setline('.', a:line_before_complete_done)
+
+  " Remove completed string.
+  let l:start_position = [a:position_before_complete_done[1], (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - strlen(a:completion_item.label)]
+  call lamp#view#edit#apply(bufnr('%'), [{
+        \   'range': {
+        \     'start': {
+        \       'line': l:start_position[0] - 1,
+        \       'character': l:start_position[1] - 1
+        \     },
+        \     'end': {
+        \       'line': a:position_before_complete_done[1] - 1,
+        \       'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - 1,
+        \     }
+        \   },
+        \   'newText': ''
+        \ }])
+  call cursor(l:start_position)
 endfunction
 
 "

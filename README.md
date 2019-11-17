@@ -172,7 +172,6 @@ endfunction
 - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
 - Improve diagnostics
-- ! Refactor completion.vim
 - ! Refactor signatureHelp
 - ! Performance
 - ! Multibyte support

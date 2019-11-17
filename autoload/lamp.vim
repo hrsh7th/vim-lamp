@@ -1,5 +1,5 @@
 let g:lamp#state = {
-      \   'feature.completion.selected': v:false
+      \   'feature.completion.is_selected': v:false
       \ }
 
 let s:Promise = vital#lamp#import('Async.Promise')
@@ -156,7 +156,7 @@ endfunction
 "
 function! lamp#complete_select(default) abort
   if complete_info(['selected']).selected != -1
-    let g:lamp#state['feature.completion.selected'] = v:true
+    let g:lamp#state['feature.completion.is_selected'] = v:true
     return "\<C-y>"
   endif
   return a:default
