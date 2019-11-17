@@ -28,28 +28,19 @@ Describe lamp#view#floatwin
   End
 
   It Should return is_showing
+    let s:floatwin = s:Floatwin.new({})
+    call s:expect(s:floatwin.is_showing()).to_equal(v:false)
+
+    call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
+    call s:expect(s:floatwin.is_showing()).to_equal(v:true)
+
+    call s:floatwin.hide()
+    call s:expect(s:floatwin.is_showing()).to_equal(v:false)
+
     if has('nvim')
-      let s:floatwin = s:Floatwin.new({})
-      call s:expect(s:floatwin.is_showing()).to_equal(v:false)
-
-      call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
-      call s:expect(s:floatwin.is_showing()).to_equal(v:true)
-
-      call s:floatwin.hide()
-      call s:expect(s:floatwin.is_showing()).to_equal(v:false)
-
       " force close (no use `s:floatwin.hide()`).
       call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
       call lamp#view#window#do(s:floatwin.winid(), { -> execute('close') })
-      call s:expect(s:floatwin.is_showing()).to_equal(v:false)
-    else
-      let s:floatwin = s:Floatwin.new({})
-      call s:expect(s:floatwin.is_showing()).to_equal(v:false)
-
-      call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
-      call s:expect(s:floatwin.is_showing()).to_equal(v:true)
-
-      call s:floatwin.hide()
       call s:expect(s:floatwin.is_showing()).to_equal(v:false)
     endif
   End

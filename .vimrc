@@ -36,14 +36,35 @@ autocmd! vimrc User lamp#initialized call s:on_lamp_initialized()
 function! s:on_lamp_initialized() abort
   call lamp#config('debug.log', '/tmp/lamp.log')
   call lamp#config('feature.completion.snippet.expand', { option -> vsnip#anonymous(option.body) })
+
   call lamp#register('vim-language-server', {
         \   'command': ['vim-language-server', '--stdio'],
         \   'filetypes': ['vim'],
+        \ })
+
+  call lamp#register('html-languageserver', {
+        \   'command': ['html-languageserver', '--stdio'],
+        \   'filetypes': ['html', 'css', 'scss'],
+        \   'initialization_options': { -> {
+        \     'embeddedLanguages': []
+        \   } },
+        \   'capabilities': {
+        \     'completionProvider': {
+        \       'triggerCharacters': ['>'],
+        \     }
+        \   }
+        \ })
+
+  call lamp#register('intelephense', {
+        \   'command': ['intelephense', '--stdio'],
+        \   'filetypes': ['php'],
         \ })
 endfunction
 
 autocmd! vimrc User lamp#text_document_did_open call s:on_lamp_text_document_did_open()
 function! s:on_lamp_text_document_did_open() abort
+  imap <buffer><expr>     <Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#complete_select('<Tab>')
+  smap <buffer><expr>     <Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#complete_select('<Tab>')
   nmap <buffer> gf<CR>    <Plug>(lamp-definition)
   nmap <buffer> gfs       <Plug>(lamp-definition-split)
   nmap <buffer> gfv       <Plug>(lamp-definition-vsplit)
