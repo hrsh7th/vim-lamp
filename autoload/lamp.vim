@@ -27,7 +27,7 @@ let s:config = {
       \     'help': ['help'],
       \     'vim': ['vim'],
       \     'typescript': ['ts', 'tsx', 'typescript', 'typescriptreact', 'typescript.tsx'],
-      \     'javascript': ['js', 'jsx', 'javascript', 'javascriptreact', 'javascript.jsx']
+      \     'javascript': ['js', 'jsx', 'javascript', 'javascriptreact', 'javascript.jsx'],
       \   }
       \ }
 

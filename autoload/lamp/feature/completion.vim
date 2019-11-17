@@ -123,19 +123,14 @@ function! s:on_complete_done() abort
             \   'newText': ''
             \ }])
     endif
+    call cursor(l:start_position)
 
     " Snippet or textEdit.
     if l:is_snippet
-      call cursor(l:start_position)
       call lamp#config('feature.completion.snippet.expand')({
             \   'body': split(l:completion_item.insertText, "\n\|\r", v:true)
             \ })
     elseif l:has_text_edit
-      call lamp#view#edit#apply(bufnr('%'), [{
-            \   'range': l:completion_item.textEdit.range,
-            \   'newText': ''
-            \ }])
-      call cursor(l:start_position)
       call lamp#config('feature.completion.snippet.expand')({
             \   'body': split(l:completion_item.textEdit.newText, "\n\|\r", v:true)
             \ })
