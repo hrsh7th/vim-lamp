@@ -172,8 +172,8 @@ function! s:resolve(item_data) abort
   endif
 
   let l:server = lamp#server#registry#get_by_name(a:item_data.server_name)
-  if empty(l:server) || !l:server.supports('capabilities.completionItem.resolveProvider')
-    return s:Promise.resolve({})
+  if empty(l:server) || !l:server.supports('capabilities.completionProvider.resolveProvider')
+    return s:Promise.resolve(a:item_data.completion_item)
   endif
 
   let s:item_state[a:item_data.id].resolve = l:server.request('completionItem/resolve', a:item_data.completion_item).catch(lamp#rescue({}))

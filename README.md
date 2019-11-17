@@ -85,7 +85,7 @@ function! s:on_text_document_did_open() abort
 endfunction
 ```
 
-# [Status](https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/)
+# [Spec compatibility](https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/)
 
 - General
     - [x] initialize
@@ -154,13 +154,14 @@ endfunction
     - [ ] textDocument/foldingRange
 
 # TODO
+- Improve documentation.
 - Write `signs/highlight` tests
 - Create asyncomplete source
 - Design canceling outdated request
     - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
 - Waiting server.initialize() more strictly
-- !!! Refactor completion.vim
+- ! Refactor completion.vim
 - ! Refactor signatureHelp
 - ! Performance
 - ! Multibyte support
