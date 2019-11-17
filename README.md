@@ -155,12 +155,11 @@ endfunction
 
 # TODO
 - Improve documentation.
-- Write `signs/highlight` tests
 - Create asyncomplete source
 - Design canceling outdated request
-    - Design event handling (like vim-lsc's once)
+- Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
-- Waiting server.initialize() more strictly
+- Improve diagnostics
 - ! Refactor completion.vim
 - ! Refactor signatureHelp
 - ! Performance
