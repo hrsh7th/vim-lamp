@@ -91,9 +91,9 @@ function! s:on_text_document_did_open() abort
   nmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
   vmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
 
-  " experimental
-  nmap <buffer> <Leader>@      <Plug>(lamp-document-highlight)
-  nmap <buffer> <Leader><Esc>  <Plug>(lamp-document-highlight-clear)
+  nmap <buffer> @              <Plug>(lamp-document-highlight)
+  " nmap <buffer> <Esc>        <Plug>(lamp-document-highlight-clear)
+  " nnoremap <buffer><Esc>     :<C-u>call lamp#feature#document_highlight#clear()<CR>
 endfunction
 ```
 
