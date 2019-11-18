@@ -4,7 +4,7 @@
 function! s:_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze__SID$')
 endfunction
-execute join(['function! vital#_lamp#Async#Promise#import() abort', printf("return map({'resolve': '', 'all': '', 'wait': '', '_vital_created': '', 'race': '', 'noop': '', 'is_promise': '', 'is_available': '', 'reject': '', 'new': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
+execute join(['function! vital#_lamp#Async#Promise#import() abort', printf("return map({'on_unhandled_rejection': '', 'resolve': '', 'all': '', 'wait': '', '_vital_created': '', 'race': '', 'noop': '', 'is_promise': '', 'is_available': '', 'reject': '', 'new': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
 delfunction s:_SID
 " ___vital___
 " ECMAScript like Promise library for asynchronous operations.
@@ -34,6 +34,10 @@ endfunction
 " @vimlint(EVL103, 0, a:resolve)
 " @vimlint(EVL103, 0, a:reject)
 let s:NOOP = function('s:noop')
+
+function! s:on_unhandled_rejection_default(...) abort
+endfunction
+let s:ON_UNHANDLED_REJECTION = function('s:on_unhandled_rejection_default')
 
 " Internal APIs
 
@@ -91,6 +95,9 @@ function! s:_publish(promise, ...) abort
   endif
 
   if empty(a:promise._children)
+    if settled == s:REJECTED
+      call s:ON_UNHANDLED_REJECTION(a:promise._result)
+    endif
     return
   endif
 
@@ -199,7 +206,12 @@ function! s:_race(promises, resolve, reject) abort
   endfor
 endfunction
 
+
 " Public APIs
+
+function! s:on_unhandled_rejection(CB) abort
+  let s:ON_UNHANDLED_REJECTION = a:CB
+endfunction
 
 function! s:new(resolver) abort
   let promise = deepcopy(s:PROMISE)

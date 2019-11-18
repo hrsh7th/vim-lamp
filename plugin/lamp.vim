@@ -94,7 +94,7 @@ function! s:on_text_document_did_close() abort
   endfunction
 
   let l:bufnr = bufnr('%')
-  call lamp#debounce('s:on_text_document_did_change:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
+  call lamp#debounce('s:on_text_document_did_close:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
 endfunction
 
 doautocmd User lamp#initialized

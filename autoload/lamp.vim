@@ -5,7 +5,6 @@ let g:lamp#state = {
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Server = lamp#server#import()
 
-
 let s:debounce_ids = {}
 
 let s:on_locations = { locations -> [setqflist(locations, 'r'), execute('copen')] }
@@ -30,6 +29,8 @@ let s:config = {
       \     'javascript': ['js', 'jsx', 'javascript', 'javascriptreact', 'javascript.jsx'],
       \   }
       \ }
+
+call s:Promise.on_unhandled_rejection({ err -> lamp#log('[ERROR]', err) })
 
 "
 " Register language server.
