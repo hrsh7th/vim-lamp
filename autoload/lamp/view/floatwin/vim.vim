@@ -13,10 +13,11 @@ endfunction
 " lamp#view#floatwin#vim#hide
 "
 function! lamp#view#floatwin#vim#hide(floatwin) abort
-  if lamp#view#floatwin#vim#is_showing(a:floatwin)
+  try
     call popup_hide(a:floatwin.vim_winid)
-    let a:floatwin.vim_winid = v:null
-  endif
+  catch /.*/
+  endtry
+  let a:floatwin.vim_winid = v:null
 endfunction
 
 "
