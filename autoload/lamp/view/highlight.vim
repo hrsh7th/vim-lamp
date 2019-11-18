@@ -2,6 +2,30 @@ let s:initialized = v:false
 let s:buf_highlights = {}
 let s:win_highlights = {}
 
+let s:colors = reverse([
+      \   'DarkBlue',
+      \   'DarkGreen',
+      \   'DarkCyan',
+      \   'DarkRed',
+      \   'DarkMagenta',
+      \   'DarkYellow',
+      \   'LightGray',
+      \   'DarkGray',
+      \   'Blue',
+      \   'Green',
+      \   'Cyan',
+      \   'Red',
+      \   'Magenta',
+      \   'Yellow',
+      \ ])
+
+"
+" lamp#view#highlight#nr2color
+"
+function! lamp#view#highlight#nr2color(nr) abort
+  return s:colors[a:nr % len(s:colors)]
+endfunction
+
 "
 " lamp#view#highlight#get_by_position
 "
@@ -45,8 +69,8 @@ endfunction
 "
 " attention.
 "
-function! lamp#view#highlight#attention(namespace, bufnr, range) abort
-  call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampAttention')
+function! lamp#view#highlight#color(namespace, bufnr, range, color) abort
+  call s:add_highlight(a:namespace, a:bufnr, a:range, 'Lamp' . a:color)
 endfunction
 
 "
@@ -165,11 +189,13 @@ function! s:initialize() abort
   endif
   let s:initialized = v:true
 
-  execute printf('highlight! LampAttention guibg=darkyellow')
   execute printf('highlight! LampError guibg=darkred')
   execute printf('highlight! LampWarning guibg=darkmagenta')
   execute printf('highlight! LampInformation gui=underline')
   execute printf('highlight! LampHint gui=underline')
+  for l:color in s:colors
+    execute printf('highlight! Lamp%s guibg=%s', l:color, l:color)
+  endfor
 
   augroup lamp#view#highlight
     autocmd!
