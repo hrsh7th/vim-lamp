@@ -171,8 +171,6 @@ endfunction
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
-- Improve diagnostics
-- ! Refactor signatureHelp
 - ! Performance
 - ! Multibyte support
 

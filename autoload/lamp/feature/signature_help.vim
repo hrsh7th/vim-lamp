@@ -5,8 +5,16 @@ let s:floatwin = s:Floatwin.new({ 'max_height': 12 })
 function! lamp#feature#signature_help#init() abort
   augroup lamp#feature#signature_help
     autocmd!
-    autocmd TextChangedI,TextChangedP,InsertEnter,InsertLeave * call s:trigger_signature_help()
+    autocmd InsertLeave * call s:close_signature_help()
+    autocmd CursorMovedI * call s:trigger_signature_help()
   augroup END
+endfunction
+
+"
+" s:close_signature_help
+"
+function! s:close_signature_help() abort
+  call s:floatwin.hide()
 endfunction
 
 "
@@ -17,11 +25,9 @@ function! s:trigger_signature_help() abort
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.signatureHelpProvider') })
   if empty(l:servers)
-    call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
+    call s:close_signature_help()
     return
   endif
-
-  call s:floatwin.hide()
 
   " gather trigger characters.
   let l:trigger_chars = []
@@ -29,30 +35,25 @@ function! s:trigger_signature_help() abort
     let l:trigger_chars += l:server.capability.get_signature_help_trigger_characters()
   endfor
 
-
   " check trigger character.
-  let l:charinfo = lamp#view#cursor#search_before_char(l:trigger_chars + [')'], 2)
-  if index(l:trigger_chars, l:charinfo[0]) == -1
-    call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
+  let l:char = lamp#view#cursor#get_before_char_skip_white()
+  if index(l:trigger_chars, l:char) == -1
+    call s:close_signature_help()
     return
   endif
 
-  let l:fn = {}
-  function! l:fn.debounce(bufnr, servers) abort
-    if mode()[0] !=# 'i'
-      call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
-      return
-    endif
+  if mode()[0] !=# 'i'
+    call s:close_signature_help()
+    return
+  endif
 
-    let l:promises = map(a:servers, { k, v -> v.request('textDocument/signatureHelp', {
-          \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
-          \   'position': lamp#protocol#position#get()
-          \ }).catch(lamp#rescue(v:null)) })
-    let l:p = s:Promise.all(l:promises)
-    let l:p = l:p.then({ responses -> s:on_responses(a:bufnr, responses) })
-    let l:p = l:p.catch(lamp#rescue())
-  endfunction
-  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> l:fn.debounce(l:bufnr, l:servers) }, 500)
+  let l:promises = map(l:servers, { k, v -> v.request('textDocument/signatureHelp', {
+        \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
+        \   'position': lamp#protocol#position#get()
+        \ }).catch(lamp#rescue(v:null)) })
+  let l:p = s:Promise.all(l:promises)
+  let l:p = l:p.then({ responses -> s:on_responses(l:bufnr, responses) })
+  let l:p = l:p.catch(lamp#rescue())
 endfunction
 
 "

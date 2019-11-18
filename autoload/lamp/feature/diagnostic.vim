@@ -11,7 +11,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd!
     autocmd CursorMoved * call s:show_floatwin()
     autocmd InsertEnter * call s:on_insert_enter()
-    autocmd InsertLeave * call lamp#feature#diagnostic#update()
+    autocmd InsertLeave,BufWritePost * call lamp#feature#diagnostic#update()
   augroup END
 endfunction
 
