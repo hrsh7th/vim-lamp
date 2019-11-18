@@ -76,6 +76,14 @@ function! lamp#server#capability#get_default_capability() abort
         \       },
         \       'contextSupport': v:true
         \     },
+        \     'codeAction': {
+        \       'dynamicRegistration': v:false,
+        \       'codeActionLiteralSupport': {
+        \         'codeActionKind': {
+        \           'valueSet': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
+        \         }
+        \       }
+        \     },
         \     'signatureHelp': {
         \       'dynamicRegistration': v:false,
         \       'signatureInformation': {
@@ -95,7 +103,26 @@ function! lamp#server#capability#get_default_capability() abort
         \         'valueSet': values(g:lamp#server#capability#symbol_kinds)
         \       },
         \       'hierarchicalDocumentSymbolSupport': v:true
-        \     }
+        \     },
+        \     'documentHighlight': {
+        \       'dynamicRegistration': v:false,
+        \     },
+        \     'declaration': {
+        \       'dynamicRegistration': v:false,
+        \       'linkSupport': v:true,
+        \     },
+        \     'definition': {
+        \       'dynamicRegistration': v:false,
+        \       'linkSupport': v:true,
+        \     },
+        \     'typeDefinition': {
+        \       'dynamicRegistration': v:false,
+        \       'linkSupport': v:true,
+        \     },
+        \     'implementation': {
+        \       'dynamicRegistration': v:false,
+        \       'linkSupport': v:true,
+        \     },
         \   },
         \   'experimental': {},
         \ }
