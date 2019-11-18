@@ -166,7 +166,8 @@ endfunction
     - [ ] textDocument/foldingRange
 
 # TODO
-- Improve documentation.
+- Improve documentation
+- Built-in snippet support
 - Create asyncomplete source
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
