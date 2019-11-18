@@ -3,6 +3,30 @@ let s:buf_highlights = {}
 let s:win_highlights = {}
 
 "
+" lamp#view#highlight#get_by_position
+"
+" Returns buf_highlights that related current bufnr.
+"
+function! lamp#view#highlight#get_by_position(position) abort
+  let l:target = {}
+  for [l:namespace, l:highlight_map] in items(s:buf_highlights)
+    for [l:bufnr, l:highlights] in items(l:highlight_map)
+      if l:bufnr != bufnr('%')
+        continue
+      endif
+
+      for l:highlight in l:highlights
+        if lamp#protocol#position#in_range(a:position, l:highlight.range)
+          let l:target[l:namespace] = get(l:target, l:namespace, [])
+          let l:target[l:namespace] += [l:highlight]
+        endif
+      endfor
+    endfor
+  endfor
+  return l:target
+endfunction
+
+"
 " remove.
 "
 function! lamp#view#highlight#remove(namespace, ...) abort

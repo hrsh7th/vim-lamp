@@ -10,6 +10,14 @@ function! lamp#protocol#position#get() abort
 endfunction
 
 "
+" lamp#protocol#position#in_range
+"
+function! lamp#protocol#position#in_range(position, range) abort
+  return lamp#protocol#position#after(a:range.start, a:position) &&
+        \ lamp#protocol#position#after(a:position, a:range.end)
+endfunction
+
+"
 " lamp#protocol#position#to_vim
 "
 function! lamp#protocol#position#to_vim(position) abort
