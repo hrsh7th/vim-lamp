@@ -82,7 +82,7 @@ function! s:update()
       let l:mark_group = printf('LampMarkdownFencedMark_%s', s:escape(l:mark))
       let l:start_mark = printf('^\s*```\s*%s\s*', l:mark)
       let l:end_mark = '\s*```\s*$'
-      execute printf('syntax region %s matchgroup=LampMarkdownFencedStart start="%s" matchgroup=LampMarkdownFencedEnd end="%s" containedin=@Markdown contains=%s concealends',
+      execute printf('syntax region %s matchgroup=LampMarkdownFencedStart start="%s" matchgroup=LampMarkdownFencedEnd end="%s" containedin=@Markdown contains=%s keepend concealends',
             \   l:mark_group,
             \   l:start_mark,
             \   l:end_mark,

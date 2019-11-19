@@ -7,6 +7,26 @@ function! lamp#protocol#range#in_line(range) abort
 endfunction
 
 "
+" lamp#protocol#range#merge_expand
+"
+function! lamp#protocol#range#merge_expand(range1, range2) abort
+  let l:start_line = min([a:range1.start.line, a:range2.start.line])
+  let l:start_character = min([a:range1.start.character, a:range2.start.character])
+  let l:end_line = max([a:range1.end.line, a:range2.end.line])
+  let l:end_character = max([a:range1.end.character, a:range2.end.character])
+  return {
+        \   'start': {
+        \     'line': l:start_line,
+        \     'character': l:start_character,
+        \   },
+        \   'end': {
+        \     'line': l:end_line,
+        \     'character': l:end_character,
+        \   },
+        \ }
+endfunction
+
+"
 " lamp#protocol#range#compare_nearest
 "
 function! lamp#protocol#range#compare_nearest(range1, range2, position) abort

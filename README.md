@@ -166,6 +166,7 @@ endfunction
     - [ ] textDocument/foldingRange
 
 # TODO
+- How to clear completed string?
 - Improve documentation
 - Built-in snippet support
 - Create asyncomplete source
@@ -174,4 +175,5 @@ endfunction
 - Should be abstracted location's feature?
 - ! Performance
 - ! Multibyte support
+
 
