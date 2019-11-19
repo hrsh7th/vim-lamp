@@ -102,6 +102,7 @@ function! s:on_complete_done() abort
       call s:clear_completed_string(
             \   a:position_before_complete_done,
             \   a:line_before_complete_done,
+            \   a:completed_item,
             \   l:completion_item
             \ )
       call lamp#config('feature.completion.snippet.expand')({
@@ -179,26 +180,29 @@ endfunction
 "
 " s:clear_completed_string
 "
-function! s:clear_completed_string(position_before_complete_done, line_before_complete_done, completion_item) abort
+function! s:clear_completed_string(position_before_complete_done, line_before_complete_done, completed_item, completion_item) abort
   " Remove last typed characters.
   call setline('.', a:line_before_complete_done)
 
   " Remove completed string.
-  let l:start_position = [a:position_before_complete_done[1], (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - strlen(a:completion_item.label)]
-  call lamp#view#edit#apply(bufnr('%'), [{
-        \   'range': {
-        \     'start': {
-        \       'line': l:start_position[0] - 1,
-        \       'character': l:start_position[1] - 1
-        \     },
-        \     'end': {
-        \       'line': a:position_before_complete_done[1] - 1,
-        \       'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - 1,
-        \     }
+  let l:range = {
+        \   'start': {
+        \     'line': a:position_before_complete_done[1],
+        \     'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - strlen(a:completed_item.word)
         \   },
-        \   'newText': ''
+        \   'end': {
+        \     'line': a:position_before_complete_done[1] - 1,
+        \     'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - 1,
+        \   }
+        \ }
+  if has_key(a:completion_item, 'textEdit')
+    let l:range = lamp#protocol#range#merge_expand(l:range, a:completion_item.textEdit.range)
+  endif
+  call lamp#view#edit#apply(bufnr('%'), [{
+        \   'range': l:range,
+        \   'newText': '',
         \ }])
-  call cursor(l:start_position)
+  call cursor([l:range.start.line + 1, l:range.start.character + 1])
 endfunction
 
 "
