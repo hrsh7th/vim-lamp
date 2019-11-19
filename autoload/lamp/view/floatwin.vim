@@ -57,7 +57,7 @@ function! s:Floatwin.new(option) abort
   call setbufvar(l:bufnr, '&buftype', 'nofile')
   return extend(deepcopy(s:Floatwin), {
         \   'bufnr': l:bufnr,
-        \   'max_width': get(a:option, 'max_width', &columns / 3),
+        \   'max_width': get(a:option, 'max_width', &columns / 2),
         \   'max_height': get(a:option, 'max_height', &lines / 2),
         \   'screenpos': [0, 0],
         \   'contents': []
@@ -68,13 +68,14 @@ endfunction
 " show_tooltip
 "
 function! s:Floatwin.show_tooltip(screenpos, contents) abort
+  let l:contents = self.fix_contents(a:contents)
   call self.show(
         \   lamp#view#floatwin#fix_position_as_tooltip(
         \     a:screenpos,
-        \     self.get_width(a:contents),
-        \     self.get_height(a:contents)
+        \     self.get_width(l:contents),
+        \     self.get_height(l:contents)
         \   ),
-        \   a:contents
+        \   l:contents
         \ )
 endfunction
 
@@ -83,7 +84,7 @@ endfunction
 "
 function! s:Floatwin.show(screenpos, contents) abort
   let self.screenpos = a:screenpos
-  let self.contents = a:contents
+  let self.contents = self.fix_contents(a:contents)
 
   " create lines.
   let l:lines = []
@@ -137,6 +138,20 @@ endfunction
 "
 function! s:Floatwin.winid() abort
   return lamp#view#floatwin#{s:namespace}#winid(self)
+endfunction
+
+"
+" fix_contents
+"
+function! s:Floatwin.fix_contents(contents) abort
+  if a:contents[0].lines[0] != ''
+    call insert(a:contents[0].lines, '')
+  endif
+  if a:contents[-1].lines[-1] != ''
+    call add(a:contents[-1].lines, '')
+  endif
+
+  return a:contents
 endfunction
 
 "

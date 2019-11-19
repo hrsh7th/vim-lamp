@@ -94,8 +94,7 @@ endfunction
 "
 function! s:Server.request(method, params) abort
   let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> self.start() })
-  let l:p = l:p.then({ -> self.initialize() })
+  let l:p = l:p.then({ -> [self.start(), self.initialize()] })
   let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
   let l:p = l:p.then({ -> self.channel.request(a:method, a:params) })
   return l:p
@@ -115,8 +114,7 @@ endfunction
 "
 function! s:Server.notify(method, params) abort
   let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> self.start() })
-  let l:p = l:p.then({ -> self.initialize() })
+  let l:p = l:p.then({ -> [self.start(), self.initialize()] })
   let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
   let l:p = l:p.then({ -> self.channel.notify(a:method, a:params) })
   return l:p

@@ -39,7 +39,11 @@ endfunction
 
 function! s:sign_place(name, bufnr, lnum) abort
   call s:initialize()
-  return sign_place(0, s:sign_group, a:name, a:bufnr, { 'lnum': a:lnum, 'priority': 1000 })
+  try
+    return sign_place(0, s:sign_group, a:name, a:bufnr, { 'lnum': a:lnum, 'priority': 1000 })
+  catch /.*/
+    call lamp#log('[ERROR]', { 'excption': v:exception, 'throwpoint': v:throwpoint })
+  endtry
 endfunction
 
 function! s:initialize() abort

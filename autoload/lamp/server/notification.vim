@@ -18,7 +18,12 @@ function! s:text_document_publish_diagnostics(server, notification) abort
   if !has_key(a:server.documents, a:notification.params.uri)
     return
   endif
+
   let l:doc = a:server.documents[a:notification.params.uri]
+  if len(l:doc.diagnostics) == 0 && len(a:notification.params.diagnostics) == 0
+    return
+  endif
+
   call l:doc.set_diagnostics(a:notification.params.diagnostics)
   call lamp#feature#diagnostic#update()
 endfunction

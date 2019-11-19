@@ -52,9 +52,11 @@ Describe lamp#view#floatwin
           \   { 'lines': ['Error from prettier'] }
           \ ])
     call s:expect(getbufline(s:floatwin.bufnr, '^', '$')).to_equal([
+          \   '',
           \   'Error from typescript',
           \   '――――――――――',
-          \   'Error from prettier'
+          \   'Error from prettier',
+          \   ''
           \ ])
     call s:floatwin.hide()
   End

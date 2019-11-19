@@ -54,10 +54,10 @@ function! s:string(string) abort
   let l:string = substitute(l:string, "\r", '', 'g')
 
   " compact fenced code block satrting.
-  let l:string = substitute(l:string, '\%(^\|' . "\n" . '\)\(```\s*\w\+\s*\)' . "\n", '\1 ', 'g')
+  let l:string = substitute(l:string, '\%(^\|' . "\n" . '\)\(```\s*\w\+\s*\)' . "\n*", '\1 ', 'g')
 
   " compact fenced code block ending.
-  let l:string = substitute(l:string, "\n\\(```\\s*\\)", ' ```', 'g')
+  let l:string = substitute(l:string, "\n*\\s*```\\s*$", ' ```', 'g')
 
   " trim first/last whitespace.
   let l:string = substitute(l:string, '^\(\s*\|\n\)\|\(\s*\|\n\)*$', '', 'g')
