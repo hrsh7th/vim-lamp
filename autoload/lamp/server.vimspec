@@ -8,7 +8,7 @@ Describe lamp#server
     let s:server = s:Server.new('typescript-language-server', {
           \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
           \   'filetypes': ['typescript', 'typescript.tsx'],
-          \   'root_uri': { -> lamp#config('root') . '/misc/typescript-fixture/' },
+          \   'root_uri': { -> lamp#config('root') . '/misc/typescript/' },
           \   'initialization_options': { -> {} }
           \ })
   End
