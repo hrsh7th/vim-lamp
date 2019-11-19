@@ -182,13 +182,16 @@ endfunction
 " s:get_expandable_state
 "
 function! s:get_expandable_state(completed_item, completion_item) abort
-  if has_key(a:completion_item, 'textEdit') && a:completed_item.word !=# a:completion_item.textEdit.newText
+  if has_key(a:completion_item, 'textEdit') &&
+        \ a:completed_item.word !=# a:completion_item.textEdit.newText
     return {
           \   'text': a:completion_item.textEdit.newText
           \ }
   endif
 
-  if get(a:completion_item, 'insertTextFormat', 1) == 2 && a:completed_item.word !=# get(a:completion_item, 'insertText', '')
+  if get(a:completion_item, 'insertTextFormat', 1) == 2 &&
+        \ has_key(a:completion_item, 'insertText') &&
+        \ a:completed_item.word !=# a:completion_item.insertText
     return {
           \   'text': a:completion_item.insertText
           \ }
