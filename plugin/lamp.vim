@@ -88,12 +88,15 @@ endfunction
 function! s:on_text_document_did_close() abort
   let l:fn = {}
   function! l:fn.debounce(bufnr) abort
-    for l:server in lamp#server#registry#find_by_filetype(getbufvar(a:bufnr, '&filetype'))
-      call l:server.ensure_document(a:bufnr)
+    for l:server in lamp#server#registry#all()
+      let l:bufnrs = map(values(l:server.documents), { k, v -> v.bufnr })
+      if index(l:bufnrs, a:bufnr) >= 0
+        call l:server.ensure_document(a:bufnr)
+      endif
     endfor
   endfunction
 
-  let l:bufnr = bufnr('%')
+  let l:bufnr = str2nr(expand('<abuf>'))
   call lamp#debounce('s:on_text_document_did_close:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
 endfunction
 

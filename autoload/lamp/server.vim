@@ -205,22 +205,31 @@ endfunction
 " close_document.
 "
 function! s:Server.close_document(bufnr) abort
-  " ignore if buffer is not related file.
+  let l:document = get(filter(values(self.documents), { k, v -> v.bufnr == a:bufnr }), 0, {})
+  if empty(l:document)
+    return
+  endif
+
+  let l:path = lamp#protocol#document#decode_uri(l:document.uri)
+
+  " ignore if buffer is not related to file.
   " if remove this, occurs infinite loop because bufloaded always return -1
-  if !filereadable(fnamemodify(bufname(a:bufnr), ':p'))
+  if !filereadable(l:path)
     return
   endif
 
   " buffer is not unloaded.
-  if bufloaded(a:bufnr)
+  if bufloaded(l:path)
     return
   endif
 
   " remove managed document.
-  call remove(self.documents, lamp#protocol#document#encode_uri(bufname(a:bufnr)))
+  call remove(self.documents, l:document.uri)
 
   call self.channel.notify('textDocument/didClose', {
-        \   'textDocument': lamp#protocol#document#identifier(a:bufnr)
+        \   'textDocument': {
+        \     'uri': l:document.uri
+        \   }
         \ })
 endfunction
 
