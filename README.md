@@ -61,7 +61,7 @@ autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open
 function! s:on_text_document_did_open() abort
   setlocal omnifunc=lamp#complete
 
-  noremap <buffer><expr> <Tab> lamp#complete_select('<Tab>')
+  noremap <buffer><expr> <Tab> lamp#map#confirm('<Tab>')
 
   nmap <buffer> gf<CR>         <Plug>(lamp-definition)
   nmap <buffer> gfs            <Plug>(lamp-definition-split)
@@ -92,8 +92,8 @@ function! s:on_text_document_did_open() abort
   vmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
 
   nmap <buffer> @              <Plug>(lamp-document-highlight)
-  " nmap <buffer> <Esc>        <Plug>(lamp-document-highlight-clear)
-  " nnoremap <buffer><Esc>     :<C-u>call lamp#feature#document_highlight#clear()<CR>
+  nmap <buffer> <Esc>          <Plug>(lamp-document-highlight-clear)
+  nnoremap <buffer><Esc>       :<C-u>call lamp#feature#document_highlight#clear()<CR>
 endfunction
 ```
 
@@ -166,7 +166,7 @@ endfunction
     - [ ] textDocument/foldingRange
 
 # TODO
-- How to clear completed string?
+- Re-thinking `lamp#map#confirm` when user no use `lexima.vim`
 - Improve documentation
 - Built-in snippet support
 - Create asyncomplete source
@@ -175,5 +175,4 @@ endfunction
 - Should be abstracted location's feature?
 - ! Performance
 - ! Multibyte support
-
 

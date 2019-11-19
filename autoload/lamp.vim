@@ -153,17 +153,6 @@ function! lamp#get(dict, path, default) abort
 endfunction
 
 "
-" lamp#complete_select
-"
-function! lamp#complete_select(default) abort
-  if complete_info(['selected']).selected != -1
-    let g:lamp#state['feature.completion.is_selected'] = v:true
-    return "\<C-y>"
-  endif
-  return a:default
-endfunction
-
-"
 " complete.
 "
 function! lamp#complete(find_start, base) abort

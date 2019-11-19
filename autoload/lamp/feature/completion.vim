@@ -38,6 +38,25 @@ function! lamp#feature#completion#init() abort
 endfunction
 
 "
+" lamp#feature#completion#should_effect_on_complete_done
+"
+function! lamp#feature#completion#should_effect_on_complete_done(completed_item) abort
+  let l:item_data = s:get_item_data(v:completed_item)
+  if empty(l:item_data)
+    return
+  endif
+
+  let l:completion_item = lamp#sync(s:resolve_completion_item(l:item_data))
+  if empty(l:completion_item)
+    let l:completion_item = l:item_data.completion_item
+  endif
+
+  return has_key(l:completion_item, 'additionalTextEdits') ||
+        \ has_key(l:completion_item, 'command') ||
+        \ !empty(s:get_expandable_state(a:completed_item, l:completion_item))
+endfunction
+
+"
 " s:on_complete_changed
 "
 function! s:on_complete_changed() abort
@@ -97,7 +116,7 @@ function! s:on_complete_done() abort
     endif
 
     " snippet or textEdit.
-    let l:expandable_state = s:get_expandable_state(l:completion_item)
+    let l:expandable_state = s:get_expandable_state(a:completed_item, l:completion_item)
     if !empty(l:expandable_state)
       call s:clear_completed_string(
             \   a:position_before_complete_done,
@@ -162,14 +181,14 @@ endfunction
 "
 " s:get_expandable_state
 "
-function! s:get_expandable_state(completion_item) abort
-  if has_key(a:completion_item, 'textEdit') && a:completion_item.label !=# a:completion_item.textEdit.newText
+function! s:get_expandable_state(completed_item, completion_item) abort
+  if has_key(a:completion_item, 'textEdit') && a:completed_item.word !=# a:completion_item.textEdit.newText
     return {
           \   'text': a:completion_item.textEdit.newText
           \ }
   endif
 
-  if get(a:completion_item, 'insertTextFormat', 1) == 2 && a:completion_item.label !=# get(a:completion_item, 'insertText', '')
+  if get(a:completion_item, 'insertTextFormat', 1) == 2 && a:completed_item.word !=# get(a:completion_item, 'insertText', '')
     return {
           \   'text': a:completion_item.insertText
           \ }
