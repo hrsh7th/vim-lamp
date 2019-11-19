@@ -1,39 +1,45 @@
-" vint: -ProhibitSetNoCompatible
 if has('vim_starting')
   set encoding=utf-8
 endif
 scriptencoding utf-8
 
 if &compatible
+  " vint: -ProhibitSetNoCompatible
   set nocompatible
 endif
 
-if !filereadable('/tmp/plug.vim')
-  silent !curl --insecure -fLo /tmp/plug.vim https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-endif
+if !isdirectory(expand('~/.vim/plugged/vim-plug'))
+  silent !curl -fLo ~/.vim/plugged/vim-plug/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+end
+execute printf('source %s', expand('~/.vim/plugged/vim-plug/plug.vim'))
 
-source /tmp/plug.vim
-
-call plug#begin('/tmp/plugged')
-Plug expand('<sfile>:p:h')
-Plug 'hrsh7th/vim-vsnip'
-Plug 'gruvbox-community/gruvbox'
+call plug#begin('~/.vim/plugged')
+Plug 'https://github.com/hrsh7th/vim-lamp'
+Plug 'https://github.com/hrsh7th/vim-vsnip'
 call plug#end()
 
-let g:mapleader = ' '
-
+"
+" required options.
+"
 set hidden
 set ambiwidth=double
 set completeopt=menu,menuone,noselect
 
-colorscheme gruvbox
+"
+" vim-vsnip mapping.
+"
+imap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
+smap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
 
 augroup vimrc
   autocmd!
 augroup END
 
-autocmd! vimrc User lamp#initialized call s:on_lamp_initialized()
-function! s:on_lamp_initialized() abort
+"
+" initialize servers.
+"
+autocmd! vimrc User lamp#initialized call s:on_initialized()
+function! s:on_initialized()
   call lamp#config('debug.log', '/tmp/lamp.log')
   call lamp#config('feature.completion.snippet.expand', { option -> vsnip#anonymous(option.body) })
 
@@ -61,20 +67,50 @@ function! s:on_lamp_initialized() abort
         \ })
 endfunction
 
-autocmd! vimrc User lamp#text_document_did_open call s:on_lamp_text_document_did_open()
-function! s:on_lamp_text_document_did_open() abort
-  imap <buffer><expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#complete_select('<Tab>')
-  smap <buffer><expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#complete_select('<Tab>')
-  nmap <buffer> gf<CR>     <Plug>(lamp-definition)
-  nmap <buffer> gfs        <Plug>(lamp-definition-split)
-  nmap <buffer> gfv        <Plug>(lamp-definition-vsplit)
-  nmap <buffer> <Leader>i  <Plug>(lamp-hover)
-  nmap <buffer> <Leader>r  <Plug>(lamp-rename)
+"
+" initialize buffers.
+"
+autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open()
+function! s:on_text_document_did_open() abort
   setlocal omnifunc=lamp#complete
-endfunction
 
-imap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
-smap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
+  noremap <buffer><expr> <Tab> lamp#map#confirm('<Tab>')
+
+  nmap <buffer> gf<CR>         <Plug>(lamp-definition)
+  nmap <buffer> gfs            <Plug>(lamp-definition-split)
+  nmap <buffer> gfv            <Plug>(lamp-definition-vsplit)
+
+  nmap <buffer> tgf<CR>        <Plug>(lamp-type-definition)
+  nmap <buffer> tgfs           <Plug>(lamp-type-definition-split)
+  nmap <buffer> tgfv           <Plug>(lamp-type-definition-vsplit)
+
+  nmap <buffer> dgf<CR>        <Plug>(lamp-declaration)
+  nmap <buffer> dgfs           <Plug>(lamp-declaration-split)
+  nmap <buffer> dgfv           <Plug>(lamp-declaration-vsplit)
+
+  nmap <buffer> igf<CR>        <Plug>(lamp-implementation)
+  nmap <buffer> igfs           <Plug>(lamp-implementation-split)
+  nmap <buffer> igfv           <Plug>(lamp-implementation-vsplit)
+
+  nmap <buffer> <Leader>i      <Plug>(lamp-hover)
+
+  nmap <buffer> <Leader>r      <Plug>(lamp-rename)
+
+  nmap <buffer> <Leader>g      <Plug>(lamp-references)
+
+  nmap <buffer> <Leader>f      <Plug>(lamp-formatting)
+  vmap <buffer> <Leader>f      <Plug>(lamp-range-formatting)
+
+  nmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
+  vmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
+
+  nmap <buffer> @              <Plug>(lamp-document-highlight)
+  nmap <buffer> <Esc>          <Plug>(lamp-document-highlight-clear)
+  nnoremap <buffer><Esc>       :<C-u>call lamp#feature#document_highlight#clear()<CR>
+
+  imap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#map#confirm('<Tab>')
+  smap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#map#confirm('<Tab>')
+endfunction
 
 nnoremap H 20h
 nnoremap J 10j
