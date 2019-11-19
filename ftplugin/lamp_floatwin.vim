@@ -70,6 +70,7 @@ function! s:update()
           endfor
         endif
       catch /.*/
+        call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
         continue
       endtry
     endif
@@ -79,12 +80,17 @@ function! s:update()
       let b:lamp_floatwin_state.fenced_mark_syntaxes[l:mark] = v:true
 
       call s:clear()
-      let l:mark_group = printf('LampMarkdownFencedMark_%s', s:escape(l:mark))
+      let l:escaped_mark = s:escape(l:mark)
+      let l:mark_group = printf('LampMarkdownFencedMark_%s', l:escaped_mark)
+      let l:mark_start_group = printf('LampMarkdownFencedMarkStart_%s', l:escaped_mark)
+      let l:mark_end_group = printf('LampMarkdownFencedMarkEnd_%s', l:escaped_mark)
       let l:start_mark = printf('^\s*```\s*%s\s*', l:mark)
       let l:end_mark = '\s*```\s*$'
-      execute printf('syntax region %s matchgroup=LampMarkdownFencedStart start="%s" matchgroup=LampMarkdownFencedEnd end="%s" containedin=@Markdown contains=%s keepend concealends',
+      execute printf('syntax region %s matchgroup=%s start="%s" matchgroup=%s end="%s" containedin=@Markdown contains=%s keepend concealends',
             \   l:mark_group,
+            \   l:mark_start_group,
             \   l:start_mark,
+            \   l:mark_end_group,
             \   l:end_mark,
             \   l:language_group
             \ )
@@ -110,15 +116,6 @@ function! s:find_marks(bufnr) abort
     let l:marks[l:match[1]] = v:true
     let l:pos = matchend(l:text, '```\s*\(\w\+\)', l:pos, 1)
   endwhile
-
-  " find from server definition.
-  for l:server in lamp#server#registry#all()
-    for l:filetype in l:server.filetypes
-      for l:part in split(l:filetype, '\.')
-        let l:marks[l:part] = v:true
-      endfor
-    endfor
-  endfor
 
   return keys(l:marks)
 endfunction

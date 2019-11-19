@@ -211,6 +211,5 @@ Well works but APIs aren't stable.
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
 - Should be abstracted location's feature?
-- ! Performance
 - ! Multibyte support
 
