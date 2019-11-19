@@ -7,13 +7,44 @@ Describe lamp#protocol#markup_content
     call lamp#view#buffer#reset()
   End
 
-  It Should format fenced code block
+  It Should format fenced code block 1
     let l:normalized = lamp#protocol#markup_content#normalize([join([
           \   '```typescript',
           \   'const promise = Promise.then();',
           \   '```'
           \ ], "\n")])
-    call s:expect(l:normalized[0].lines).to_equal(["```typescript const promise = Promise.then(); ```"])
+    call s:expect(l:normalized[0].lines).to_equal([
+          \   '```typescript const promise = Promise.then(); ```'
+          \ ])
+  End
+
+  It Should format fenced code block 2
+    let l:normalized = lamp#protocol#markup_content#normalize([join([
+          \   'Sample text',
+          \   '',
+          \   '```typescript',
+          \   'const promise = Promise.then();',
+          \   '```',
+          \   '',
+          \   'Sample text',
+          \   '   ',
+          \   '   ',
+          \   '``` help',
+          \   'This is help',
+          \   '```   ',
+          \   ''
+          \ ], "\n")])
+    call s:expect(l:normalized[0].lines).to_equal([
+          \   'Sample text',
+          \   '',
+          \   '```typescript const promise = Promise.then(); ```',
+          \   '',
+          \   'Sample text',
+          \   '',
+          \   '',
+          \   '``` help This is help ```',
+          \   ''
+          \ ])
   End
 
 End

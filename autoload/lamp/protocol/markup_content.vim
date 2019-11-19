@@ -1,3 +1,7 @@
+let s:start = '\%(^\|' . "\n" . '\)\s*'
+let s:end = '\s*\%($\|' . "\n" . '\)'
+let s:white_nr = '\%(\s\|' . "\n" . '\)*'
+
 "
 " lamp#protocol#markup_content#combine
 "
@@ -38,10 +42,10 @@ function! lamp#protocol#markup_content#to_string(markup_content) abort
   if type(a:markup_content) == type('')
     return s:string(a:markup_content)
   elseif type(a:markup_content) == type({})
-    let l:string = s:string(a:markup_content.value)
-    if has_key(a:markup_content, 'language') && l:string !=# ''
-      let l:string = '```' . a:markup_content.language . "\n" . l:string
-      let l:string = l:string . "\n" . '```'
+    let l:string = a:markup_content.value
+    if has_key(a:markup_content, 'language') && l:string !~# '^' . s:white_nr . '$'
+      let l:string = '```' . a:markup_content.language . ' ' . l:string
+      let l:string = l:string . ' ```'
     endif
     return s:string(l:string)
   endif
@@ -54,19 +58,19 @@ function! s:string(string) abort
   let l:string = a:string
 
   " remove \r.
-  let l:string = substitute(l:string, "\r", '', 'g')
+  let l:string = substitute(l:string, "\\(\r\n\\|\r\\)", "\n", 'g')
 
   " compact fenced code block satrting.
-  let l:string = substitute(l:string, '\%(^\|' . "\n" . '\)\(```\s*\w\+\s*\)' . "\n*", '\1 ', 'g')
+  let l:string = substitute(l:string, s:start . '\zs\(```\s*\w\+\)' . s:white_nr, '\1 ', 'g')
 
   " compact fenced code block ending.
-  let l:string = substitute(l:string, "\n*\\s*```\\s*$", ' ```', 'g')
+  let l:string = substitute(l:string, s:white_nr . '```\s*' . '\ze' . s:end, ' ```', 'g')
 
   " trim first/last whitespace.
-  let l:string = substitute(l:string, '^\(\s*\|\n\)\|\(\s*\|\n\)*$', '', 'g')
+  let l:string = substitute(l:string, '^\s*\|\s*$', '', 'g')
 
   " remove trailing whitspae.
-  let l:string = substitute(l:string, '\s*\n', "\n", 'g')
+  let l:string = substitute(l:string, '\s*\(' . s:end . '\)', '\1', 'g')
 
   return l:string
 endfunction
