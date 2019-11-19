@@ -206,8 +206,8 @@ function! s:clear_completed_string(position_before_complete_done, line_before_co
   " Remove completed string.
   let l:range = {
         \   'start': {
-        \     'line': a:position_before_complete_done[1],
-        \     'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - strlen(a:completed_item.word)
+        \     'line': a:position_before_complete_done[1] - 1,
+        \     'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - strlen(a:completed_item.word) - 1
         \   },
         \   'end': {
         \     'line': a:position_before_complete_done[1] - 1,
@@ -222,43 +222,6 @@ function! s:clear_completed_string(position_before_complete_done, line_before_co
         \   'newText': '',
         \ }])
   call cursor([l:range.start.line + 1, l:range.start.character + 1])
-endfunction
-
-"
-" s:get_item_data
-"
-function! s:get_item_data(completed_item) abort
-  if empty(a:completed_item)
-    return {}
-  endif
-
-  if !has_key(a:completed_item, 'user_data')
-    return {}
-  endif
-
-  if type(a:completed_item.user_data) == type({})
-    let l:user_data = a:completed_item.user_data
-  else
-    try
-      let l:user_data = json_decode(a:completed_item.user_data)
-      if type(l:user_data) != type({}) " vim's json_decode is not throw exception.
-        let l:user_data = {}
-      endif
-    catch /.*/
-      let l:user_data = {}
-    endtry
-  endif
-
-  if !has_key(l:user_data, s:user_data_key)
-    return {}
-  endif
-
-  let l:item_data = l:user_data[s:user_data_key]
-  if !has_key(l:item_data, 'id') || !has_key(l:item_data, 'server_name') || !has_key(l:item_data, 'completion_item')
-    return {}
-  endif
-
-  return l:item_data
 endfunction
 
 "
@@ -331,5 +294,42 @@ function! s:get_floatwin_screenpos(event, contents) abort
   endif
 
   return [l:row, l:col]
+endfunction
+
+"
+" s:get_item_data
+"
+function! s:get_item_data(completed_item) abort
+  if empty(a:completed_item)
+    return {}
+  endif
+
+  if !has_key(a:completed_item, 'user_data')
+    return {}
+  endif
+
+  if type(a:completed_item.user_data) == type({})
+    let l:user_data = a:completed_item.user_data
+  else
+    try
+      let l:user_data = json_decode(a:completed_item.user_data)
+      if type(l:user_data) != type({}) " vim's json_decode is not throw exception.
+        let l:user_data = {}
+      endif
+    catch /.*/
+      let l:user_data = {}
+    endtry
+  endif
+
+  if !has_key(l:user_data, s:user_data_key)
+    return {}
+  endif
+
+  let l:item_data = l:user_data[s:user_data_key]
+  if !has_key(l:item_data, 'id') || !has_key(l:item_data, 'server_name') || !has_key(l:item_data, 'completion_item')
+    return {}
+  endif
+
+  return l:item_data
 endfunction
 
