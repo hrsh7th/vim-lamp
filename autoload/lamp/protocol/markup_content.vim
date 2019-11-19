@@ -20,9 +20,12 @@ function! lamp#protocol#markup_content#normalize(markup_contents) abort
     if type(l:markup_content) == type([])
       let l:normalized += lamp#protocol#markup_content#normalize(l:markup_content)
     else
-      let l:normalized += [{
-            \   'lines': split(lamp#protocol#markup_content#to_string(l:markup_content), "\n", v:true)
-            \ }]
+      let l:string = lamp#protocol#markup_content#to_string(l:markup_content)
+      if l:string !=# ''
+        let l:normalized += [{
+              \   'lines': split(l:string, "\n", v:true)
+              \ }]
+      endif
     endif
   endfor
   return filter(l:normalized, { k, v -> v.lines != [''] })
@@ -35,8 +38,8 @@ function! lamp#protocol#markup_content#to_string(markup_content) abort
   if type(a:markup_content) == type('')
     return s:string(a:markup_content)
   elseif type(a:markup_content) == type({})
-    let l:string = a:markup_content.value
-    if has_key(a:markup_content, 'language')
+    let l:string = s:string(a:markup_content.value)
+    if has_key(a:markup_content, 'language') && l:string !=# ''
       let l:string = '```' . a:markup_content.language . "\n" . l:string
       let l:string = l:string . "\n" . '```'
     endif
