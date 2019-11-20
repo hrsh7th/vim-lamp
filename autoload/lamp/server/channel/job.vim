@@ -21,7 +21,11 @@ endfunction
 " send
 "
 function! s:Job.send(data) abort
-  call self.job.send(a:data)
+  if self.is_running()
+    call self.job.send(a:data)
+  else
+    call lamp#log('[LOG]', 's:Job.send', 'channel is not running.')
+  endif
 endfunction
 
 "

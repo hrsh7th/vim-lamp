@@ -157,7 +157,7 @@ Well works but APIs aren't stable.
     - Workspace
         - [ ] workspace/workspaceFolders
         - [ ] workspace/didChangeWorkspaceFolders
-        - [ ] workspace/didChangeConfiguration
+        - [x] workspace/didChangeConfiguration
         - [ ] workspace/configuration
         - [ ] workspace/didChangeWatchedFiles
         - [ ] workspace/symbol

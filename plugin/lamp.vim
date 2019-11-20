@@ -102,3 +102,5 @@ endfunction
 
 doautocmd User lamp#initialized
 
+call lamp#log('')
+call lamp#log('[STARTED]', strftime('%Y-%m-%d %H:%M:%S'))

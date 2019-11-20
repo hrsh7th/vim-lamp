@@ -211,7 +211,7 @@ function! lamp#complete(find_start, base) abort
       let s:context.id += 1
       let l:vim_item = {}
       let l:vim_item.word = l:word
-      let l:vim_item.kind = lamp#protocol#completion#get_kind_name(l:item.kind) . ' ' . get(l:item, 'detail', '')
+      let l:vim_item.kind = lamp#protocol#completion#get_kind_name(l:item.kind) . ' ' . substitute(get(l:item, 'detail', ''), '\%(\r\n\|\r\|\n\)', ' ', 'g')
       let l:vim_item.abbr = l:is_expandable ? l:word . '~' : l:word
       let l:vim_item.menu = '[LAMP]'
       let l:vim_item.user_data = json_encode({
