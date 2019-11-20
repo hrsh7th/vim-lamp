@@ -16,7 +16,12 @@ execute printf('source %s', expand('~/.vim/plugged/vim-plug/plug.vim'))
 call plug#begin('~/.vim/plugged')
 Plug 'https://github.com/hrsh7th/vim-lamp'
 Plug 'https://github.com/hrsh7th/vim-vsnip'
+Plug 'https://github.com/gruvbox-community/gruvbox'
 call plug#end()
+
+colorscheme gruvbox
+
+let g:mapleader = ' '
 
 "
 " required options.

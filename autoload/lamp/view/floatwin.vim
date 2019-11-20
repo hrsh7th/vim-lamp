@@ -106,8 +106,9 @@ function! s:Floatwin.show(screenpos, contents) abort
   " write lines
   call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
 
-  " update syntax highlight
-  if LampFloatwinSyntaxShouldUpdate(self.bufnr)
+  " update syntax highlight for nvim.
+  " NOTE: if vim, use autocmd to apply syntax in ftplugin/lamp_floatwin.vim.
+  if has('nvim') && LampFloatwinSyntaxShouldUpdate(self.bufnr)
     call lamp#view#window#do(self.winid(), { -> LampFloatwinSyntaxUpdate() })
   endif
 endfunction
