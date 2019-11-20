@@ -190,7 +190,9 @@ function! lamp#complete(find_start, base) abort
   for [l:server_name, l:request] in items(s:context.requests)
     let l:response = lamp#sync(l:request)
 
-    let l:items = type(l:response) == type({}) ? get(l:response, 'items', []) : l:response
+    let l:items = []
+    let l:items = type(l:response) == type({}) ? get(l:response, 'items', []) : l:items
+    let l:items = type(l:response) == type([]) ? l:response : l:items
     for l:item in l:items
       let l:filter_text = get(l:item, 'filterText', l:item.label)
       if l:filter_text !~ '^' . a:base && strlen(a:base) >= 1
