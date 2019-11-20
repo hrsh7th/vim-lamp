@@ -22,6 +22,8 @@ function! s:Server.new(name, option) abort
         \   'filetypes': a:option.filetypes,
         \   'root_uri': get(a:option, 'root_uri', { -> '' }),
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
+        \   'workspace_path': v:null,
+        \   'workspace_configurations': get(a:option, 'workspace_configurations', {}),
         \   'documents': {},
         \   'capability': s:Capability.new({
         \     'capabilities': get(a:option, 'capabilities', {})
@@ -142,10 +144,33 @@ endfunction
 function! s:Server.ensure_document(bufnr) abort
   call self.start()
   return self.initialize().then({ -> [
+        \   self.configuration(a:bufnr),
         \   self.open_document(a:bufnr),
         \   self.close_document(a:bufnr),
         \   self.change_document(a:bufnr)
         \ ] })
+endfunction
+
+"
+" configuration.
+"
+function! s:Server.configuration(bufnr) abort
+  let l:workspace_path = '*'
+
+  let l:path = fnamemodify(bufname(a:bufnr), ':p')
+  for [l:workspace_path, l:configuration] in items(self.workspace_configurations)
+    if stridx(l:workspace_path, l:path) == 0
+      let l:workspace_path = l:workspace_path
+      break
+    endif
+  endfor
+
+  if has_key(self.workspace_configurations, l:workspace_path) && self.workspace_path != l:workspace_path
+    let self.workspace_path = l:workspace_path
+    call self.channel.notify('workspace/didChangeConfiguration', {
+          \   'settings': self.workspace_configurations[l:workspace_path]
+          \ })
+  endif
 endfunction
 
 "
