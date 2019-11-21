@@ -7,10 +7,8 @@ augroup END
 "
 function! lamp#language#php(...) abort
   if !executable('intelephense')
-    echoerr 'You should install `intelephense`.'
-    echoerr '------------------------------------------------------------'
-    echoerr '> npm install -g intelephense'
-    echoerr '------------------------------------------------------------'
+    echomsg '[vim-lamp] You should install `intelephense`.'
+    echomsg '[vim-lamp] > npm install -g intelephense'
     return
   endif
 
@@ -22,7 +20,6 @@ function! lamp#language#php(...) abort
         \     'storagePath': expand('~/.cache/intelephense')
         \   } }
         \ }, get(a:000, 0, {})))
-
   autocmd! lamp#language FileType php setlocal iskeyword+=$
 endfunction
 
@@ -31,10 +28,8 @@ endfunction
 "
 function! lamp#language#html(...) abort
   if !executable('html-languageserver')
-    echoerr 'You should install `html-languageserver`.'
-    echoerr '------------------------------------------------------------'
-    echoerr '> npm install -g vscode-html-languageserver-bin'
-    echoerr '------------------------------------------------------------'
+    echomsg '[vim-lamp] You should install `html-languageserver`.'
+    echomsg '[vim-lamp] > npm install -g vscode-html-languageserver-bin'
     return
   endif
 
@@ -53,7 +48,6 @@ function! lamp#language#html(...) abort
         \     }
         \   }
         \ }, get(a:000, 0, {})))
-        \ 
   autocmd! lamp#language FileType html setlocal iskeyword+=/
 endfunction
 
@@ -62,10 +56,8 @@ endfunction
 "
 function! lamp#language#typescript(...) abort
   if !executable('typescript-language-server')
-    echoerr 'You should install `typescript-language-server`.'
-    echoerr '------------------------------------------------------------'
-    echoerr '> npm install -g typescript-language-server'
-    echoerr '------------------------------------------------------------'
+    echomsg '[vim-lamp] You should install `typescript-language-server`.'
+    echomsg '[vim-lamp] > npm install -g typescript-language-server'
     return
   endif
 
@@ -84,10 +76,8 @@ endfunction
 "
 function! lamp#language#vim(...) abort
   if !executable('vim-language-server')
-    echoerr 'You should install `vim-language-server`.'
-    echoerr '------------------------------------------------------------'
-    echoerr '> npm install -g vim-language-server'
-    echoerr '------------------------------------------------------------'
+    echomsg '[vim-lamp] You should install `vim-language-server`.'
+    echomsg '[vim-lamp] > npm install -g vim-language-server'
     return
   endif
 
@@ -103,10 +93,8 @@ endfunction
 "
 function! lamp#language#rust(...) abort
   if !executable('rls')
-    echoerr 'You should install `rls`.'
-    echoerr '------------------------------------------------------------'
-    echoerr '> rustup update && rustup component add rls rust-analysis rust-src'
-    echoerr '------------------------------------------------------------'
+    echomsg '[vim-lamp] You should install `rls`.'
+    echomsg '[vim-lamp] > rustup update && rustup component add rls rust-analysis rust-src'
     return
   endif
 
