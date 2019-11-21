@@ -14,12 +14,6 @@ let s:floatwin = s:Floatwin.new({})
 let s:user_data_key = 'lamp'
 
 "
-" Last inserted character.
-" This use to check commitCharacters.
-"
-let s:recent_inserted_char = ''
-
-"
 " {
 "   [id]: {
 "     'resolve': Promise;
@@ -32,7 +26,6 @@ function! lamp#feature#completion#init() abort
   augroup lamp#feature#completion
     autocmd!
     autocmd CompleteChanged * call s:on_complete_changed()
-    autocmd InsertCharPre * call s:on_insert_char_pre()
     autocmd CompleteDone * call s:on_complete_done()
   augroup END
 endfunction
@@ -56,6 +49,7 @@ function! lamp#feature#completion#should_effect_on_complete_done(completed_item)
         \ !empty(s:get_expandable_state(a:completed_item, l:completion_item))
 endfunction
 
+
 "
 " s:on_complete_changed
 "
@@ -77,13 +71,6 @@ function! s:on_complete_changed() abort
 endfunction
 
 "
-" s:on_insert_char_pre
-"
-function! s:on_insert_char_pre() abort
-  let s:recent_inserted_char = v:char
-endfunction
-
-"
 " s:on_complete_done
 "
 function! s:on_complete_done() abort
@@ -94,6 +81,10 @@ function! s:on_complete_done() abort
 
   let l:fn = {}
   function! l:fn.next_tick(is_selected, position_before_complete_done, line_before_complete_done, completed_item) abort
+    if mode()[0] ==# 'n'
+      return
+    endif
+
     let l:item_data = s:get_item_data(a:completed_item)
     if empty(l:item_data)
       return
@@ -108,11 +99,6 @@ function! s:on_complete_done() abort
     let l:completion_item = lamp#sync(s:resolve_completion_item(l:item_data))
     if empty(l:completion_item)
       let l:completion_item = l:item_data.completion_item
-    endif
-
-    " check `lamp#complete_select` or `commitCharacters`
-    if !a:is_selected && index(s:get_commit_characters(l:item_data, l:completion_item), s:recent_inserted_char) == -1
-      return
     endif
 
     " snippet or textEdit.
@@ -225,19 +211,6 @@ function! s:clear_completed_string(position_before_complete_done, line_before_co
         \   'newText': '',
         \ }])
   call cursor([l:range.start.line + 1, l:range.start.character + 1])
-endfunction
-
-"
-" s:get_commit_characters
-"
-function! s:get_commit_characters(item_data, completion_item) abort
-  let l:commit_chars = []
-  let l:commit_chars += get(a:completion_item, 'commitCharacters', [])
-  let l:server = lamp#server#registry#get_by_name(a:item_data.server_name)
-  if !empty(l:server)
-    let l:commit_chars += l:server.capability.get_completion_all_commit_characters()
-  endif
-  return l:commit_chars
 endfunction
 
 "
