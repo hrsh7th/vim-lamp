@@ -153,6 +153,67 @@ function! lamp#get(dict, path, default) abort
 endfunction
 
 "
+" findup.
+"
+function! lamp#findup(...) abort
+  let l:path = fnamemodify(bufname('%'), ':p')
+  while l:path != '/'
+    for l:marker in a:000
+      let l:candidate = l:path . '/' . l:marker
+      if isdirectory(l:candidate) || filereadable(l:candidate)
+        return l:path
+      endif
+    endfor
+    let l:path = substitute(l:path, '/[^/]*$', '', 'g')
+  endwhile
+  return getcwd()
+endfunction
+
+"
+" merge.
+"
+function! lamp#merge(dict1, dict2) abort
+  try
+    let l:returns = deepcopy(a:dict1)
+
+    " merge same key.
+    for l:key in keys(a:dict1)
+      if !has_key(a:dict2, l:key)
+        continue
+      endif
+
+      " both dict.
+      if type(a:dict1[l:key]) == type({}) && type(a:dict2[l:key]) == type({})
+        let l:returns[l:key] = lamp#merge(a:dict1[l:key], a:dict2[l:key])
+      endif
+
+      " both list.
+      if type(a:dict1[l:key]) == type([]) && type(a:dict2[l:key]) == type([])
+        let l:returns[l:key] = extend(copy(a:dict1[l:key]), a:dict2[l:key])
+      endif
+
+      " remove key when v:null provided explicitly.
+      if type(a:dict1[l:key]) != type(v:null) && type(a:dict2[l:key]) == type(v:null)
+        unlet l:returns[l:key]
+      endif
+    endfor
+
+    " add new key.
+    for l:key in keys(a:dict2)
+      " always have key.
+      if has_key(a:dict1, l:key)
+        continue
+      endif
+      let l:returns[l:key] = a:dict2[l:key]
+    endfor
+  catch /.*/
+    echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+  endtry
+
+  return l:returns
+endfunction
+
+"
 " complete.
 "
 function! lamp#complete(find_start, base) abort

@@ -57,31 +57,29 @@ Well works but APIs aren't stable.
     "
     autocmd! vimrc User lamp#initialized * call s:on_initialized()
     function! s:on_initialized()
-        call lamp#config('debug.log', '/tmp/lamp.log')
-        call lamp#config('feature.completion.snippet.expand', { option -> vsnip#anonymous(option.body) })
+      call lamp#config('debug.log', '/tmp/lamp.log')
+      call lamp#config('feature.completion.snippet.expand', { option -> vsnip#anonymous(option.body) })
 
-        call lamp#register('vim-language-server', {
-              \   'command': ['vim-language-server', '--stdio'],
-              \   'filetypes': ['vim'],
-              \ })
+      " Built-in settings.
+      call lamp#language#php()
+      call lamp#language#html()
+      call lamp#language#typescript()
+      call lamp#language#rust()
+      call lamp#language#vim()
 
-        call lamp#register('html-languageserver', {
-              \   'command': ['html-languageserver', '--stdio'],
-              \   'filetypes': ['html', 'css'],
-              \   'initialization_options': { -> {
-              \     'embeddedLanguages': []
-              \   } },
-              \   'capabilities': {
-              \     'completionProvider': {
-              \       'triggerCharacters': ['>'],
-              \     }
-              \   }
-              \ })
-
-        call lamp#register('intelephense', {
-              \   'command': ['intelephense', '--stdio'],
-              \   'filetypes': ['php'],
-              \ })
+      " Custom settings.
+      call lamp#register('example-server', {
+            \   'command': ['example-server', '--stdio'],
+            \   'filetypes': ['example'],
+            \   'root_uri': { -> lamp#findup('.git', 'example.config.json') },
+            \   'initialization_options': { -> {
+            \   } },
+            \   'capabilitis': {
+            \     'completionProvider': {
+            \       'triggerCharacters': [',']
+            \     }
+            \   }
+            \ })
     endfunction
 
     "
