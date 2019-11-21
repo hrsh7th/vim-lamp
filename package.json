@@ -21,6 +21,7 @@
   "devDependencies": {
     "husky": "^3.0.9",
     "typescript": "^3.6.4",
-    "typescript-language-server": "^0.4.0"
+    "typescript-language-server": "^0.4.0",
+    "vscode-html-languageserver-bin": "^1.4.0"
   }
 }

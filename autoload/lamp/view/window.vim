@@ -19,9 +19,11 @@ function! lamp#view#window#do(winid, fn) abort
     echomsg string({ 'e': v:exception, 't': v:throwpoint })
   endtry
   execute printf('noautocmd keepalt keepjumps %swincmd w', win_id2win(l:current_winid))
+
   if index(['v', 'V', "\<C-v>"], l:mode) >= 0
     normal! gv
   endif
+
   if index(['s', 'S', "\<C-S>"], l:mode) >= 0
     normal! gv
     call feedkeys("\<C-g>", 'n')
