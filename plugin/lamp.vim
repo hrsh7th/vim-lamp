@@ -45,10 +45,11 @@ augroup lamp
   autocmd BufWinEnter,FileType * call <SID>on_text_document_did_open()
   autocmd TextChanged,InsertLeave * call <SID>on_text_document_did_change()
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
+  autocmd VimLeavePre * call <SID>on_vim_leave_pre()
 augroup END
 
 "
-" textDocument/didOpen
+" s:on_text_document_did_open
 "
 function! s:on_text_document_did_open() abort
   let l:bufnr = bufnr('%')
@@ -68,7 +69,7 @@ function! s:on_text_document_did_open() abort
 endfunction
 
 "
-" textDocument/didChange
+" s:on_text_document_did_change
 "
 function! s:on_text_document_did_change() abort
   let l:fn = {}
@@ -83,9 +84,13 @@ function! s:on_text_document_did_change() abort
 endfunction
 
 "
-" textDocument/didClose
+" s:on_text_document_did_close
 "
 function! s:on_text_document_did_close() abort
+  if v:exiting isnot v:null
+    return
+  endif
+
   let l:fn = {}
   function! l:fn.debounce(bufnr) abort
     for l:server in lamp#server#registry#all()
@@ -98,6 +103,15 @@ function! s:on_text_document_did_close() abort
 
   let l:bufnr = str2nr(expand('<abuf>'))
   call lamp#debounce('s:on_text_document_did_close:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
+endfunction
+
+"
+" s:on_vim_leave_pre
+"
+function! s:on_vim_leave_pre() abort
+  for l:server in lamp#server#registry#all()
+    call lamp#sync(l:server.exit())
+  endfor
 endfunction
 
 doautocmd User lamp#initialized

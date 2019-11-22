@@ -31,6 +31,7 @@ function! s:Server.new(name, option) abort
         \   'state': {
         \     'started': v:false,
         \     'initialized': v:null,
+        \     'exited': v:false,
         \   },
         \ })
 endfunction
@@ -39,7 +40,7 @@ endfunction
 " start.
 "
 function! s:Server.start() abort
-  if !self.state.started
+  if !self.state.started && !self.state.exited
     let self.state.started = v:true
     call self.channel.start(function(s:Server.on_notification, [], self))
   endif
@@ -51,9 +52,24 @@ endfunction
 "
 function! s:Server.stop() abort
   if self.state.started
-   call self.channel.stop()
+    call lamp#sync(self.channel.request('shutdown', {}))
+    call self.channel.notify('exit', {})
+    call self.channel.stop()
     let self.state.started = v:false
-    let self.initialized = v:null
+    let self.state.initialized = v:null
+  endif
+  return s:Promise.resolve()
+endfunction
+
+"
+" exit.
+"
+function! s:Server.exit() abort
+  if self.state.started
+    call lamp#sync(self.channel.request('shutdown', {}))
+    call self.channel.notify('exit', {})
+    call self.channel.stop()
+    let self.state.exited = v:true
   endif
   return s:Promise.resolve()
 endfunction
@@ -235,14 +251,14 @@ function! s:Server.close_document(bufnr) abort
 
   let l:path = lamp#protocol#document#decode_uri(l:document.uri)
 
-  " ignore if buffer is not related to file.
-  " if remove this, occurs infinite loop because bufloaded always return -1
-  if !filereadable(l:path)
+  " buffer is not unloaded.
+  if bufloaded(l:path)
     return
   endif
 
-  " buffer is not unloaded.
-  if bufloaded(l:path)
+  " ignore if buffer is not related to file.
+  " if remove this, occurs infinite loop because bufloaded always return -1
+  if !filereadable(l:path)
     return
   endif
 

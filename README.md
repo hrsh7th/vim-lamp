@@ -109,9 +109,9 @@ endfunction
     - General
         - [x] initialize
         - [x] initialized
-        - [ ] ~~shutdown~~
-        - [ ] ~~exit~~
-        - [ ] ~~$/cancelRequest~~
+        - [x] shutdown
+        - [x] exit
+        - [ ] $/cancelRequest
 
     - Window
         - [ ] window/showMessage

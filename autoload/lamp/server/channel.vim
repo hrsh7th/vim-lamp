@@ -169,8 +169,9 @@ endfunction
 " on_stderr
 "
 function! s:Channel.on_stderr(data) abort
-  echomsg string(['on_stderr', a:data])
-  " TODO: impl
+  if strlen(a:data)
+    echomsg string(['on_stderr', a:data])
+  endif
 endfunction
 
 "
