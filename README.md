@@ -176,6 +176,7 @@ endfunction
 
 # TODO
 - Re-thinking `lamp#map#confirm` when user no use `lexima.vim`
+- Custom highlighting in fenced language (e.g. underlined)
 - Improve documentation
 - Built-in snippet support
 - Create asyncomplete source

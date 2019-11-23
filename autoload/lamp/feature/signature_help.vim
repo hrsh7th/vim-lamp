@@ -5,7 +5,7 @@ let s:floatwin = s:Floatwin.new({ 'max_height': 12 })
 function! lamp#feature#signature_help#init() abort
   augroup lamp#feature#signature_help
     autocmd!
-    autocmd CursorMoved * call s:close_signature_help()
+    autocmd InsertLeave * call s:close_signature_help()
     autocmd CursorMovedI * call s:trigger_signature_help()
   augroup END
 endfunction
@@ -88,7 +88,7 @@ function! s:get_contents(response) abort
 
   " parameter_doc
   let l:parameter_doc = ''
-  if !empty(l:parameter) && has_key(l:parameter, 'documentation')
+  if !empty(l:parameter) && has_key(l:parameter, 'documentation') && !empty(l:parameter.documentation)
     let l:parameter_doc = ''
     let l:parameter_doc .= '**' . s:get_parameter_label(l:signature, l:parameter) . '**'
     let l:parameter_doc .= ' - '
@@ -97,23 +97,25 @@ function! s:get_contents(response) abort
   endif
 
   " signature label.
-  let l:signature_label = l:signature.label . "\n"
+  let l:signature_label = l:signature.label
   if !empty(l:parameter)
     let l:signature_label = s:mark_active_parameter(l:signature.label, s:get_parameter_label(l:signature, l:parameter))
   endif
 
   let l:signature_doc = ''
   if has_key(l:signature, 'documentation')
-    let l:signature_doc .= lamp#protocol#markup_content#to_string(l:signature.documentation) . "\n"
+    let l:signature_doc .= lamp#protocol#markup_content#to_string(l:signature.documentation)
   endif
 
   " signature_help
   let l:signature_help = ''
-  let l:signature_help .= lamp#protocol#markup_content#to_string(l:signature_label)
-  let l:signature_help .= "\n"
-  let l:signature_help .= l:parameter_doc
-  let l:signature_help .= "\n"
-  let l:signature_help .= l:signature_doc
+  let l:signature_help .= lamp#protocol#markup_content#to_string(l:signature_label) . "\n"
+  if strlen(l:parameter_doc) > 0
+    let l:signature_help .= "\n" . l:parameter_doc . "\n"
+  endif
+  if strlen(l:signature_doc) > 0
+    let l:signature_help .= "\n" . l:signature_doc
+  endif
 
   return lamp#protocol#markup_content#normalize(l:signature_help)
 endfunction
