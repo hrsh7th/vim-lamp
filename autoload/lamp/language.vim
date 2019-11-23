@@ -84,6 +84,15 @@ function! lamp#language#vim(...) abort
   call lamp#register('vim-language-server', lamp#merge({
         \   'command': ['vim-language-server', '--stdio'],
         \   'filetypes': ['vim', 'vimspec'],
+        \   'initialization_options': { -> {
+        \     'iskeyword': &iskeyword,
+        \     'vimruntime': $VIMRUNTIME,
+        \     'runtimepath': &runtimepath,
+        \     'suggest': {
+        \       'fromVimruntime': v:true,
+        \       'fromRuntimepath': v:true
+        \     }
+        \   } }
         \ }, get(a:000, 0, {})))
 endfunction
 
