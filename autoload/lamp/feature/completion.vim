@@ -126,7 +126,7 @@ function! s:on_complete_done() abort
       if !empty(l:server)
         call l:server.request('workspace/executeCommand', {
               \   'command': l:completion_item.command.command,
-              \   'arguments': get(l:completion_item.command, 'arguments')
+              \   'arguments': get(l:completion_item.command, 'arguments', [])
               \ }).catch(lamp#rescue())
       endif
     endif

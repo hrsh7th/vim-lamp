@@ -110,7 +110,11 @@ endfunction
 "
 function! s:on_vim_leave_pre() abort
   for l:server in lamp#server#registry#all()
-    call lamp#sync(l:server.exit())
+    try
+      call lamp#sync(l:server.exit())
+    catch /.*/
+      call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
+    endtry
   endfor
 endfunction
 

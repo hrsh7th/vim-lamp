@@ -55,36 +55,51 @@ endfunction
 "
 " Send request.
 "
-function! s:Channel.request(method, params) abort
+function! s:Channel.request(method, ...) abort
+  let l:message = { 'method': a:method }
+  if len(a:000) > 0
+    let l:message = extend(l:message, { 'params': a:000[0] })
+  endif
+
   let self.request_id = self.request_id + 1
 
   let l:fn = {}
-  function! l:fn.executor(method, params, resolve, reject) abort dict
-    call lamp#log(' -> [REQUEST]', self.request_id, a:method, a:params)
+  function! l:fn.executor(message, resolve, reject) abort dict
+    call lamp#log(' -> [REQUEST]', self.request_id, a:message)
     let self.requests[self.request_id] = {
           \   'resolve': a:resolve,
           \   'reject': a:reject
           \ }
-    call self.job.send(self.to_message({ 'id': self.request_id, 'method': a:method, 'params': a:params }))
+    call self.job.send(self.to_message(extend({ 'id': self.request_id }, a:message)))
   endfunction
 
-  return s:Promise.new(function(l:fn.executor, [a:method, a:params], self))
+  return s:Promise.new(function(l:fn.executor, [l:message], self))
 endfunction
 
 "
 " Send response.
 "
-function! s:Channel.response(id, data) abort
-  call lamp#log(' -> [RESPONSE]', a:id, a:data)
-  call self.job.send(self.to_message(extend({ 'id': a:id }, a:data)))
+function! s:Channel.response(id, ...) abort
+  let l:message = { 'id': a:id }
+  if len(a:000) > 0
+    let l:message = extend(l:message, a:000[0])
+  endif
+
+  call lamp#log(' -> [RESPONSE]', l:message)
+  call self.job.send(self.to_message(l:message))
 endfunction
 
 "
 " Send notify.
 "
-function! s:Channel.notify(method, params) abort
-  call lamp#log(' -> [NOTIFY]', a:method, a:params)
-  call self.job.send(self.to_message({ 'method': a:method, 'params': a:params }))
+function! s:Channel.notify(method, ...) abort
+  let l:message = { 'method': a:method }
+  if len(a:000) > 0
+    let l:message = extend(l:message, { 'params': a:000[0] })
+  endif
+
+  call lamp#log(' -> [NOTIFY]', l:message)
+  call self.job.send(self.to_message(l:message))
 endfunction
 
 "

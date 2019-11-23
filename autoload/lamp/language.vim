@@ -96,6 +96,25 @@ function! lamp#language#vim(...) abort
         \ }, get(a:000, 0, {})))
 endfunction
 
+"
+" lamp#language#go
+"
+function! lamp#language#go() abort
+  if !executable('vim-language-server')
+    echomsg '[vim-lamp] You should install `vim-language-server`.'
+    echomsg '[vim-lamp] see https://github.com/golang/tools/blob/master/gopls/doc/user.md'
+    return
+  endif
+
+  call lamp#register('gopls', {
+        \   'command': ['gopls'],
+        \   'filetypes': ['go'],
+        \   'initialization_options': { -> {
+        \     'usePlaceholders': v:true,
+        \     'completeUnimported': v:true
+        \   } }
+        \ })
+endfunction
 
 "
 " lamp#language#rust

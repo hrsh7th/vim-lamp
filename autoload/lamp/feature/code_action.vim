@@ -38,7 +38,7 @@ function! lamp#feature#code_action#do(range) abort
           \     'diagnostics': !empty(l:diagnostic) ? [l:diagnostic] : [],
           \     'only': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
           \   }
-          \ }).then({ data -> { 'server': l:server, 'data': data } }))
+          \ }).then({ data -> { 'server': l:server, 'data': data } }).catch(lamp#rescue([])))
   endfor
 
   let l:p = s:Promise.all(l:promises)
@@ -54,6 +54,7 @@ endfunction
 function! s:on_responses(responses) abort
   let l:code_actions = [] " [{ 'server': ..., 'action': CodeAction }]
   for l:response in a:responses
+    let l:response.data = type(l:response.data) == type([]) ? l:response.data : []
     let l:code_actions += map(l:response.data, { k, v ->
           \   {
           \     'server': l:response.server,
