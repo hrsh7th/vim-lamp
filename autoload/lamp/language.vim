@@ -108,7 +108,7 @@ function! lamp#language#rust(...) abort
   endif
 
   call lamp#register('rls', lamp#merge({
-        \   'command': ['rustup run stable rls'],
+        \   'command': ['rls'],
         \   'filetypes': ['rust'],
         \   'root_uri': { -> lamp#findup('.git', 'cargo.toml') }
         \ }, get(a:000, 0, {})))

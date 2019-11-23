@@ -72,7 +72,7 @@ function! lamp#server#capability#get_default_capability() abort
         \         'preselectSupport': v:true,
         \       },
         \       'completionItemKind': {
-        \         'valueSet': keys(lamp#protocol#completion#get_kind_map())
+        \         'valueSet': map(keys(lamp#protocol#completion#get_kind_map()), { k, v -> str2nr(v) })
         \       },
         \       'contextSupport': v:true
         \     },
