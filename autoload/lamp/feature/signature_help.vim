@@ -5,7 +5,7 @@ let s:floatwin = s:Floatwin.new({ 'max_height': 12 })
 function! lamp#feature#signature_help#init() abort
   augroup lamp#feature#signature_help
     autocmd!
-    autocmd InsertLeave * call s:close_signature_help()
+    autocmd CursorMoved * call s:close_signature_help()
     autocmd CursorMovedI * call s:trigger_signature_help()
   augroup END
 endfunction
@@ -38,11 +38,6 @@ function! s:trigger_signature_help() abort
   " check trigger character.
   let l:char = lamp#view#cursor#get_before_char_skip_white()
   if index(l:trigger_chars, l:char) == -1
-    call s:close_signature_help()
-    return
-  endif
-
-  if mode()[0] !=# 'i'
     call s:close_signature_help()
     return
   endif

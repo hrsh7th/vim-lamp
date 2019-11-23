@@ -133,3 +133,19 @@ function! lamp#language#rust(...) abort
         \ }, get(a:000, 0, {})))
 endfunction
 
+"
+" lamp#language#python
+"
+function! lamp#language#python(...) abort
+  if !executable('pyls')
+    echomsg '[vim-lamp] You should install `pyls`.'
+    echomsg '[vim-lamp] see https://github.com/palantir/python-language-server> pip install python-language-server'
+    return
+  endif
+
+  call lamp#register('pyls', lamp#merge({
+        \   'command': ['pyls'],
+        \   'filetypes': ['python'],
+        \ }, get(a:000, 0, {})))
+endfunction
+
