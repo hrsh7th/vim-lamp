@@ -129,7 +129,7 @@ function! lamp#language#rust(...) abort
   call lamp#register('rls', lamp#merge({
         \   'command': ['rls'],
         \   'filetypes': ['rust'],
-        \   'root_uri': { -> lamp#findup('.git', 'cargo.toml') }
+        \   'root_uri': { -> lamp#findup('.git', 'Cargo.toml') }
         \ }, get(a:000, 0, {})))
 endfunction
 
