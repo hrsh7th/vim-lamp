@@ -71,7 +71,7 @@ function! s:on_responses(responses) abort
     let l:index = s:test.action_index
   else
     let l:index = lamp#view#input#select('Select code actions:', map(copy(l:code_actions), { k, v ->
-          \   v.action.title
+          \   substitute(v.action.title, '\r\n\|\n\|\r', '', 'g')
           \ }))
   endif
 
