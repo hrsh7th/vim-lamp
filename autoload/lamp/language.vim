@@ -101,7 +101,7 @@ endfunction
 "
 function! lamp#language#go() abort
   if !executable('vim-language-server')
-    echomsg '[vim-lamp] You should install `vim-language-server`.'
+    echomsg '[vim-lamp] You should install `gopls`.'
     echomsg '[vim-lamp] see https://github.com/golang/tools/blob/master/gopls/doc/user.md'
     return
   endif
@@ -139,7 +139,7 @@ endfunction
 function! lamp#language#python(...) abort
   if !executable('pyls')
     echomsg '[vim-lamp] You should install `pyls`.'
-    echomsg '[vim-lamp] see https://github.com/palantir/python-language-server> pip install python-language-server'
+    echomsg '[vim-lamp] see https://github.com/palantir/python-language-server'
     return
   endif
 
