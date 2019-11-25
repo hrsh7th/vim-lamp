@@ -109,7 +109,12 @@ function! s:add_highlight(namespace, bufnr, range, highlight) abort
   call s:initialize()
 
   if !lamp#protocol#range#has_length(a:range)
-    return
+    let l:text = get(getbufline(a:bufnr, a:range.end.line), 0, '')
+    if a:range.end.character < strchars(l:text) - 1
+      let a:range.end.character += 1
+    else
+      return
+    endif
   endif
 
   if !has_key(s:buf_highlights, a:namespace)

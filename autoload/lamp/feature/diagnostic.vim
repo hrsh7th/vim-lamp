@@ -24,11 +24,8 @@ function! lamp#feature#diagnostic#update() abort
   endif
 
   let l:fn = {}
-  function! l:fn.debounce() abort
-    call s:update()
-    call s:show_floatwin()
-  endfunction
-  call lamp#debounce('lamp#feature#diagnostic#update', { -> l:fn.debounce() }, 0)
+  call s:update()
+  call s:show_floatwin()
 endfunction
 
 "
