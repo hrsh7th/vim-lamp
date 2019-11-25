@@ -104,20 +104,20 @@ function! s:on_complete_done() abort
     " snippet or textEdit.
     let l:expandable_state = s:get_expandable_state(a:completed_item, l:completion_item)
     if !empty(l:expandable_state)
-      call s:clear_completed_string(
+      undojoin | call s:clear_completed_string(
             \   a:position_before_complete_done,
             \   a:line_before_complete_done,
             \   a:completed_item,
             \   l:completion_item
             \ )
-      call lamp#config('feature.completion.snippet.expand')({
+      undojoin | call lamp#config('feature.completion.snippet.expand')({
             \   'body': split(l:expandable_state.text, "\n\|\r", v:true)
             \ })
     endif
 
     " additionalTextEdits.
     if has_key(l:completion_item, 'additionalTextEdits')
-      call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
+      undojoin | call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
     endif
 
     " executeCommand.
