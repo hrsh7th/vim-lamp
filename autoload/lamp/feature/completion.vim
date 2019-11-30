@@ -111,7 +111,7 @@ function! s:on_complete_done() abort
             \   l:completion_item
             \ )
       undojoin | call lamp#config('feature.completion.snippet.expand')({
-            \   'body': split(l:expandable_state.text, "\n\|\r", v:true)
+            \   'body': l:expandable_state.text
             \ })
     endif
 
