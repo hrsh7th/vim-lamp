@@ -93,7 +93,7 @@ endfunction
 "
 if !exists('$LAMP_TEST')
   function! lamp#rescue(...) abort
-    function! s:catch(err, default) abort
+    function! s:catch(default, err) abort
       call lamp#log('[RESCUE]', a:err)
       return a:default
     endfunction
