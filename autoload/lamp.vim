@@ -157,7 +157,7 @@ endfunction
 "
 function! lamp#findup(...) abort
   let l:path = fnamemodify(bufname('%'), ':p')
-  while l:path != '/'
+  while index(['', '/'], l:path) == -1
     for l:marker in a:000
       let l:candidate = l:path . '/' . l:marker
       if isdirectory(l:candidate) || filereadable(l:candidate)
