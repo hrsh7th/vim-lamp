@@ -14,8 +14,8 @@ end
 execute printf('source %s', expand('~/.vim/plugged/vim-plug/plug.vim'))
 
 call plug#begin('~/.vim/plugged')
-Plug 'https://github.com/hrsh7th/vim-lamp'
-Plug 'https://github.com/hrsh7th/vim-vsnip'
+Plug expand('<sfile>:p:h:h') . '/vim-lamp'
+Plug expand('<sfile>:p:h:h') . '/vim-vsnip'
 Plug 'https://github.com/gruvbox-community/gruvbox'
 call plug#end()
 
@@ -33,8 +33,8 @@ set completeopt=menu,menuone,noselect
 "
 " vim-vsnip mapping.
 "
-imap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
-smap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
+imap <expr><Tab> vsnip#available() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
+smap <expr><Tab> vsnip#available() ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
 
 augroup vimrc
   autocmd!
@@ -113,8 +113,8 @@ function! s:on_text_document_did_open() abort
   nmap <buffer> <Esc>          <Plug>(lamp-document-highlight-clear)
   nnoremap <buffer><Esc>       :<C-u>call lamp#feature#document_highlight#clear()<CR>
 
-  imap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#map#confirm('<Tab>')
-  smap <expr><Tab> vsnip#expandable_or_jumpable() ? '<Plug>(vsnip-expand-or-jump)' : lamp#map#confirm('<Tab>')
+  imap <expr><Tab> vsnip#available() ? '<Plug>(vsnip-expand-or-jump)' : lamp#map#confirm('<Tab>')
+  smap <expr><Tab> vsnip#available() ? '<Plug>(vsnip-expand-or-jump)' : lamp#map#confirm('<Tab>')
 endfunction
 
 nnoremap H 20h
