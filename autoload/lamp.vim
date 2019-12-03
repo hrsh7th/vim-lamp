@@ -1,4 +1,5 @@
 let g:lamp#state = {
+      \   'exiting': v:false,
       \   'feature.completion.is_selected': v:false
       \ }
 

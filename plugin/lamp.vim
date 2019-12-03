@@ -87,12 +87,12 @@ endfunction
 " s:on_text_document_did_close
 "
 function! s:on_text_document_did_close() abort
-  if v:exiting isnot v:null
-    return
-  endif
-
   let l:fn = {}
   function! l:fn.debounce(bufnr) abort
+    if g:lamp#state.exiting
+      return
+    endif
+
     for l:server in lamp#server#registry#all()
       let l:bufnrs = map(values(l:server.documents), { k, v -> v.bufnr })
       if index(l:bufnrs, a:bufnr) >= 0
@@ -109,6 +109,7 @@ endfunction
 " s:on_vim_leave_pre
 "
 function! s:on_vim_leave_pre() abort
+  let g:lamp#state.exiting = v:true
   for l:server in lamp#server#registry#all()
     try
       call lamp#sync(l:server.exit(), 200)
