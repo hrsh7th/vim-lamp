@@ -29,8 +29,9 @@ end
 execute printf('source %s', expand('~/.vim/plugged/vim-plug/plug.vim'))
 
 call plug#begin('~/.vim/plugged')
-Plug 'https://github.com/hrsh7th/vim-lamp'
-Plug 'https://github.com/hrsh7th/vim-vsnip'
+Plug 'hrsh7th/vim-lamp'
+Plug 'hrsh7th/vim-vsnip'
+Plug 'hrsh7th/vim-vsnip-integ'
 call plug#end()
 
 "
@@ -49,9 +50,6 @@ augroup END
 "
 autocmd! vimrc User lamp#initialized * call s:on_initialized()
 function! s:on_initialized()
-  " Snippet integration.
-  call lamp#config('feature.completion.snippet.expand', { option -> vsnip#anonymous(option.body) })
-
   " Built-in settings.
   call lamp#language#php()
   call lamp#language#html()
