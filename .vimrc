@@ -134,9 +134,6 @@ nnoremap <Leader>l <C-w>l
 nnoremap <C-h> <C-o>
 nnoremap <C-l> <C-i>
 
-nmap <Tab> %
-vmap <Tab> %
-
 nnoremap q :<C-u>q<CR>
 nnoremap Q :<C-u>qa!<CR>
 nnoremap <Leader>t :<C-u>tabclose<CR>

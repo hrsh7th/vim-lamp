@@ -2,6 +2,13 @@ let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({})
 
+let s:context = {
+      \   'is_selected': v:false,
+      \   'position_before_complete_done': [],
+      \   'line_before_complete_done': '',
+      \   'completed_item': v:null,
+      \ }
+
 "
 " TextEdit enabled if other completion engine plugin provides below user-data.
 "
@@ -49,7 +56,6 @@ function! lamp#feature#completion#should_effect_on_complete_done(completed_item)
         \ !empty(s:get_expandable_state(a:completed_item, l:completion_item))
 endfunction
 
-
 "
 " s:on_complete_changed
 "
@@ -79,71 +85,78 @@ function! s:on_complete_done() abort
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
   call s:floatwin.hide()
 
-  let l:fn = {}
-  function! l:fn.next_tick(is_selected, position_before_complete_done, line_before_complete_done, completed_item) abort
-    if mode()[0] ==# 'n'
-      return
-    endif
+  let s:context.is_selected = g:lamp#state['feature.completion.is_selected']
+  let s:context.position_before_complete_done = getpos('.')
+  let s:context.line_before_complete_done = getline('.')
+  let s:context.completed_item = v:completed_item
 
-    let l:item_data = s:get_item_data(a:completed_item)
-    if empty(l:item_data)
-      return
-    endif
-
-    " <BS>, <C-w> etc.
-    if strlen(getline('.')) < strlen(a:line_before_complete_done)
-      return
-    endif
-
-    " completionItem/resolve
-    let l:completion_item = lamp#sync(s:resolve_completion_item(l:item_data))
-    if empty(l:completion_item)
-      let l:completion_item = l:item_data.completion_item
-    endif
-
-    " snippet or textEdit.
-    let l:expandable_state = s:get_expandable_state(a:completed_item, l:completion_item)
-    if !empty(l:expandable_state)
-      undojoin | call s:clear_completed_string(
-            \   a:position_before_complete_done,
-            \   a:line_before_complete_done,
-            \   a:completed_item,
-            \   l:completion_item
-            \ )
-      undojoin | call lamp#config('feature.completion.snippet.expand')({
-            \   'body': l:expandable_state.text
-            \ })
-    endif
-
-    " additionalTextEdits.
-    if has_key(l:completion_item, 'additionalTextEdits')
-      undojoin | call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
-    endif
-
-    " executeCommand.
-    if has_key(l:completion_item, 'command')
-      let l:server = lamp#server#registry#get_by_name(l:item_data.server_name)
-      if !empty(l:server)
-        call l:server.request('workspace/executeCommand', {
-              \   'command': l:completion_item.command.command,
-              \   'arguments': get(l:completion_item.command, 'arguments', [])
-              \ }).catch(lamp#rescue())
-      endif
-    endif
-  endfunction
-
-  let l:is_selected = g:lamp#state['feature.completion.is_selected']
-  let l:position_before_complete_done = getpos('.')
-  let l:line_before_complete_done = getline('.')
-
-  call timer_start(0, { -> l:fn.next_tick(
-        \   l:is_selected,
-        \   l:position_before_complete_done,
-        \   l:line_before_complete_done,
-        \   v:completed_item
-        \ ) }, { 'repeat': 1 })
+  if !empty(v:completed_item)
+    call feedkeys(printf("\<C-r>=<SNR>%d_on_complete_done_after()\<CR>", s:SID()), 'n')
+  endif
 
   let g:lamp#state['feature.completion.is_selected'] = v:false
+endfunction
+
+"
+" s:on_complete_done_after
+"
+function! s:on_complete_done_after() abort
+  let l:is_selected = s:context.is_selected
+  let l:position_before_complete_done = s:context.position_before_complete_done
+  let l:line_before_complete_done = s:context.line_before_complete_done
+  let l:completed_item = s:context.completed_item
+
+  if mode()[0] ==# 'n'
+    return ''
+  endif
+
+  let l:item_data = s:get_item_data(l:completed_item)
+  if empty(l:item_data)
+    return ''
+  endif
+
+  " <BS>, <C-w> etc.
+  if strlen(getline('.')) < strlen(l:line_before_complete_done)
+    return ''
+  endif
+
+  " completionItem/resolve
+  let l:completion_item = lamp#sync(s:resolve_completion_item(l:item_data))
+  if empty(l:completion_item)
+    let l:completion_item = l:item_data.completion_item
+  endif
+
+  " snippet or textEdit.
+  let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
+  if !empty(l:expandable_state)
+    undojoin | call s:clear_completed_string(
+          \   l:position_before_complete_done,
+          \   l:line_before_complete_done,
+          \   l:completed_item,
+          \   l:completion_item
+          \ )
+    undojoin | call lamp#config('feature.completion.snippet.expand')({
+          \   'body': l:expandable_state.text
+          \ })
+  endif
+
+  " additionalTextEdits.
+  if has_key(l:completion_item, 'additionalTextEdits')
+    undojoin | call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
+  endif
+
+  " executeCommand.
+  if has_key(l:completion_item, 'command')
+    let l:server = lamp#server#registry#get_by_name(l:item_data.server_name)
+    if !empty(l:server)
+      call l:server.request('workspace/executeCommand', {
+            \   'command': l:completion_item.command.command,
+            \   'arguments': get(l:completion_item.command, 'arguments', [])
+            \ }).catch(lamp#rescue())
+    endif
+  endif
+
+  return ''
 endfunction
 
 "
@@ -308,4 +321,12 @@ function! s:get_item_data(completed_item) abort
 
   return l:item_data
 endfunction
+
+
+"
+" SID.
+"
+function! s:SID() abort
+  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+endfun
 
