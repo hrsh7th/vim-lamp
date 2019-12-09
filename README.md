@@ -48,7 +48,7 @@ augroup END
 "
 " initialize servers.
 "
-autocmd! vimrc User lamp#initialized * call s:on_initialized()
+autocmd! vimrc User lamp#initialized call s:on_initialized()
 function! s:on_initialized()
   " Built-in settings.
   call lamp#language#php()
