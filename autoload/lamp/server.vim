@@ -181,7 +181,6 @@ function! s:Server.configuration(bufnr) abort
   let l:path = fnamemodify(bufname(a:bufnr), ':p')
   for [l:workspace_path, l:configuration] in items(self.workspace_configurations)
     if stridx(l:workspace_path, l:path) == 0
-      let l:workspace_path = l:workspace_path
       break
     endif
   endfor
@@ -236,7 +235,7 @@ function! s:Server.change_document(bufnr) abort
   elseif self.capability.get_text_document_sync_kind() == 2
     let l:diff = l:doc.diff()
     call l:doc.sync()
-    if l:diff.rangeLength != 0 || l:diff.text !=# '' 
+    if l:diff.rangeLength != 0 || l:diff.text !=# ''
       call self.channel.notify('textDocument/didChange', {
             \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
             \   'contentChanges': [l:diff]
@@ -257,7 +256,7 @@ function! s:Server.close_document(bufnr) abort
   let l:path = lamp#protocol#document#decode_uri(l:document.uri)
 
   " buffer is not unloaded.
-  if bufloaded(l:path)
+  if bufexists(l:path)
     return
   endif
 

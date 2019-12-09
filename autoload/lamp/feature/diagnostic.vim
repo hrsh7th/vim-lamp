@@ -19,13 +19,13 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update() abort
-  if mode() !=# 'n'
-    return
-  endif
+  call s:show_floatwin()
 
   let l:fn = {}
-  call s:update()
-  call s:show_floatwin()
+  function! l:fn.debounce() abort
+    call s:update()
+  endfunction
+  call lamp#debounce('lamp#feature#diagnostic#update', l:fn.debounce, 200)
 endfunction
 
 "
@@ -80,7 +80,7 @@ function! s:show_floatwin() abort
 endfunction
 
 "
-" s:clear_for_insertmode
+" on_insert_enter
 "
 function! s:on_insert_enter() abort
   call s:floatwin.hide()
@@ -88,7 +88,7 @@ function! s:on_insert_enter() abort
 endfunction
 
 "
-" s:update
+" update
 "
 function! s:update() abort
   if mode() !=# 'n'
@@ -130,7 +130,7 @@ function! s:update() abort
 endfunction
 
 "
-" s:get_document_map
+" get_document_map
 "
 function! s:get_document_map(uri) abort
   let l:servers = lamp#server#registry#all()
