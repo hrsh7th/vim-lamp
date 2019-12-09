@@ -28,8 +28,7 @@ Describe lamp#feature#references
     let l:bufnr = bufnr('%')
     call lamp#feature#references#do(v:false)
     call lamp#sync({ -> l:bufnr != bufnr('%') })
-    " call s:expect(2).to_equal(len(getqflist())) " NOTE: Currently tested server is ignore `includeDeclaration` option.
-    call s:expect(3).to_equal(len(getqflist()))
+    call s:expect(3).to_equal(len(getqflist())) " NOT: the server has not supported `includeDeclaration`.
   End
 
   It Should retrieve references(include declaration)

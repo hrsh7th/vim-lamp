@@ -26,11 +26,11 @@ Describe lamp#feature#rename
     set filetype=typescript
 
     let s:locations = []
-    call lamp#config('feature.rename.on_renamed', { locations -> execute('let s:locations = locations') })
+    call lamp#config('view.location.on_location', { locations -> execute('let s:locations = locations') })
     call lamp#feature#rename#test({ 'new_name': 'module2' })
     call lamp#feature#rename#do()
     call lamp#sync({ -> len(s:locations) > 0 })
-    call lamp#config('feature.rename.on_renamed', { locations -> [setqflist(locations), execute('copen')] })
+    call lamp#config('view.location.on_location', { locations -> [setqflist(locations), execute('copen')] })
   End
 
 End

@@ -53,10 +53,10 @@ Describe lamp#feature#implementation
     set filetype=typescript
 
     let s:called = v:false
-    call lamp#config('feature.implementation.on_implementations', { -> execute('let s:called = v:true') })
+    call lamp#config('view.location.on_location', { -> execute('let s:called = v:true') })
     call lamp#feature#implementation#do('edit')
     call lamp#sync({ -> s:called })
-    call lamp#config('feature.implementation.on_implementations', { -> execute('copen') })
+    call lamp#config('view.location.on_location', { locations -> [setqflist(locations), execute('copen')] })
   End
 
 End

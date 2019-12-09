@@ -8,17 +8,14 @@ let s:Server = lamp#server#import()
 
 let s:debounce_ids = {}
 
-let s:on_locations = { locations -> [setqflist(locations, 'r'), execute('copen')] }
+let s:on_location = { locations -> [setqflist(locations, 'r'), execute('copen')] }
+let s:on_fallback = { command, position -> lamp#view#notice({ 'lines': ['`Location`: no locations found.'] }) }
 let s:config = {
       \   'root': expand('<sfile>:p:h:h'),
       \   'debug.log': v:null,
-      \   'feature.definition.on_definitions': s:on_locations,
-      \   'feature.type_definition.on_type_definitions': s:on_locations,
-      \   'feature.declaration.on_declaration': s:on_locations,
-      \   'feature.implementation.on_implementations': s:on_locations,
-      \   'feature.references.on_references': s:on_locations,
-      \   'feature.rename.on_renamed': s:on_locations,
       \   'feature.completion.snippet.expand': v:null,
+      \   'view.location.on_location': s:on_location,
+      \   'view.location.on_fallback': s:on_fallback,
       \   'view.sign.error.text': 'x',
       \   'view.sign.warning.text': '!',
       \   'view.sign.information.text': 'i',

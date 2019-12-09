@@ -104,6 +104,9 @@ function! s:edits(workspace_edit) abort
             \ })
     endfor
   endfor
-  call lamp#config('feature.rename.on_renamed')(l:locations)
+  call lamp#view#location#handle('', {}, l:locations, {
+        \   'always_listing': v:true,
+        \   'no_fallback': v:true
+        \ })
 endfunction
 

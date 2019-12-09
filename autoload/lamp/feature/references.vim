@@ -42,10 +42,9 @@ function! s:on_response(bufnr, responses) abort
     let l:locations += lamp#protocol#location#normalize(l:response)
   endfor
 
-  if len(l:locations) > 0
-    call lamp#config('feature.references.on_references')(l:locations)
-  else
-    call lamp#view#notice#add({ 'lines': ['`References`: No references found.'] })
-  endif
+  call lamp#view#location#handle('', {}, l:locations, {
+        \   'always_listing': v:true,
+        \   'no_fallback': v:true
+        \ })
 endfunction
 

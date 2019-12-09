@@ -19,32 +19,27 @@ function! lamp#feature#definition#do(command) abort
     return
   endif
 
+  let l:position = lamp#protocol#position#get()
   let l:promises = map(l:servers, { k, v ->
         \   v.request('textDocument/definition', {
         \     'textDocument': lamp#protocol#document#identifier(bufnr('%')),
-        \     'position': lamp#protocol#position#get(),
+        \     'position': l:position,
         \   }).catch(lamp#rescue([]))
         \ })
   let l:p = s:Promise.all(l:promises)
-  let l:p = l:p.then({ responses -> s:on_response(a:command, l:bufnr, responses) })
+  let l:p = l:p.then({ responses -> s:on_response(a:command, l:bufnr, l:position, responses) })
   let l:p = l:p.catch(lamp#rescue())
 endfunction
 
 "
 " s:on_response
 "
-function! s:on_response(command, bufnr, responses) abort
+function! s:on_response(command, bufnr, position, responses) abort
   let l:locations = []
   for l:response in a:responses
     let l:locations += lamp#protocol#location#normalize(l:response)
   endfor
 
-  if len(l:locations) == 1
-    call lamp#view#buffer#open(a:command, l:locations[0])
-  elseif len(l:locations) > 1
-    call lamp#config('feature.definition.on_definitions')(l:locations)
-  else
-    call lamp#view#notice#add({ 'lines': ['`Definition`: No definitions found.'] })
-  endif
+  call lamp#view#location#handle(a:command, a:position, l:locations)
 endfunction
 

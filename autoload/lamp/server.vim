@@ -52,8 +52,10 @@ endfunction
 "
 function! s:Server.stop() abort
   if self.state.started
-    call lamp#sync(self.channel.request('shutdown'), 200)
-    call self.channel.notify('exit')
+    if !empty(self.state.initialized)
+      call lamp#sync(self.channel.request('shutdown'), 200)
+      call self.channel.notify('exit')
+    endif
     call self.channel.stop()
     let self.state.started = v:false
     let self.state.initialized = v:null
@@ -66,9 +68,12 @@ endfunction
 "
 function! s:Server.exit() abort
   if self.state.started
-    call lamp#sync(self.channel.request('shutdown'), 200)
-    call self.channel.notify('exit')
+    if !empty(self.state.initialized)
+      call lamp#sync(self.channel.request('shutdown'), 200)
+      call self.channel.notify('exit')
+    endif
     call self.channel.stop()
+    let self.state.initialized = v:null
     let self.state.exited = v:true
   endif
   return s:Promise.resolve()
