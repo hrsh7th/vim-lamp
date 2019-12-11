@@ -4,7 +4,7 @@ let s:Channel = lamp#server#channel#import()
 let s:Capability = lamp#server#capability#import()
 
 "
-" Create server instance.
+" lamp#server#import
 "
 function! lamp#server#import() abort
   return s:Server
@@ -13,7 +13,7 @@ endfunction
 let s:Server = {}
 
 "
-" new.
+" new
 "
 function! s:Server.new(name, option) abort
   return extend(deepcopy(s:Server), {
@@ -37,7 +37,7 @@ function! s:Server.new(name, option) abort
 endfunction
 
 "
-" start.
+" start
 "
 function! s:Server.start() abort
   if !self.state.started && !self.state.exited
@@ -48,7 +48,7 @@ function! s:Server.start() abort
 endfunction
 
 "
-" stop.
+" stop
 "
 function! s:Server.stop() abort
   if self.state.started
@@ -64,7 +64,7 @@ function! s:Server.stop() abort
 endfunction
 
 "
-" exit.
+" exit
 "
 function! s:Server.exit() abort
   if self.state.started
@@ -80,35 +80,33 @@ function! s:Server.exit() abort
 endfunction
 
 "
-" is_running.
+" is_running
 "
 function! s:Server.is_running() abort
   return self.channel.is_running()
 endfunction
 
 "
-" initialize.
+" initialize
 "
 function! s:Server.initialize() abort
   if !empty(self.state.initialized)
     return self.state.initialized
   endif
 
-  " callback
-  let l:fn = {}
-  function! l:fn.on_initialize(response) abort dict
+  let l:ctx = {}
+  function! l:ctx.callback(response) abort dict
     call self.capability.merge(a:response)
     call self.channel.notify('initialized', {})
     return a:response
   endfunction
 
-  " request.
   let self.state.initialized = self.channel.request('initialize', {
         \   'processId': v:null,
         \   'rootUri': lamp#protocol#document#encode_uri(self.root_uri()),
         \   'initializationOptions': self.initialization_options(),
         \   'capabilities': lamp#server#capability#get_default_capability(),
-        \ }).then(function(l:fn.on_initialize, [], self))
+        \ }).then(function(l:ctx.callback, [], self))
   return self.state.initialized
 endfunction
 
@@ -223,8 +221,10 @@ function! s:Server.change_document(bufnr) abort
     return
   endif
 
+  let l:sync_kind = self.capability.get_text_document_sync_kind()
+
   " full sync.
-  if self.capability.get_text_document_sync_kind() == 1
+  if l:sync_kind == 1
     call l:doc.sync()
     call self.channel.notify('textDocument/didChange', {
           \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
@@ -232,7 +232,7 @@ function! s:Server.change_document(bufnr) abort
           \ })
 
   " incremental sync.
-  elseif self.capability.get_text_document_sync_kind() == 2
+  elseif l:sync_kind == 2
     let l:diff = l:doc.diff()
     call l:doc.sync()
     if l:diff.rangeLength != 0 || l:diff.text !=# ''

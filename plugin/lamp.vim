@@ -3,6 +3,7 @@ if exists('g:loaded_lamp')
 endif
 let g:loaded_lamp = v:true
 
+" version check.
 if (!has('nvim') && v:version < 801) || (has('nvim') && !has('nvim-0.4.0'))
   echomsg 'vim-lamp is supported only vim-8.1(later) or nvim-0.4.0(later)'
   finish
@@ -17,6 +18,9 @@ for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:fa
   endtry
 endfor
 
+"
+" mappings.
+"
 nnoremap <silent><Plug>(lamp-definition)                     :<C-u>call lamp#feature#definition#do('edit')<CR>
 nnoremap <silent><Plug>(lamp-definition-split)               :<C-u>call lamp#feature#definition#do('split')<CR>
 nnoremap <silent><Plug>(lamp-definition-vsplit)              :<C-u>call lamp#feature#definition#do('vsplit')<CR>
@@ -40,6 +44,9 @@ vnoremap <silent><Plug>(lamp-range-formatting)               :<C-u>call lamp#fea
 nnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(0)<CR>
 vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(2)<CR>
 
+"
+" events.
+"
 augroup lamp
   autocmd!
   autocmd BufWinEnter,FileType * call <SID>on_text_document_did_open()
@@ -49,7 +56,7 @@ augroup lamp
 augroup END
 
 "
-" s:on_text_document_did_open
+" on_text_document_did_open
 "
 function! s:on_text_document_did_open() abort
   let l:bufnr = bufnr('%')
@@ -59,57 +66,68 @@ function! s:on_text_document_did_open() abort
     doautocmd User lamp#text_document_did_open
   endif
 
-  let l:fn = {}
-  function! l:fn.debounce(bufnr, servers) abort
+  let l:ctx = {}
+  function! l:ctx.callback(bufnr, servers) abort
     for l:server in a:servers
       call l:server.ensure_document(a:bufnr)
     endfor
   endfunction
-  call lamp#debounce('s:on_text_document_did_open:' . l:bufnr, { -> l:fn.debounce(l:bufnr, l:servers) }, 100)
+  call lamp#debounce(
+        \   's:on_text_document_did_open:' . l:bufnr,
+        \   { -> l:ctx.callback(l:bufnr, l:servers) },
+        \   100
+        \ )
 endfunction
 
 "
-" s:on_text_document_did_change
+" on_text_document_did_change
 "
 function! s:on_text_document_did_change() abort
-  let l:fn = {}
-  function! l:fn.debounce(bufnr) abort
+  let l:ctx = {}
+  function! l:ctx.callback(bufnr) abort
     for l:server in lamp#server#registry#find_by_filetype(getbufvar(a:bufnr, '&filetype'))
       call l:server.ensure_document(a:bufnr)
     endfor
   endfunction
 
   let l:bufnr = bufnr('%')
-  call lamp#debounce('s:on_text_document_did_change:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
+  call lamp#debounce(
+        \   's:on_text_document_did_change:' . l:bufnr,
+        \   { -> l:ctx.callback(l:bufnr) },
+        \   100
+        \ )
 endfunction
 
 "
-" s:on_text_document_did_close
+" on_text_document_did_close
 "
 function! s:on_text_document_did_close() abort
-  let l:fn = {}
-  function! l:fn.debounce(bufnr) abort
-    if g:lamp#state.exiting
-      return
+  let l:ctx = {}
+  function! l:ctx.callback(bufnr) abort
+    if !lamp#state('exiting')
+      for l:server in lamp#server#registry#all()
+        let l:bufnrs = map(values(l:server.documents), { k, v -> v.bufnr })
+        if index(l:bufnrs, a:bufnr) >= 0
+          call l:server.ensure_document(a:bufnr)
+        endif
+      endfor
     endif
-
-    for l:server in lamp#server#registry#all()
-      let l:bufnrs = map(values(l:server.documents), { k, v -> v.bufnr })
-      if index(l:bufnrs, a:bufnr) >= 0
-        call l:server.ensure_document(a:bufnr)
-      endif
-    endfor
   endfunction
 
   let l:bufnr = str2nr(expand('<abuf>'))
-  call lamp#debounce('s:on_text_document_did_close:' . l:bufnr, { -> l:fn.debounce(l:bufnr) }, 100)
+  call lamp#debounce(
+        \   's:on_text_document_did_close:' . l:bufnr,
+        \   { -> l:ctx.callback(l:bufnr) },
+        \   100
+        \ )
 endfunction
 
 "
-" s:on_vim_leave_pre
+" on_vim_leave_pre
 "
 function! s:on_vim_leave_pre() abort
-  let g:lamp#state.exiting = v:true
+  call lamp#state('exiting', v:true)
+
   for l:server in lamp#server#registry#all()
     try
       call lamp#sync(l:server.exit(), 200)
@@ -123,3 +141,4 @@ doautocmd User lamp#initialized
 
 call lamp#log('')
 call lamp#log('[STARTED]', strftime('%Y-%m-%d %H:%M:%S'))
+

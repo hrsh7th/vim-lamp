@@ -3,7 +3,6 @@ let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({})
 
 let s:context = {
-      \   'is_selected': v:false,
       \   'position_before_complete_done': [],
       \   'line_before_complete_done': '',
       \   'completed_item': v:null,
@@ -29,6 +28,9 @@ let s:user_data_key = 'lamp'
 "
 let s:item_state = {}
 
+"
+" lamp#feature#completion#init
+"
 function! lamp#feature#completion#init() abort
   augroup lamp#feature#completion
     autocmd!
@@ -38,26 +40,7 @@ function! lamp#feature#completion#init() abort
 endfunction
 
 "
-" lamp#feature#completion#should_effect_on_complete_done
-"
-function! lamp#feature#completion#should_effect_on_complete_done(completed_item) abort
-  let l:item_data = s:get_item_data(v:completed_item)
-  if empty(l:item_data)
-    return
-  endif
-
-  let l:completion_item = lamp#sync(s:resolve_completion_item(l:item_data))
-  if empty(l:completion_item)
-    let l:completion_item = l:item_data.completion_item
-  endif
-
-  return has_key(l:completion_item, 'additionalTextEdits') ||
-        \ has_key(l:completion_item, 'command') ||
-        \ !empty(s:get_expandable_state(a:completed_item, l:completion_item))
-endfunction
-
-"
-" s:on_complete_changed
+" on_complete_changed
 "
 function! s:on_complete_changed() abort
   call s:floatwin.hide()
@@ -67,17 +50,25 @@ function! s:on_complete_changed() abort
     return
   endif
 
-  let l:fn = {}
-  function! l:fn.debounce(event, item_data) abort
-    call s:resolve_completion_item(a:item_data).then({ completion_item -> s:show_documentation(a:event, completion_item) })
+  let l:ctx = {}
+  let l:ctx.event = copy(v:event)
+  let l:ctx.item_data = l:item_data
+  function! l:ctx.callback() abort
+    call s:resolve_completion_item(self.item_data).then({ completion_item ->
+          \   s:show_documentation(self.event, completion_item)
+          \ })
   endfunction
 
   let l:event = copy(v:event)
-  call lamp#debounce('lamp#feature#completion:show_documentation', { -> l:fn.debounce(l:event, l:item_data) }, 100)
+  call lamp#debounce(
+        \   'lamp#feature#completion:show_documentation',
+        \   { -> l:ctx.callback() },
+        \   100
+        \ )
 endfunction
 
 "
-" s:on_complete_done
+" on_complete_done
 "
 function! s:on_complete_done() abort
   " clear.
@@ -85,7 +76,6 @@ function! s:on_complete_done() abort
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
   call s:floatwin.hide()
 
-  let s:context.is_selected = g:lamp#state['feature.completion.is_selected']
   let s:context.position_before_complete_done = getpos('.')
   let s:context.line_before_complete_done = getline('.')
   let s:context.completed_item = v:completed_item
@@ -93,15 +83,12 @@ function! s:on_complete_done() abort
   if !empty(v:completed_item)
     call feedkeys(printf("\<C-r>=<SNR>%d_on_complete_done_after()\<CR>", s:SID()), 'n')
   endif
-
-  let g:lamp#state['feature.completion.is_selected'] = v:false
 endfunction
 
 "
-" s:on_complete_done_after
+" on_complete_done_after
 "
 function! s:on_complete_done_after() abort
-  let l:is_selected = s:context.is_selected
   let l:position_before_complete_done = s:context.position_before_complete_done
   let l:line_before_complete_done = s:context.line_before_complete_done
   let l:completed_item = s:context.completed_item
@@ -160,7 +147,7 @@ function! s:on_complete_done_after() abort
 endfunction
 
 "
-" s:resolve_completion_item
+" resolve_completion_item
 "
 function! s:resolve_completion_item(item_data) abort
   let s:item_state[a:item_data.id] = get(s:item_state, a:item_data.id, {})
@@ -178,7 +165,7 @@ function! s:resolve_completion_item(item_data) abort
 endfunction
 
 "
-" s:get_expandable_state
+" get_expandable_state
 "
 function! s:get_expandable_state(completed_item, completion_item) abort
   if has_key(a:completion_item, 'textEdit') &&
@@ -199,22 +186,24 @@ function! s:get_expandable_state(completed_item, completion_item) abort
 endfunction
 
 "
-" s:clear_completed_string
+" clear_completed_string
 "
 function! s:clear_completed_string(position_before_complete_done, line_before_complete_done, completed_item, completion_item) abort
   " Remove last typed characters.
   call setline('.', a:line_before_complete_done)
 
+  let l:position = {
+        \   'line': a:position_before_complete_done[1] - 1,
+        \   'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - 1,
+        \ }
+
   " Remove completed string.
   let l:range = {
         \   'start': {
-        \     'line': a:position_before_complete_done[1] - 1,
-        \     'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - strlen(a:completed_item.word) - 1
+        \     'line': l:position.line,
+        \     'character': l:position.character - strlen(a:completed_item.word)
         \   },
-        \   'end': {
-        \     'line': a:position_before_complete_done[1] - 1,
-        \     'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - 1,
-        \   }
+        \   'end': l:position
         \ }
   if has_key(a:completion_item, 'textEdit')
     let l:range = lamp#protocol#range#merge_expand(l:range, a:completion_item.textEdit.range)
@@ -227,7 +216,7 @@ function! s:clear_completed_string(position_before_complete_done, line_before_co
 endfunction
 
 "
-" s:show_documentation.
+" show_documentation
 "
 function! s:show_documentation(event, completion_item) abort
   if mode()[0] !=# 'i'
@@ -255,7 +244,7 @@ function! s:show_documentation(event, completion_item) abort
 endfunction
 
 "
-" s:get_floatwin_position.
+" get_floatwin_screenpos
 "
 function! s:get_floatwin_screenpos(event, contents) abort
   if empty(a:event)
@@ -286,7 +275,7 @@ function! s:get_floatwin_screenpos(event, contents) abort
 endfunction
 
 "
-" s:get_item_data
+" get_item_data
 "
 function! s:get_item_data(completed_item) abort
   if empty(a:completed_item)
@@ -315,13 +304,14 @@ function! s:get_item_data(completed_item) abort
   endif
 
   let l:item_data = l:user_data[s:user_data_key]
-  if !has_key(l:item_data, 'id') || !has_key(l:item_data, 'server_name') || !has_key(l:item_data, 'completion_item')
+  if !has_key(l:item_data, 'id')
+        \ || !has_key(l:item_data, 'server_name')
+        \ || !has_key(l:item_data, 'completion_item')
     return {}
   endif
 
   return l:item_data
 endfunction
-
 
 "
 " SID.

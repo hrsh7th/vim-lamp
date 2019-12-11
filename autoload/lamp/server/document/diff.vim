@@ -1,3 +1,6 @@
+"
+" lamp#server#document#diff#compute
+"
 function! lamp#server#document#diff#compute(old, new) abort
   let [l:start_line, l:start_char] = s:first_difference(a:old, a:new)
   let [l:end_line, l:end_char] = s:last_difference(a:old[l:start_line :], a:new[l:start_line :], l:start_char)

@@ -1,10 +1,11 @@
 augroup lamp_floatwin
-  " This autocmd for support vim's popup-window.
   autocmd!
   autocmd BufWinEnter * call s:update()
 augroup END
 
-" @see lamp#view#floatwin
+"
+" LampFloatwinSyntaxShouldUpdate
+"
 function! LampFloatwinSyntaxShouldUpdate(bufnr) abort
   if !has_key(b:, 'lamp_floatwin_state')
     return v:true
@@ -23,13 +24,15 @@ function! LampFloatwinSyntaxShouldUpdate(bufnr) abort
   return v:false
 endfunction
 
-" @see lamp#view#floatwin
+"
+" LampFloatwinSyntaxUpdate
+"
 function! LampFloatwinSyntaxUpdate()
   call s:update()
 endfunction
 
 "
-" s:update
+" update
 "
 function! s:update()
   if &filetype !=# 'lamp_floatwin'
@@ -46,10 +49,8 @@ function! s:update()
   " include markdown syntax.
   if !b:lamp_floatwin_state.markdown_syntax
     let b:lamp_floatwin_state.markdown_syntax = v:true
-
-    call s:clear()
-    runtime! syntax/markdown.vim
-    syntax include @Markdown syntax/markdown.vim
+    call s:apply('runtime! syntax/markdown.vim')
+    call s:apply('syntax include @Markdown syntax/markdown.vim')
   endif
 
   for [l:mark, l:language] in items(s:get_language_map(s:find_marks(bufnr('%'))))
@@ -61,12 +62,10 @@ function! s:update()
 
       try
         if l:language ==# 'vim' && has('nvim')
-          call s:clear()
-          execute printf('syntax include %s syntax/vim/generated.vim', l:language_group)
+          call s:apply('syntax include %s syntax/vim/generated.vim', l:language_group)
         else
           for l:syntax_path in s:find_syntax_path(l:language)
-            call s:clear()
-            execute printf('syntax include %s %s', l:language_group, l:syntax_path)
+            call s:apply('syntax include %s %s', l:language_group, l:syntax_path)
           endfor
         endif
       catch /.*/
@@ -79,14 +78,13 @@ function! s:update()
     if !has_key(b:lamp_floatwin_state.fenced_mark_syntaxes, l:mark)
       let b:lamp_floatwin_state.fenced_mark_syntaxes[l:mark] = v:true
 
-      call s:clear()
       let l:escaped_mark = s:escape(l:mark)
       let l:mark_group = printf('LampMarkdownFencedMark_%s', l:escaped_mark)
       let l:mark_start_group = printf('LampMarkdownFencedMarkStart_%s', l:escaped_mark)
       let l:mark_end_group = printf('LampMarkdownFencedMarkEnd_%s', l:escaped_mark)
       let l:start_mark = printf('^\s*```\s*%s\s*', l:mark)
       let l:end_mark = '\s*```\s*$'
-      execute printf('syntax region %s matchgroup=%s start="%s" matchgroup=%s end="%s" containedin=@Markdown contains=%s keepend concealends',
+      call s:apply('syntax region %s matchgroup=%s start="%s" matchgroup=%s end="%s" containedin=@Markdown contains=%s keepend concealends',
             \   l:mark_group,
             \   l:mark_start_group,
             \   l:start_mark,
@@ -99,8 +97,7 @@ function! s:update()
 endfunction
 
 "
-" find marks.
-" @see autoload/lamp/view/floatwin.vim
+" find_marks
 "
 function! s:find_marks(bufnr) abort
   let l:marks = {}
@@ -121,7 +118,7 @@ function! s:find_marks(bufnr) abort
 endfunction
 
 "
-" get_syntax_map
+" get_language_map
 "
 function! s:get_language_map(marks) abort
   let l:language_map = {}
@@ -165,7 +162,7 @@ function! s:get_language_map(marks) abort
 endfunction
 
 "
-" find syntax path.
+" find_syntax_path
 "
 function! s:find_syntax_path(name) abort
   let l:syntax_paths = []
@@ -179,7 +176,7 @@ function! s:find_syntax_path(name) abort
 endfunction
 
 "
-" s:escape
+" escape
 "
 function! s:escape(group)
   let l:group = a:group
@@ -188,13 +185,15 @@ function! s:escape(group)
 endfunction
 
 "
-" s:clear
+" apply
 "
-function! s:clear()
+function! s:apply(cmd, ...) abort
   let b:current_syntax = ''
   unlet b:current_syntax
 
   let g:main_syntax = ''
   unlet g:main_syntax
+
+  execute call('printf', [a:cmd] + a:000)
 endfunction
 

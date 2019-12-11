@@ -1,3 +1,6 @@
+"
+" lamp#view#input#select
+"
 function! lamp#view#input#select(message, candidates) abort
   redraw
   let l:candidates = [a:message]

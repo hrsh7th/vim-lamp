@@ -12,7 +12,7 @@ function! lamp#server#notification#on(server, notification) abort
 endfunction
 
 "
-" s:text_document_publish_diagnostics
+" text_document_publish_diagnostics
 "
 function! s:text_document_publish_diagnostics(server, notification) abort
   if !has_key(a:server.documents, a:notification.params.uri)
@@ -29,7 +29,7 @@ function! s:text_document_publish_diagnostics(server, notification) abort
 endfunction
 
 "
-" s:workspace_apply_edit
+" workspace_apply_edit
 "
 function! s:workspace_apply_edit(server, notification) abort
   let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(a:notification.params.edit)

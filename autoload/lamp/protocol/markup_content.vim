@@ -52,7 +52,7 @@ function! lamp#protocol#markup_content#to_string(markup_content) abort
 endfunction
 
 "
-" s:string
+" string
 "
 function! s:string(string) abort
   let l:string = a:string

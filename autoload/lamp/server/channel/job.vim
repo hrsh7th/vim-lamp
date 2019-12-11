@@ -1,5 +1,5 @@
 "
-" job api compat layer.
+" lamp#server#channel#job#import
 "
 function! lamp#server#channel#job#import() abort
   return s:Job
@@ -8,7 +8,7 @@ endfunction
 let s:Job = {}
 
 "
-" new.
+" new
 "
 function! s:Job.new(command, option) abort
   let l:job = has('nvim') ? s:neovim(a:command, a:option) : s:vim(a:command, a:option)

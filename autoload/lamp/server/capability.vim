@@ -27,6 +27,9 @@ let g:lamp#server#capability#symbol_kinds = {
       \   'TypeParameter': 26,
       \ }
 
+"
+" lamp#server#capability#get_default_capability
+"
 function! lamp#server#capability#get_default_capability() abort
   return {
         \   'workspace': {
@@ -128,6 +131,9 @@ function! lamp#server#capability#get_default_capability() abort
         \ }
 endfunction
 
+"
+" lamp#server#capability#import
+"
 function! lamp#server#capability#import() abort
   return s:Capability
 endfunction

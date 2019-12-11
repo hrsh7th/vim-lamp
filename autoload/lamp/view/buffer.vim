@@ -36,7 +36,7 @@ function! lamp#view#buffer#open(command, location) abort
 endfunction
 
 "
-" force fire `TextChanged`
+" lamp#view#buffer#touch
 "
 function! lamp#view#buffer#touch(expr) abort
   let l:bufnr = bufnr(a:expr, v:true)
@@ -51,7 +51,7 @@ function! lamp#view#buffer#touch(expr) abort
 endfunction
 
 "
-" bufdo.
+" lamp#view#buffer#do
 "
 function! lamp#view#buffer#do(bufnr, fn) abort
   let l:current_bufnr = bufnr('%')
@@ -69,7 +69,7 @@ function! lamp#view#buffer#do(bufnr, fn) abort
 endfunction
 
 "
-" get_indent_option
+" lamp#view#buffer#get_indent_size
 "
 function! lamp#view#buffer#get_indent_size() abort
   if &shiftwidth
@@ -79,7 +79,7 @@ function! lamp#view#buffer#get_indent_size() abort
 endfunction
 
 "
-" for test.
+" lamp#view#buffer#reset
 "
 function! lamp#view#buffer#reset() abort
   set hidden

@@ -1,3 +1,6 @@
+"
+" lamp#view#visual#range
+"
 function! lamp#view#visual#range() abort
   let l:start = getpos("'<")
   let l:end = getpos("'>")

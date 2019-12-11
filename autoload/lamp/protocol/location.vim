@@ -1,3 +1,6 @@
+"
+" lamp#protocol#location#normalize
+"
 function! lamp#protocol#location#normalize(locations) abort
   if empty(a:locations)
     return []

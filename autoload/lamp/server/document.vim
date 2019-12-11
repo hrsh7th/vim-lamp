@@ -1,5 +1,5 @@
 "
-" Create document instance.
+" lamp#server#document#import
 "
 function! lamp#server#document#import() abort
   return s:Document
@@ -8,7 +8,7 @@ endfunction
 let s:Document = {}
 
 "
-" new.
+" new
 "
 function! s:Document.new(bufnr) abort
   return extend(deepcopy(s:Document), {
@@ -23,14 +23,14 @@ function! s:Document.new(bufnr) abort
 endfunction
 
 "
-" diff.
+" diff
 "
 function! s:Document.diff() abort
   return lamp#server#document#diff#compute(self.buffer, getbufline(self.bufnr, '^', '$'))
 endfunction
 
 "
-" Sync.
+" sync
 "
 function! s:Document.sync() abort
   let self.buffer = lamp#view#buffer#get_lines(self.bufnr)
@@ -38,14 +38,14 @@ function! s:Document.sync() abort
 endfunction
 
 "
-" out of date.
+" out_of_date
 "
 function! s:Document.out_of_date() abort
   return self.changedtick != getbufvar(self.bufnr, 'changedtick')
 endfunction
 
 "
-" set_diagnostics.
+" set_diagnostics
 "
 function! s:Document.set_diagnostics(diagnostics) abort
   let self.diagnostics = a:diagnostics
