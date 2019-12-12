@@ -35,7 +35,7 @@ function! lamp#language#html(...) abort
 
   call lamp#register('html-languageserver', lamp#merge({
         \   'command': ['html-languageserver', '--stdio'],
-        \   'filetypes': ['html', 'css', 'scss'],
+        \   'filetypes': ['html'],
         \   'initialization_options': { -> {
         \     'embeddedLanguages': {
         \       'css': v:true,
