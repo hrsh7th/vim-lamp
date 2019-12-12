@@ -85,9 +85,9 @@ Describe lamp#view#edit
           \   }]
           \ }]
     call lamp#view#edit#apply_workspace(lamp#view#edit#normalize_workspace_edit(s:workspace_edit))
-    call s:expect(getbufline(bufnr(s:filepath1), '^', '$')[0]).to_equal("import { module2 } from './module1';")
-    call s:expect(getbufline(bufnr(s:filepath1), '^', '$')[4]).to_equal("module2();")
-    call s:expect(getbufline(bufnr(s:filepath2), '^', '$')[0]).to_equal("export const module2 = () => {")
+    call s:expect(lamp#view#buffer#get_lines(bufnr(s:filepath1))[0]).to_equal("import { module2 } from './module1';")
+    call s:expect(lamp#view#buffer#get_lines(bufnr(s:filepath1))[4]).to_equal("module2();")
+    call s:expect(lamp#view#buffer#get_lines(bufnr(s:filepath2))[0]).to_equal("export const module2 = () => {")
   End
 
   It Should keep cursor position 1

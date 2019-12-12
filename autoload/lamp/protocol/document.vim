@@ -33,7 +33,7 @@ endfunction
 function! lamp#protocol#document#item(bufnr) abort
   return extend(lamp#protocol#document#versioned_identifier(a:bufnr), {
         \   'languageId': lamp#protocol#document#language_id(a:bufnr),
-        \   'text': join(getbufline(a:bufnr, '^', '$'), "\n")
+        \   'text': join(lamp#view#buffer#get_lines(a:bufnr), "\n")
         \ })
 endfunction
 

@@ -17,7 +17,7 @@ Describe lamp#view#buffer
   It Should update changedtick
     let s:filename = lamp#config('root') . '/misc/typescript/src/index.ts'
     call lamp#view#buffer#open('edit', { 'filename': s:filename, 'lnum': 3, 'col': 3 })
-    let s:buffer = getbufline(s:filename, '^', '$')
+    let s:buffer = lamp#view#buffer#get_lines(s:filename)
 
     normal! i1234567890
 
@@ -28,7 +28,7 @@ Describe lamp#view#buffer
 
     " keep undo.
     normal! u
-    call s:expect(s:buffer).to_equal(getbufline(s:filename, '^', '$'))
+    call s:expect(s:buffer).to_equal(lamp#view#buffer#get_lines(s:filename))
   End
 
 End

@@ -10,6 +10,17 @@ function! lamp#view#buffer#append_line(bufnr, start, line) abort
 endfunction
 
 "
+" lamp#view#buffer#get_lines
+"
+function! lamp#view#buffer#get_lines(bufnr) abort
+  let l:lines = getbufline(a:bufnr, '^', '$')
+  if &fixendofline && !&binary && l:lines[-1] !=# ''
+    call add(l:lines, '')
+  endif
+  return l:lines
+endfunction
+
+"
 " lamp#view#buffer#open
 "
 function! lamp#view#buffer#open(command, location) abort

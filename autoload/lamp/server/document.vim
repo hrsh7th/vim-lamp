@@ -14,7 +14,7 @@ function! s:Document.new(bufnr) abort
   return extend(deepcopy(s:Document), {
         \   'uri': lamp#protocol#document#encode_uri(a:bufnr),
         \   'bufnr': a:bufnr,
-        \   'buffer': getbufline(a:bufnr, '^', '$'),
+        \   'buffer': lamp#view#buffer#get_lines(a:bufnr),
         \   'filetype': getbufvar(a:bufnr, '&filetype'),
         \   'language_id': lamp#protocol#document#language_id(a:bufnr),
         \   'changedtick': getbufvar(a:bufnr, 'changedtick'),
@@ -33,7 +33,7 @@ endfunction
 " Sync.
 "
 function! s:Document.sync() abort
-  let self.buffer = getbufline(self.bufnr, '^', '$')
+  let self.buffer = lamp#view#buffer#get_lines(self.bufnr)
   let self.changedtick = getbufvar(self.bufnr, 'changedtick')
 endfunction
 

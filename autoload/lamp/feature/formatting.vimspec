@@ -29,9 +29,9 @@ Describe lamp#feature#formatting
     set filetype=typescript
 
     let l:bufnr = bufnr('%')
-    let l:lines = getbufline(l:bufnr, '^', '$')
+    let l:lines = lamp#view#buffer#get_lines(l:bufnr)
     call lamp#feature#formatting#do()
-    call lamp#sync({ -> getbufline(l:bufnr, '^', '$') != l:lines })
+    call lamp#sync({ -> lamp#view#buffer#get_lines(l:bufnr) != l:lines })
     call s:expect([
           \   'if (true) {',
           \   '  console.log("sample text1");',
@@ -39,8 +39,9 @@ Describe lamp#feature#formatting
           \   '',
           \   'if (true) {',
           \   '  console.log("sample text2");',
-          \   '}'
-          \ ]).to_equal(getbufline(l:bufnr, '^', '$'))
+          \   '}',
+          \   ''
+          \ ]).to_equal(lamp#view#buffer#get_lines(l:bufnr))
   End
 
   It Should formatting 2
@@ -55,9 +56,9 @@ Describe lamp#feature#formatting
     set filetype=typescript
 
     let l:bufnr = bufnr('%')
-    let l:lines = getbufline(l:bufnr, '^', '$')
+    let l:lines = lamp#view#buffer#get_lines(l:bufnr)
     call lamp#feature#formatting#do()
-    call lamp#sync({ -> getbufline(l:bufnr, '^', '$') != l:lines })
+    call lamp#sync({ -> lamp#view#buffer#get_lines(l:bufnr) != l:lines })
     call s:expect([
           \   'if (true) {',
           \   "\t" . 'console.log("sample text1");',
@@ -65,8 +66,9 @@ Describe lamp#feature#formatting
           \   '',
           \   'if (true) {',
           \   "\t" . 'console.log("sample text2");',
-          \   '}'
-          \ ]).to_equal(getbufline(l:bufnr, '^', '$'))
+          \   '}',
+          \   ''
+          \ ]).to_equal(lamp#view#buffer#get_lines(l:bufnr))
   End
 
 End

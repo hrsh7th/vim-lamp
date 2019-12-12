@@ -32,11 +32,11 @@ Describe lamp#feature#range_formatting
     set filetype=typescript
 
     let l:bufnr = bufnr('%')
-    let l:lines = getbufline(l:bufnr, '^', '$')
+    let l:lines = lamp#view#buffer#get_lines(l:bufnr)
 
     normal! Vjj
     call lamp#feature#range_formatting#do()
-    call lamp#sync({ -> getbufline(l:bufnr, '^', '$') != l:lines })
+    call lamp#sync({ -> lamp#view#buffer#get_lines(l:bufnr) != l:lines })
     call s:expect([
           \   'if (true) {',
           \   '  console.log("sample text1");',
@@ -44,8 +44,9 @@ Describe lamp#feature#range_formatting
           \   '',
           \   'if(true){',
           \   'console.log("sample text2");',
-          \   '}'
-          \ ]).to_equal(getbufline(l:bufnr, '^', '$'))
+          \   '}',
+          \   ''
+          \ ]).to_equal(lamp#view#buffer#get_lines(l:bufnr))
   End
 
 End
