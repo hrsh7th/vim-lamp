@@ -48,7 +48,22 @@ function! lamp#language#html(...) abort
         \     }
         \   }
         \ }, get(a:000, 0, {})))
-  autocmd! lamp#language FileType html setlocal iskeyword+=/
+endfunction
+
+"
+" lamp#language#css
+"
+function! lamp#language#css(...) abort
+  if !executable('css-languageserver')
+    echomsg '[vim-lamp] You should install `css-languageserver`.'
+    echomsg '[vim-lamp] > npm install -g vscode-css-languageserver-bin'
+    return
+  endif
+
+  call lamp#register('css-languageserver', lamp#merge({
+        \   'command': ['css-languageserver', '--stdio'],
+        \   'filetypes': ['css', 'scss'],
+        \ }, get(a:000, 0, {})))
 endfunction
 
 "

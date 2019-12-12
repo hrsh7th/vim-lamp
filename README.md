@@ -53,9 +53,12 @@ function! s:on_initialized()
   " Built-in settings.
   call lamp#language#php()
   call lamp#language#html()
+  call lamp#language#css()
   call lamp#language#typescript()
   call lamp#language#rust()
   call lamp#language#vim()
+  call lamp#language#go()
+  call lamp#language#python()
 
   " Custom settings.
   call lamp#register('example-server', {
