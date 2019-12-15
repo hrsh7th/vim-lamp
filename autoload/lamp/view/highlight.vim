@@ -155,7 +155,7 @@ function! s:update() abort
       endfor
     endfor
   endfunction
-  call lamp#debounce('lamp#view#highlight:update', l:ctx.callback, 0)
+  call lamp#debounce('lamp#view#highlight:update', l:ctx.callback, 200)
 endfunction
 
 "
