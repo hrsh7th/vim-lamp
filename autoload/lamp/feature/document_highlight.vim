@@ -34,7 +34,7 @@ function! lamp#feature#document_highlight#do() abort
   let l:highlights_under_cursor = lamp#view#highlight#get(lamp#protocol#position#get())
 
   " remove highlight under cursor if already highlighted.
-  if len(keys(l:highlights_under_cursor)) != 0
+  if len(l:highlights_under_cursor) != 0
     for l:highlight in l:highlights_under_cursor
       call lamp#view#highlight#remove(l:highlight.namespace, bufnr('%'))
     endfor
@@ -65,7 +65,7 @@ function! s:on_response(bufnr, response) abort
     return
   endif
 
-  let l:namespace = s:highlight_namespace + s:highlight_id
+  let l:namespace = s:highlight_namespace . s:highlight_id
   for l:highlight in a:response
     call lamp#view#highlight#color(l:namespace, a:bufnr, l:highlight.range, lamp#view#highlight#nr2color(s:highlight_id))
   endfor

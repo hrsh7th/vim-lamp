@@ -30,7 +30,7 @@ endfunction
 "
 " Returns buf_highlights that related current bufnr.
 "
-function! lamp#view#highlight#get_by_position(position) abort
+function! lamp#view#highlight#get(position) abort
   return lamp#view#highlight#{s:ns}#get(a:position)
 endfunction
 
