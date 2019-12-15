@@ -1,8 +1,16 @@
 # vim-lamp
 Language Server Protocol client for Vim.
 
+# Concept
+- Works on vim/nvim both
+- High performance
+    - Use listener_add/nvim_buf_attach
+- Well supported LSP spec
+    - completionItem/resolve
+    - Snippet support (by vim-vsnip)
+
 # Status
-Well works but APIs aren't stable.
+Well works but not docummented.
 
 # Setting
 
@@ -172,5 +180,3 @@ endfunction
 - Create asyncomplete source
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)
-- ! Multibyte support
-
