@@ -2,7 +2,7 @@ let s:Promise = vital#lamp#import('Async.Promise')
 let s:Document = lamp#server#document#import()
 let s:Channel = lamp#server#channel#import()
 let s:Capability = lamp#server#capability#import()
-let s:Diff = diffkit#import()
+let s:Diff = lamp#view#diff#import()
 
 "
 " lamp#server#import
