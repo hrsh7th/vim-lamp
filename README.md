@@ -4,13 +4,6 @@ Language Server Protocol client for Vim.
 # Status
 Well works but APIs aren't stable.
 
-# Requirement
-
-- vim
-    - 8.1 or later
-- nvim
-    - 0.4.0 or later
-
 # Setting
 
 ```vim
