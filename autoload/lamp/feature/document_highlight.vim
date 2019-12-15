@@ -1,7 +1,13 @@
 let s:highlight_id = 0
 let s:highlight_namespace = 'lamp#feature#document_highlight'
 
-let s:highlight_active_namespaces = []
+"
+" [{
+"   'namespace': ...,
+"   'bufnr': ...
+" }]
+"
+let s:active_highlights = []
 
 "
 " lamp#feature#document_highlight#init
@@ -14,10 +20,10 @@ endfunction
 " lamp#feature#document_highlight#clear
 "
 function! lamp#feature#document_highlight#clear() abort
-  for l:namespace in s:highlight_active_namespaces
-    call lamp#view#highlight#remove(l:namespace)
+  for l:highlight in s:active_highlights
+    call lamp#view#highlight#remove(l:highlight.namespace, l:highlight.bufnr)
   endfor
-  let s:highlight_active_namespaces = []
+  let s:active_highlights = []
   let s:highlight_id = 0
 endfunction
 
@@ -25,14 +31,17 @@ endfunction
 " lamp#feature#document_highlight#do
 "
 function! lamp#feature#document_highlight#do() abort
-  let l:highlights_under_cursor = lamp#view#highlight#get_by_position(lamp#protocol#position#get())
-  if len(keys(l:highlights_under_cursor)) != 0
-    for l:namespace in keys(l:highlights_under_cursor)
-      call lamp#view#highlight#remove(l:namespace)
+  let l:highlights_under_cursor = lamp#view#highlight#get(lamp#protocol#position#get())
+
+  " remove highlight under cursor if already highlighted.
+  if len(l:highlights_under_cursor) != 0
+    for l:highlight in l:highlights_under_cursor
+      call lamp#view#highlight#remove(l:highlight.namespace, bufnr('%'))
     endfor
     return
   endif
 
+  " highlight word under cursor.
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.documentHighlightProvider') })
@@ -56,11 +65,14 @@ function! s:on_response(bufnr, response) abort
     return
   endif
 
-  let l:namespace = s:highlight_namespace + s:highlight_id
+  let l:namespace = s:highlight_namespace . s:highlight_id
   for l:highlight in a:response
     call lamp#view#highlight#color(l:namespace, a:bufnr, l:highlight.range, lamp#view#highlight#nr2color(s:highlight_id))
   endfor
-  call add(s:highlight_active_namespaces, l:namespace)
+  call add(s:active_highlights, {
+        \   'bufnr': a:bufnr,
+        \   'namespace': l:namespace
+        \ })
   let s:highlight_id += 1
 endfunction
 

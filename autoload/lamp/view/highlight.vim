@@ -1,6 +1,5 @@
 let s:initialized = v:false
-let s:buf_highlights = {}
-let s:win_highlights = {}
+let s:ns = has('nvim') ? 'nvim' : 'vim'
 
 let s:colors = reverse([
       \   'DarkBlue',
@@ -31,42 +30,16 @@ endfunction
 "
 " Returns buf_highlights that related current bufnr.
 "
-function! lamp#view#highlight#get_by_position(position) abort
-  let l:target = {}
-  for [l:namespace, l:highlight_map] in items(s:buf_highlights)
-    for [l:bufnr, l:highlights] in items(l:highlight_map)
-      if l:bufnr != bufnr('%')
-        continue
-      endif
-
-      for l:highlight in l:highlights
-        if lamp#protocol#position#in_range(a:position, l:highlight.range)
-          let l:target[l:namespace] = get(l:target, l:namespace, [])
-          let l:target[l:namespace] += [l:highlight]
-        endif
-      endfor
-    endfor
-  endfor
-  return l:target
+function! lamp#view#highlight#get(position) abort
+  return lamp#view#highlight#{s:ns}#get(a:position)
 endfunction
 
 "
 " lamp#view#highlight#remove
 "
-function! lamp#view#highlight#remove(namespace, ...) abort
+function! lamp#view#highlight#remove(namespace, bufnr) abort
   call lamp#log('[CALL] lamp#view#highlight#remove')
-
-  if len(a:000) > 0
-    if has_key(s:buf_highlights, a:namespace) && has_key(s:buf_highlights[a:namespace], a:000[0])
-      let s:buf_highlights[a:namespace][a:000[0]] = []
-      call s:update()
-    endif
-  else
-    if has_key(s:buf_highlights, a:namespace)
-      let s:buf_highlights[a:namespace] = {}
-      call s:update()
-    endif
-  endif
+  call lamp#view#highlight#{s:ns}#remove(a:namespace, a:bufnr)
 endfunction
 
 "
@@ -109,10 +82,11 @@ endfunction
 " add_highlight
 "
 function! s:add_highlight(namespace, bufnr, range, highlight) abort
-  call lamp#log('[CALL] lamp#view#highlight s:add_highlight')
-
   call s:initialize()
 
+  call lamp#log('[CALL] lamp#view#highlight s:add_highlight')
+
+  " correct empty range.
   if !lamp#protocol#range#has_length(a:range)
     let l:text = get(getbufline(a:bufnr, a:range.end.line), 0, '')
     if a:range.end.character < strchars(l:text) - 1
@@ -122,73 +96,35 @@ function! s:add_highlight(namespace, bufnr, range, highlight) abort
     endif
   endif
 
-  if !has_key(s:buf_highlights, a:namespace)
-    let s:buf_highlights[a:namespace] = {}
-  endif
-  if !has_key(s:buf_highlights[a:namespace], a:bufnr)
-    let s:buf_highlights[a:namespace][a:bufnr] = []
-  endif
-  let s:buf_highlights[a:namespace][a:bufnr] += [{ 'highlight': a:highlight, 'range': a:range }]
-
-  call s:update()
-endfunction
-
-"
-" update
-"
-function! s:update() abort
-  let l:ctx = {}
-  function! l:ctx.callback() abort
-    call lamp#log('[CALL] lamp#view#highlight s:update')
-
-    for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
-      " clear current highlight
-      let l:winid = win_getid(l:winnr)
-      if has_key(s:win_highlights, l:winid)
-        call lamp#view#window#do(l:winid, { -> map(copy(s:win_highlights[l:winid]), { k, v -> matchdelete(v) }) })
-        let s:win_highlights[l:winid] = []
-      else
-        let s:win_highlights[l:winid] = []
-      endif
-
-      " add new highlights
-      let l:bufnr = winbufnr(l:winnr)
-      for [l:namespace, l:buf_highlight] in items(s:buf_highlights)
-        if has_key(l:buf_highlight, l:bufnr)
-          for l:highlight in l:buf_highlight[l:bufnr]
-            let s:win_highlights[l:winid] += [matchaddpos(l:highlight.highlight, s:positions(l:bufnr, l:highlight.range), 100, -1, { 'window': l:winid })]
-          endfor
-        endif
-      endfor
-    endfor
-  endfunction
-  call lamp#debounce('lamp#view#highlight:update', l:ctx.callback, 200)
+  " add highlight.
+  call lamp#view#highlight#{s:ns}#add(a:namespace, a:bufnr, s:positions(a:bufnr, a:range), a:highlight)
 endfunction
 
 "
 " positions
 "
-" Return [[lnum, col-start, length]]
-"
 function! s:positions(bufnr, range) abort
+  " to inclusive.
   if a:range.end.character == 0
     let a:range.end.character = strlen(get(getbufline(a:bufnr, a:range.end.line), 0, ''))
     let a:range.end.line -= 1
   endif
 
+  " same line.
   if a:range.start.line == a:range.end.line
-    return [[a:range.start.line + 1, a:range.start.character + 1, a:range.end.character - a:range.start.character]]
+    return [[a:range.start.line, a:range.start.character, a:range.end.character]]
   endif
 
+  " multiline.
   let l:positions = []
   for l:line in range(a:range.start.line, a:range.end.line)
     if a:range.start.line == l:line
-      let l:bytes = strlen(get(getbufline(a:bufnr, a:range.start.line + 1), 0, ''))
-      call add(l:positions, [l:line + 1, a:range.start.character + 1, l:bytes - a:range.start.character])
+      call add(l:positions, [l:line, a:range.start.character, a:range.end.character])
     elseif a:range.end.line == l:line
-      call add(l:positions, [l:line + 1, 0, a:range.end.character])
+      call add(l:positions, [l:line, 0, a:range.end.character])
     else
-      call add(l:positions, l:line + 1)
+      let l:text = get(getbufline(a:bufnr, l:line + 1), 0, '')
+      call add(l:positions, [l:line, 0, strlen(l:text)])
     endif
   endfor
   return l:positions
@@ -203,17 +139,25 @@ function! s:initialize() abort
   endif
   let s:initialized = v:true
 
-  execute printf('highlight! LampError guibg=darkred')
-  execute printf('highlight! LampWarning guibg=darkmagenta')
+  execute printf('highlight! LampError gui=underline guibg=darkred')
+  execute printf('highlight! LampWarning gui=underline guibg=darkmagenta')
   execute printf('highlight! LampInformation gui=underline')
   execute printf('highlight! LampHint gui=underline')
   for l:color in s:colors
     execute printf('highlight! Lamp%s guibg=%s', l:color, l:color)
   endfor
 
-  augroup lamp#view#highlight
-    autocmd!
-    autocmd BufWinEnter,WinNew * call s:update()
-  augroup END
+  if exists('*prop_add')
+    call prop_type_add('LampError', { 'highlight': 'LampError' })
+    call prop_type_add('LampWarning', { 'highlight': 'LampWarning' })
+    call prop_type_add('LampInformation', { 'highlight': 'LampInformation' })
+    call prop_type_add('LampHint', { 'highlight': 'LampHint' })
+    for l:color in s:colors
+      let l:highlight = printf('Lamp%s', l:color)
+      call prop_type_add(l:highlight, {
+            \   'highlight': l:highlight
+            \ })
+    endfor
+  endif
 endfunction
 
