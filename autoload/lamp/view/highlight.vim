@@ -123,7 +123,8 @@ function! s:positions(bufnr, range) abort
     elseif a:range.end.line == l:line
       call add(l:positions, [l:line, 0, a:range.end.character])
     else
-      call add(l:positions, [l:line, 0, -1])
+      let l:text = get(getbufline(a:bufnr, l:line + 1), 0, '')
+      call add(l:positions, [l:line, 0, strlen(l:text)])
     endif
   endfor
   return l:positions
@@ -145,5 +146,18 @@ function! s:initialize() abort
   for l:color in s:colors
     execute printf('highlight! Lamp%s guibg=%s', l:color, l:color)
   endfor
+
+  if exists('*prop_add')
+    call prop_type_add('LampError', { 'highlight': 'LampError' })
+    call prop_type_add('LampWarning', { 'highlight': 'LampWarning' })
+    call prop_type_add('LampInformation', { 'highlight': 'LampInformation' })
+    call prop_type_add('LampHint', { 'highlight': 'LampHint' })
+    for l:color in s:colors
+      let l:highlight = printf('Lamp%s', l:color)
+      call prop_type_add(l:highlight, {
+            \   'highlight': l:highlight
+            \ })
+    endfor
+  endif
 endfunction
 

@@ -86,22 +86,18 @@ function! s:initialize() abort
   call sign_define('LampSignError', {
         \   'text': lamp#config('view.sign.error.text'),
         \   'texthl': 'LampSignError',
-        \   'linehl': 'SignColumn'
         \ })
   call sign_define('LampSignWarning', {
         \   'text': lamp#config('view.sign.warning.text'),
         \   'texthl': 'LampSignWarning',
-        \   'linehl': 'SignColumn'
         \ })
   call sign_define('LampSignInformation', {
         \   'text': lamp#config('view.sign.information.text'),
         \   'texthl': 'LampSignInformation',
-        \   'linehl': 'SignColumn'
         \ })
   call sign_define('LampSignHint', {
         \   'text': lamp#config('view.sign.hint.text'),
         \   'texthl': 'LampSignHint',
-        \   'linehl': 'SignColumn'
         \ })
 endfunction
 
