@@ -138,8 +138,8 @@ function! s:initialize() abort
   endif
   let s:initialized = v:true
 
-  execute printf('highlight! LampError guibg=darkred')
-  execute printf('highlight! LampWarning guibg=darkmagenta')
+  execute printf('highlight! LampError gui=underline guibg=darkred')
+  execute printf('highlight! LampWarning gui=underline guibg=darkmagenta')
   execute printf('highlight! LampInformation gui=underline')
   execute printf('highlight! LampHint gui=underline')
   for l:color in s:colors
