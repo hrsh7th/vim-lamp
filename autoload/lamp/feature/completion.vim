@@ -3,8 +3,8 @@ let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({})
 
 let s:context = {
-      \   'position_before_complete_done': [],
-      \   'line_before_complete_done': '',
+      \   'curpos': [],
+      \   'line': '',
       \   'completed_item': v:null,
       \ }
 
@@ -76,8 +76,8 @@ function! s:on_complete_done() abort
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
   call s:floatwin.hide()
 
-  let s:context.position_before_complete_done = getpos('.')
-  let s:context.line_before_complete_done = getline('.')
+  let s:context.curpos = getpos('.')
+  let s:context.line = getline('.')
   let s:context.completed_item = v:completed_item
 
   if !empty(v:completed_item)
@@ -89,8 +89,8 @@ endfunction
 " on_complete_done_after
 "
 function! s:on_complete_done_after() abort
-  let l:position_before_complete_done = s:context.position_before_complete_done
-  let l:line_before_complete_done = s:context.line_before_complete_done
+  let l:curpos = s:context.curpos
+  let l:line = s:context.line
   let l:completed_item = s:context.completed_item
 
   if mode()[0] ==# 'n'
@@ -103,7 +103,7 @@ function! s:on_complete_done_after() abort
   endif
 
   " <BS>, <C-w> etc.
-  if strlen(getline('.')) < strlen(l:line_before_complete_done)
+  if strlen(getline('.')) < strlen(l:line)
     return ''
   endif
 
@@ -117,8 +117,8 @@ function! s:on_complete_done_after() abort
   let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
   if !empty(l:expandable_state)
     undojoin | call s:clear_completed_string(
-          \   l:position_before_complete_done,
-          \   l:line_before_complete_done,
+          \   l:curpos,
+          \   l:line,
           \   l:completed_item,
           \   l:completion_item
           \ )
@@ -188,13 +188,13 @@ endfunction
 "
 " clear_completed_string
 "
-function! s:clear_completed_string(position_before_complete_done, line_before_complete_done, completed_item, completion_item) abort
+function! s:clear_completed_string(curpos, line, completed_item, completion_item) abort
   " Remove last typed characters.
-  call setline('.', a:line_before_complete_done)
+  call setline('.', a:line)
 
   let l:position = {
-        \   'line': a:position_before_complete_done[1] - 1,
-        \   'character': (a:position_before_complete_done[2] + a:position_before_complete_done[3]) - 1,
+        \   'line': a:curpos[1] - 1,
+        \   'character': (a:curpos[2] + a:curpos[3]) - 1,
         \ }
 
   " Remove completed string.
