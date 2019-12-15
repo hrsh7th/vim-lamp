@@ -54,16 +54,19 @@ endfunction
 " lamp#view#highlight#remove
 "
 function! lamp#view#highlight#remove(namespace, ...) abort
+  call lamp#log('[CALL] lamp#view#highlight#remove')
+
   if len(a:000) > 0
     if has_key(s:buf_highlights, a:namespace) && has_key(s:buf_highlights[a:namespace], a:000[0])
       let s:buf_highlights[a:namespace][a:000[0]] = []
+      call s:update()
     endif
   else
     if has_key(s:buf_highlights, a:namespace)
       let s:buf_highlights[a:namespace] = {}
+      call s:update()
     endif
   endif
-  call s:update()
 endfunction
 
 "
@@ -106,6 +109,8 @@ endfunction
 " add_highlight
 "
 function! s:add_highlight(namespace, bufnr, range, highlight) abort
+  call lamp#log('[CALL] lamp#view#highlight s:add_highlight')
+
   call s:initialize()
 
   if !lamp#protocol#range#has_length(a:range)
@@ -134,6 +139,8 @@ endfunction
 function! s:update() abort
   let l:ctx = {}
   function! l:ctx.callback() abort
+    call lamp#log('[CALL] lamp#view#highlight s:update')
+
     for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
       " clear current highlight
       let l:winid = win_getid(l:winnr)

@@ -11,7 +11,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd!
     autocmd CursorMoved * call s:show_floatwin()
     autocmd InsertEnter * call s:on_insert_enter()
-    autocmd InsertLeave,BufWritePost * call lamp#feature#diagnostic#update()
+    autocmd InsertLeave * call lamp#feature#diagnostic#update()
   augroup END
 endfunction
 
@@ -29,7 +29,7 @@ function! lamp#feature#diagnostic#update() abort
 endfunction
 
 "
-" lamp#feature#diagnostic#show_floatwin
+" show_floatwin
 "
 function! s:show_floatwin() abort
   if s:floatwin.is_showing()
@@ -94,6 +94,8 @@ function! s:update() abort
   if mode() !=# 'n'
     return
   endif
+
+  call lamp#log('[CALL] lamp#feature#diagnostic s:update')
 
   let l:updated_bufnrs = {}
   for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
