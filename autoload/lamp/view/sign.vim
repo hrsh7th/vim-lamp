@@ -1,6 +1,6 @@
 let s:initialized = v:false
 
-let s:sign_group = 'lamp'
+let s:sign_group = 'LampSign'
 
 "
 " lamp#view#sign#get_line
