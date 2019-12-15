@@ -21,45 +21,49 @@ endfunction
 " s:trigger_signature_help
 "
 function! s:trigger_signature_help() abort
-  if index(['i', 's', 'v'], mode()[0]) == -1
-    return
-  endif
+  let l:ctx = {}
+  function! l:ctx.callback() abort
+    if index(['i', 's'], mode()[0]) == -1
+      return
+    endif
 
-  let l:bufnr = bufnr('%')
-  let l:servers = lamp#server#registry#find_by_filetype(&filetype)
-  let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.signatureHelpProvider') })
-  if empty(l:servers)
-    call s:close_signature_help()
-    return
-  endif
+    let l:bufnr = bufnr('%')
+    let l:servers = lamp#server#registry#find_by_filetype(&filetype)
+    let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.signatureHelpProvider') })
+    if empty(l:servers)
+      call s:close_signature_help()
+      return
+    endif
 
-  " gather trigger characters.
-  let l:trigger_chars = []
-  for l:server in l:servers
-    let l:trigger_chars += l:server.capability.get_signature_help_trigger_characters()
-  endfor
+    " gather trigger characters.
+    let l:trigger_chars = []
+    for l:server in l:servers
+      let l:trigger_chars += l:server.capability.get_signature_help_trigger_characters()
+    endfor
 
-  " check trigger character.
-  let l:char = lamp#view#cursor#get_before_char_skip_white()
-  if index(l:trigger_chars, l:char) == -1
-    call s:close_signature_help()
-    return
-  endif
+    " check trigger character.
+    let l:char = lamp#view#cursor#get_before_char_skip_white()
+    if index(l:trigger_chars, l:char) == -1
+      call s:close_signature_help()
+      return
+    endif
 
-  let l:promises = map(l:servers, { k, v -> v.request('textDocument/signatureHelp', {
-        \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
-        \   'position': lamp#protocol#position#get()
-        \ }).catch(lamp#rescue(v:null)) })
-  let l:p = s:Promise.all(l:promises)
-  let l:p = l:p.then({ responses -> s:on_responses(l:bufnr, responses) })
-  let l:p = l:p.catch(lamp#rescue())
+    let l:promises = map(l:servers, { k, v -> v.request('textDocument/signatureHelp', {
+          \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
+          \   'position': lamp#protocol#position#get()
+          \ }).catch(lamp#rescue(v:null)) })
+    let l:p = s:Promise.all(l:promises)
+    let l:p = l:p.then({ responses -> s:on_responses(l:bufnr, responses) })
+    let l:p = l:p.catch(lamp#rescue())
+  endfunction
+  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> l:ctx.callback() }, 100)
 endfunction
 
 "
 " s:on_responses
 "
 function! s:on_responses(bufnr, responses) abort
-  if index(['i', 's', 'v'], mode()[0]) == -1
+  if index(['i', 's'], mode()[0]) == -1
     return 
   endif
 
