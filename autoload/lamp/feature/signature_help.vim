@@ -5,8 +5,8 @@ let s:floatwin = s:Floatwin.new({ 'max_height': 12 })
 function! lamp#feature#signature_help#init() abort
   augroup lamp#feature#signature_help
     autocmd!
-    autocmd InsertLeave * call s:close_signature_help()
-    autocmd CursorMovedI * call s:trigger_signature_help()
+    autocmd InsertLeave,CursorMoved * call s:close_signature_help()
+    autocmd CursorMoved,CursorMovedI * call s:trigger_signature_help()
   augroup END
 endfunction
 
@@ -21,6 +21,10 @@ endfunction
 " s:trigger_signature_help
 "
 function! s:trigger_signature_help() abort
+  if index(['i', 's', 'v'], mode()[0]) == -1
+    return
+  endif
+
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.signatureHelpProvider') })
@@ -55,8 +59,8 @@ endfunction
 " s:on_responses
 "
 function! s:on_responses(bufnr, responses) abort
-  if mode()[0] !=# 'i'
-    return
+  if index(['i', 's', 'v'], mode()[0]) == -1
+    return 
   endif
 
   let l:lines = []
