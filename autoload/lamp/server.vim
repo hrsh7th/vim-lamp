@@ -2,6 +2,7 @@ let s:Promise = vital#lamp#import('Async.Promise')
 let s:Document = lamp#server#document#import()
 let s:Channel = lamp#server#channel#import()
 let s:Capability = lamp#server#capability#import()
+let s:Diff = diffkit#import()
 
 "
 " lamp#server#import
@@ -24,6 +25,7 @@ function! s:Server.new(name, option) abort
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
         \   'workspace_path': v:null,
         \   'workspace_configurations': get(a:option, 'workspace_configurations', {}),
+        \   'diff': s:Diff.new(),
         \   'documents': {},
         \   'capability': s:Capability.new({
         \     'capabilities': get(a:option, 'capabilities', {})
@@ -201,6 +203,7 @@ function! s:Server.open_document(bufnr) abort
   endif
 
   " create document.
+  call self.diff.attach(a:bufnr)
   let self.documents[l:uri] = s:Document.new(a:bufnr)
   call self.channel.notify('textDocument/didOpen', {
         \   'textDocument': lamp#protocol#document#item(a:bufnr),
@@ -233,7 +236,7 @@ function! s:Server.change_document(bufnr) abort
 
   " incremental sync.
   elseif l:sync_kind == 2
-    let l:diff = l:doc.diff()
+    let l:diff = self.diff.compute(a:bufnr)
     call l:doc.sync()
     if l:diff.rangeLength != 0 || l:diff.text !=# ''
       call self.channel.notify('textDocument/didChange', {
@@ -268,6 +271,7 @@ function! s:Server.close_document(bufnr) abort
 
   " remove managed document.
   call remove(self.documents, l:document.uri)
+  call self.diff.detach(a:bufnr)
 
   call self.channel.notify('textDocument/didClose', {
         \   'textDocument': {
