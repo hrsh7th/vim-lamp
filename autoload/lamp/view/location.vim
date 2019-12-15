@@ -1,3 +1,6 @@
+"
+" lamp#view#location#handle
+"
 function! lamp#view#location#handle(command, position, locations, ...) abort
   let l:option = get(a:000, 0, {})
 

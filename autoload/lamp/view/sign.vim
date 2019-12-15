@@ -2,6 +2,9 @@ let s:initialized = v:false
 
 let s:sign_group = 'lamp'
 
+"
+" lamp#view#sign#get_line
+"
 function! lamp#view#sign#get_line(bufnr, lnum) abort
   let l:signs = get(sign_getplaced(a:bufnr, {
         \   'group': s:sign_group,
@@ -10,6 +13,9 @@ function! lamp#view#sign#get_line(bufnr, lnum) abort
   return get(l:signs, 'signs', [])
 endfunction
 
+"
+" lamp#view#sign#remove
+"
 function! lamp#view#sign#remove(...) abort
   call s:initialize()
   if len(a:000) > 0 
@@ -21,22 +27,37 @@ function! lamp#view#sign#remove(...) abort
   endif
 endfunction
 
+"
+" lamp#view#sign#error
+"
 function! lamp#view#sign#error(bufnr, lnum) abort
   return s:sign_place('LampSignError', a:bufnr, a:lnum)
 endfunction
 
+"
+" lamp#view#sign#warning
+"
 function! lamp#view#sign#warning(bufnr, lnum) abort
   return s:sign_place('LampSignWarning', a:bufnr, a:lnum)
 endfunction
 
+"
+" lamp#view#sign#information
+"
 function! lamp#view#sign#information(bufnr, lnum) abort
   return s:sign_place('LampSignInformation', a:bufnr, a:lnum)
 endfunction
 
+"
+" lamp#view#sign#hint
+"
 function! lamp#view#sign#hint(bufnr, lnum) abort
   return s:sign_place('LampSignHint', a:bufnr, a:lnum)
 endfunction
 
+"
+" sign_place
+"
 function! s:sign_place(name, bufnr, lnum) abort
   call s:initialize()
   try
@@ -46,6 +67,9 @@ function! s:sign_place(name, bufnr, lnum) abort
   endtry
 endfunction
 
+"
+" initialize
+"
 function! s:initialize() abort
   if s:initialized
     return

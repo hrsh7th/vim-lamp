@@ -21,11 +21,11 @@ endfunction
 function! lamp#feature#diagnostic#update() abort
   call s:show_floatwin()
 
-  let l:fn = {}
-  function! l:fn.debounce() abort
+  let l:ctx = {}
+  function! l:ctx.callback() abort
     call s:update()
   endfunction
-  call lamp#debounce('lamp#feature#diagnostic#update', l:fn.debounce, 200)
+  call lamp#debounce('lamp#feature#diagnostic#update', l:ctx.callback, 200)
 endfunction
 
 "
@@ -39,8 +39,8 @@ function! s:show_floatwin() abort
     return
   endif
 
-  let l:fn = {}
-  function! l:fn.debounce() abort
+  let l:ctx = {}
+  function! l:ctx.callback() abort
     if mode() !=# 'n' || empty(lamp#view#sign#get_line(bufnr('%'), line('.')))
       call s:floatwin.hide()
       return
@@ -73,9 +73,9 @@ function! s:show_floatwin() abort
   endfunction
 
   if s:floatwin.is_showing()
-    call l:fn.debounce()
+    call l:ctx.callback()
   else
-    call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:fn.debounce, 800)
+    call lamp#debounce('lamp#feature#diagnostic:show_floatwin', l:ctx.callback, 800)
   endif
 endfunction
 

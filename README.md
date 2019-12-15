@@ -55,9 +55,9 @@ function! s:on_initialized()
   call lamp#language#html()
   call lamp#language#css()
   call lamp#language#typescript()
-  call lamp#language#rust()
   call lamp#language#vim()
   call lamp#language#go()
+  call lamp#language#rust()
   call lamp#language#python()
 
   " Custom settings.
@@ -81,8 +81,6 @@ endfunction
 autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open()
 function! s:on_text_document_did_open() abort
   setlocal omnifunc=lamp#complete
-
-  inoremap <buffer><expr> <Tab> lamp#map#confirm('<Tab>')
 
   nmap <buffer> gf<CR>         <Plug>(lamp-definition)
   nmap <buffer> gfs            <Plug>(lamp-definition-split)
@@ -176,10 +174,8 @@ endfunction
 </details>
 
 # TODO
-- Re-thinking `lamp#map#confirm` when user no use `lexima.vim`
 - Custom highlighting in fenced language (e.g. underlined)
 - Improve documentation
-- Built-in snippet support
 - Create asyncomplete source
 - Design canceling outdated request
 - Design event handling (like vim-lsc's once)

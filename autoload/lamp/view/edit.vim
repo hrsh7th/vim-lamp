@@ -63,7 +63,7 @@ function! lamp#view#edit#apply(bufnr, edits) abort
 endfunction
 
 "
-" s:edit
+" edit
 "
 function! s:edit(bufnr, edit, position) abort
   let l:start_line = getbufline(a:bufnr, a:edit.range.start.line)[0]
@@ -141,7 +141,7 @@ function! s:range(edits) abort
 endfunction
 
 "
-" s:sort
+" sort
 "
 function! s:sort(edits) abort
   function! s:compare(edit1, edit2) abort
@@ -155,7 +155,7 @@ function! s:sort(edits) abort
 endfunction
 
 "
-" s:overlap
+" overlap
 "
 function! s:overlap(edits) abort
   if len(a:edits) > 1

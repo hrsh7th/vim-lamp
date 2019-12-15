@@ -1,7 +1,20 @@
 "
-" lamp#server#document#diff#compute
+" lamp#view#diff#import
 "
-function! lamp#server#document#diff#compute(old, new) abort
+function! lamp#view#diff#import() abort
+  if exists('*listener_add')
+    return lamp#view#diff#vim#import()
+  endif
+  if has('nvim')
+    return lamp#view#diff#nvim#import()
+  endif
+  return lamp#view#diff#compat#import()
+endfunction
+
+"
+" lamp#view#diff#compute
+"
+function! lamp#view#diff#compute(old, new) abort
   let [l:start_line, l:start_char] = s:first_difference(a:old, a:new)
   let [l:end_line, l:end_char] = s:last_difference(a:old[l:start_line :], a:new[l:start_line :], l:start_char)
 
@@ -21,8 +34,9 @@ function! lamp#server#document#diff#compute(old, new) abort
         \ }
 endfunction
 
-" Finds the line and character of the first different character between two
-" list of Strings.
+"
+" first_difference
+"
 function! s:first_difference(old, new) abort
   let l:line_count = min([len(a:old), len(a:new)])
   if l:line_count == 0 | return [0, 0] | endif
@@ -45,6 +59,9 @@ function! s:first_difference(old, new) abort
   return [l:i, l:j]
 endfunction
 
+"
+" last_difference
+"
 function! s:last_difference(old, new, start_char) abort
   let l:line_count = min([len(a:old), len(a:new)])
   if l:line_count == 0 | return [0, 0] | endif
@@ -75,6 +92,9 @@ function! s:last_difference(old, new, start_char) abort
   return [l:i, l:j]
 endfunction
 
+"
+" extract_text
+"
 function! s:extract_text(lines, start_line, start_char, end_line, end_char) abort
   if a:start_line == len(a:lines) + a:end_line
     if a:end_line == 0 | return '' | endif
@@ -94,6 +114,9 @@ function! s:extract_text(lines, start_line, start_char, end_line, end_char) abor
   return l:result
 endfunction
 
+"
+" length
+"
 function! s:length(lines, start_line, start_char, end_line, end_char) abort
   let l:adj_end_line = len(a:lines) + a:end_line
   if l:adj_end_line >= len(a:lines)

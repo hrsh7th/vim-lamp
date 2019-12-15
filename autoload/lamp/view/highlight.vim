@@ -51,7 +51,7 @@ function! lamp#view#highlight#get_by_position(position) abort
 endfunction
 
 "
-" remove.
+" lamp#view#highlight#remove
 "
 function! lamp#view#highlight#remove(namespace, ...) abort
   if len(a:000) > 0
@@ -67,35 +67,35 @@ function! lamp#view#highlight#remove(namespace, ...) abort
 endfunction
 
 "
-" attention.
+" lamp#view#highlight#color
 "
 function! lamp#view#highlight#color(namespace, bufnr, range, color) abort
   call s:add_highlight(a:namespace, a:bufnr, a:range, 'Lamp' . a:color)
 endfunction
 
 "
-" error.
+" lamp#view#highlight#error
 "
 function! lamp#view#highlight#error(namespace, bufnr, range) abort
   call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampError')
 endfunction
 
 "
-" warning.
+" lamp#view#highlight#warning
 "
 function! lamp#view#highlight#warning(namespace, bufnr, range) abort
   call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampWarning')
 endfunction
 
 "
-" information.
+" lamp#view#highlight#information
 "
 function! lamp#view#highlight#information(namespace, bufnr, range) abort
   call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampInformation')
 endfunction
 
 "
-" hint.
+" lamp#view#highlight#hint
 "
 function! lamp#view#highlight#hint(namespace, bufnr, range) abort
   call s:add_highlight(a:namespace, a:bufnr, a:range, 'LampHint')
@@ -103,7 +103,7 @@ endfunction
 
 
 "
-" s:add_highlight
+" add_highlight
 "
 function! s:add_highlight(namespace, bufnr, range, highlight) abort
   call s:initialize()
@@ -129,11 +129,11 @@ function! s:add_highlight(namespace, bufnr, range, highlight) abort
 endfunction
 
 "
-" s:update
+" update
 "
 function! s:update() abort
-  let l:fn = {}
-  function! l:fn.debounce() abort
+  let l:ctx = {}
+  function! l:ctx.callback() abort
     for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
       " clear current highlight
       let l:winid = win_getid(l:winnr)
@@ -155,11 +155,13 @@ function! s:update() abort
       endfor
     endfor
   endfunction
-  call lamp#debounce('lamp#view#highlight:update', { -> l:fn.debounce() }, 0)
+  call lamp#debounce('lamp#view#highlight:update', l:ctx.callback, 0)
 endfunction
 
 "
-" s:positions => [[lnum, col-start, length]]
+" positions
+"
+" Return [[lnum, col-start, length]]
 "
 function! s:positions(bufnr, range) abort
   if a:range.end.character == 0
@@ -186,7 +188,7 @@ function! s:positions(bufnr, range) abort
 endfunction
 
 "
-" s:initialize
+" initialize
 "
 function! s:initialize() abort
   if s:initialized

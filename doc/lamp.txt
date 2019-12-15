@@ -60,7 +60,7 @@ EXAMPLE                                                         *lamp-example*
     autocmd!
   augroup END
 
-  autocmd! vimrc User lamp#initialized * call s:on_initialized()
+  autocmd! vimrc User lamp#initialized call s:on_initialized()
   function! s:on_initialized()
     call lamp#register('typescript-language-server', {
         \   'command': ['typescript-language-server', '--stdio'],
@@ -102,7 +102,6 @@ EXAMPLE                                                         *lamp-example*
     nmap <buffer> <Leader><CR>  <Plug>(lamp-code-action)
     vmap <buffer> <Leader><CR>  <Plug>(lamp-code-action)
 
-    " experimental
     nmap <buffer> <Leader>@     <Plug>(lamp-document-highlight)
     nmap <buffer> <Leader><Esc> <Plug>(lamp-document-highlight-clear)
   endfunction

@@ -39,7 +39,7 @@ endfunction
 let s:Notice = {}
 
 "
-" new.
+" new
 "
 function! s:Notice.new(contents, option) abort
   return extend(deepcopy(s:Notice), {
@@ -51,7 +51,7 @@ function! s:Notice.new(contents, option) abort
 endfunction
 
 "
-" show.
+" show
 "
 function! s:Notice.show(position) abort
   if type(self.started_time) != type([])
@@ -61,7 +61,7 @@ function! s:Notice.show(position) abort
 endfunction
 
 "
-" outdated.
+" outdated
 "
 function! s:Notice.outdated() abort
   let l:outdated = reltimefloat(reltime(self.started_time)) > 2
@@ -72,14 +72,14 @@ function! s:Notice.outdated() abort
 endfunction
 
 "
-" get_width.
+" get_width
 "
 function! s:Notice.get_width() abort
   return self.floatwin.get_width(self.contents)
 endfunction
 
 "
-" get_height.
+" get_height
 "
 function! s:Notice.get_height() abort
   return self.floatwin.get_height(self.contents)

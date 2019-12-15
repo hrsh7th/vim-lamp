@@ -3,7 +3,7 @@ let s:Promise = vital#lamp#import('Async.Promise')
 let s:test = {}
 
 "
-" for test
+" lamp#feature#code_action#test
 "
 function! lamp#feature#code_action#test(test) abort
   let s:test = a:test
@@ -22,7 +22,7 @@ endfunction
 function! lamp#feature#code_action#do(range) abort
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
-  let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.codeActionProvider') })
+  let l:servers = filter(l:servers, { _, server -> server.supports('capabilities.codeActionProvider') })
   if empty(l:servers)
     call lamp#view#notice#add({ 'lines': ['`CodeAction`: Has no `CodeAction` capability.'] })
     return
@@ -47,7 +47,7 @@ function! lamp#feature#code_action#do(range) abort
 endfunction
 
 "
-" s:on_responses
+" on_responses
 "
 " responses = [{ 'server': ..., 'data': [...CodeAction] }]
 "
@@ -104,7 +104,7 @@ function! s:on_responses(responses) abort
 endfunction
 
 "
-" s:get_diagnostic
+" get_diagnostic
 "
 function! s:get_nearest_diagnostic(range, bufnr, server) abort
   if a:range != 0
@@ -125,7 +125,7 @@ function! s:get_nearest_diagnostic(range, bufnr, server) abort
 endfunction
 
 "
-" s:get_range
+" get_range
 "
 function! s:get_range(range, diagnostic) abort
   " diagnostics.

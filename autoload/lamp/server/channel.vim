@@ -1,14 +1,17 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Job = lamp#server#channel#job#import()
 
-let s:Channel = {}
-
+"
+" lamp#server#channel#import
+"
 function! lamp#server#channel#import() abort
   return s:Channel
 endfunction
 
+let s:Channel = {}
+
 "
-" new.
+" new
 "
 function! s:Channel.new(option) abort
   return extend(deepcopy(s:Channel), {
@@ -22,7 +25,7 @@ function! s:Channel.new(option) abort
 endfunction
 
 "
-" Start process.
+" start
 "
 function! s:Channel.start(on_notification) abort
   let self.job = s:Job.new(self.command, {
@@ -34,7 +37,7 @@ function! s:Channel.start(on_notification) abort
 endfunction
 
 "
-" Stop process.
+" stop
 "
 function! s:Channel.stop() abort
   if !empty(self.job)
@@ -43,7 +46,7 @@ function! s:Channel.stop() abort
 endfunction
 
 "
-" Get process status.
+" is_running
 "
 function! s:Channel.is_running() abort
   if !empty(self.job)
@@ -53,7 +56,7 @@ function! s:Channel.is_running() abort
 endfunction
 
 "
-" Send request.
+" request
 "
 function! s:Channel.request(method, ...) abort
   let l:message = { 'method': a:method }
@@ -63,21 +66,20 @@ function! s:Channel.request(method, ...) abort
 
   let self.request_id = self.request_id + 1
 
-  let l:fn = {}
-  function! l:fn.executor(message, resolve, reject) abort dict
-    call lamp#log(' -> [REQUEST]', self.request_id, a:message)
+  let l:ctx = {}
+  function! l:ctx.executor(message, resolve, reject) abort dict
     let self.requests[self.request_id] = {
           \   'resolve': a:resolve,
           \   'reject': a:reject
           \ }
     call self.job.send(self.to_message(extend({ 'id': self.request_id }, a:message)))
+    call lamp#log(' -> [REQUEST]', self.request_id, a:message)
   endfunction
-
-  return s:Promise.new(function(l:fn.executor, [l:message], self))
+  return s:Promise.new(function(l:ctx.executor, [l:message], self))
 endfunction
 
 "
-" Send response.
+" response
 "
 function! s:Channel.response(id, ...) abort
   let l:message = { 'id': a:id }
@@ -90,7 +92,7 @@ function! s:Channel.response(id, ...) abort
 endfunction
 
 "
-" Send notify.
+" notify
 "
 function! s:Channel.notify(method, ...) abort
   let l:message = { 'method': a:method }
@@ -103,7 +105,7 @@ function! s:Channel.notify(method, ...) abort
 endfunction
 
 "
-" Convert to message.
+" to_message
 "
 function! s:Channel.to_message(content) abort
   let l:content = json_encode(extend({ 'jsonrpc': '2.0' }, a:content))
@@ -111,7 +113,7 @@ function! s:Channel.to_message(content) abort
 endfunction
 
 "
-" on message.
+" on_message
 "
 function! s:Channel.on_message(message) abort
   if has_key(a:message, 'id')
@@ -141,7 +143,7 @@ function! s:Channel.on_message(message) abort
 endfunction
 
 "
-" on_stdout.
+" on_stdout
 "
 function! s:Channel.on_stdout(data) abort
   let self.buffer .= a:data
