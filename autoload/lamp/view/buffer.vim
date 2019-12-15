@@ -25,7 +25,6 @@ endfunction
 "
 function! lamp#view#buffer#open(command, location) abort
   let l:bufnr = bufnr(a:location.filename, v:true)
-  call bufload(l:bufnr)
   call setbufvar(l:bufnr, '&buflisted', v:true)
 
   execute printf('%s %s', a:command, a:location.filename)
@@ -33,21 +32,6 @@ function! lamp#view#buffer#open(command, location) abort
   if has_key(a:location, 'lnum')
     call cursor([a:location.lnum, get(a:location, 'col', 1)])
   endif
-endfunction
-
-"
-" lamp#view#buffer#touch
-"
-function! lamp#view#buffer#touch(expr) abort
-  let l:bufnr = bufnr(a:expr, v:true)
-  if !bufloaded(l:bufnr)
-    return
-  endif
-
-  call lamp#view#buffer#do(l:bufnr, { -> [
-        \   execute('undojoin | normal! i_'),
-        \   execute('undojoin | normal! "_x"')
-        \ ] })
 endfunction
 
 "

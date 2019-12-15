@@ -3,12 +3,6 @@ if exists('g:loaded_lamp')
 endif
 let g:loaded_lamp = v:true
 
-" version check.
-if (!has('nvim') && v:version < 801) || (has('nvim') && !has('nvim-0.4.0'))
-  echomsg 'vim-lamp is supported only vim-8.1(later) or nvim-0.4.0(later)'
-  finish
-endif
-
 " initialize features.
 for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
   try

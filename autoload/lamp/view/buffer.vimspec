@@ -14,22 +14,5 @@ Describe lamp#view#buffer
     call s:expect(3).to_equal(col('.'))
   End
 
-  It Should update changedtick
-    let s:filename = lamp#config('root') . '/misc/typescript/src/index.ts'
-    call lamp#view#buffer#open('edit', { 'filename': s:filename, 'lnum': 3, 'col': 3 })
-    let s:buffer = lamp#view#buffer#get_lines(s:filename)
-
-    normal! i1234567890
-
-    " update changedtick.
-    let s:changedtick = getbufvar(s:filename, 'changedtick')
-    call lamp#view#buffer#touch(s:filename)
-    call s:expect(s:changedtick).not.to_equal(getbufvar(bufnr(s:filename), 'changedtick'))
-
-    " keep undo.
-    normal! u
-    call s:expect(s:buffer).to_equal(lamp#view#buffer#get_lines(s:filename))
-  End
-
 End
 

@@ -31,7 +31,6 @@ function! lamp#view#edit#apply_workspace(workspace_edit) abort
   for [l:uri, l:edits] in items(a:workspace_edit)
     let l:bufnr = bufnr(lamp#protocol#document#decode_uri(l:uri), v:true)
     if !bufloaded(l:bufnr)
-      call bufload(l:bufnr)
       call setbufvar(l:bufnr, '&buflisted', v:true)
     endif
     call lamp#view#edit#apply(l:bufnr, l:edits)
@@ -47,18 +46,24 @@ function! lamp#view#edit#apply(bufnr, edits) abort
   let l:edits = s:sort(l:edits)
   let l:edits = s:overlap(l:edits)
 
+  let l:current_bufnr = bufnr('%')
+
+  " change buffer.
+  if l:current_bufnr != a:bufnr
+    execute printf('%sbuffer', a:bufnr)
+  endif
+
   " apply edit.
   let l:position = lamp#protocol#position#to_vim(lamp#protocol#position#get())
   for l:edit in reverse(copy(l:edits))
     call s:edit(a:bufnr, l:edit, l:position)
   endfor
 
-  if bufnr('%') == a:bufnr
-    " adjust curops.
+  " update curpos.
+  if l:current_bufnr == a:bufnr
     call setpos('.', [a:bufnr, l:position.line, l:position.character])
   else
-    " fire TextChanged.
-    call lamp#view#buffer#touch(a:bufnr)
+    execute printf('%sbuffer', l:current_bufnr)
   endif
 endfunction
 
@@ -66,9 +71,9 @@ endfunction
 " edit
 "
 function! s:edit(bufnr, edit, position) abort
-  let l:start_line = getbufline(a:bufnr, a:edit.range.start.line)[0]
+  let l:start_line = getline(a:edit.range.start.line)
   let l:before_line = strcharpart(l:start_line, 0, a:edit.range.start.character - 1)
-  let l:end_line = get(getbufline(a:bufnr, a:edit.range.end.line), 0, '')
+  let l:end_line = getline(a:edit.range.end.line)
   let l:after_line = strcharpart(l:end_line, a:edit.range.end.character - 1, strchars(l:end_line) - (a:edit.range.end.character - 1))
 
   let l:lines = split(a:edit.newText, "\n", v:true)
@@ -84,8 +89,6 @@ function! s:edit(bufnr, edit, position) abort
   if a:edit.range.end.line <= a:position.line
     if a:edit.range.end.line == a:position.line
       if a:position.character <= a:edit.range.end.character
-        " TODO: Is this needed?
-        " let a:position.character = a:edit.range.end.character
       else
         let a:position.character = a:position.character + strchars(l:lines[-1]) - strchars(l:end_line)
       endif
@@ -99,11 +102,11 @@ function! s:edit(bufnr, edit, position) abort
   while l:i < l:lines_len
     let l:lnum = a:edit.range.start.line + l:i
     if l:i <= l:range_len && l:i < l:total_lines
-      if get(getbufline(a:bufnr, l:lnum), 0) !=# l:lines[l:i]
-        call setbufline(a:bufnr, l:lnum, l:lines[l:i])
+      if getline(l:lnum) !=# l:lines[l:i]
+        call setline(l:lnum, l:lines[l:i])
       endif
     else
-      call lamp#view#buffer#append_line(a:bufnr, l:lnum - 1, l:lines[l:i])
+      call append(l:lnum - 1, l:lines[l:i])
     endif
     let l:i += 1
   endwhile
@@ -112,7 +115,7 @@ function! s:edit(bufnr, edit, position) abort
   if l:lines_len <= l:range_len
     let l:start = a:edit.range.end.line - (l:range_len - l:lines_len)
     let l:end = a:edit.range.end.line
-    call deletebufline(a:bufnr, l:start, l:end)
+    execute printf('%s,%sdelete _', l:start, l:end)
   endif
 endfunction
 
