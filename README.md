@@ -7,6 +7,7 @@ Language Server Protocol client for Vim.
     - Use listener_add/nvim_buf_attach
 - Well supported LSP spec
     - completionItem/resolve
+        - show floatwin/popupwin document during completion
     - Snippet support (by vim-vsnip)
 
 # Status
