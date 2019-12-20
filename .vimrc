@@ -77,44 +77,33 @@ endfunction
 "
 autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open()
 function! s:on_text_document_did_open() abort
+  " completion
   setlocal omnifunc=lamp#complete
 
-  noremap <buffer><expr> <Tab> lamp#map#confirm('<Tab>')
+  " commands
+  nnoremap <buffer> gf<CR>       :<C-u>LampDefinition edit<CR>
+  nnoremap <buffer> gfs          :<C-u>LampDefinition split<CR>
+  nnoremap <buffer> gfv          :<C-u>LampDefinition vsplit<CR>
+  nnoremap <buffer> tgf<CR>      :<C-u>LampTypeDefinition edit<CR>
+  nnoremap <buffer> tgfs         :<C-u>LampTypeDefinition split<CR>
+  nnoremap <buffer> tgfv         :<C-u>LampTypeDefinition vsplit<CR>
+  nnoremap <buffer> dgf<CR>      :<C-u>LampDeclaration edit<CR>
+  nnoremap <buffer> dgfs         :<C-u>LampDeclaration split<CR>
+  nnoremap <buffer> dgfv         :<C-u>LampDeclaration vsplit<CR>
+  nnoremap <buffer> <Leader>i    :<C-u>LampHover<CR>
+  nnoremap <buffer> <Leader>r    :<C-u>LampRename<CR>
+  nnoremap <buffer> <Leader>g    :<C-u>LampReferences<CR>
+  nnoremap <buffer> @            :<C-u>LampDocumentHighlight<CR>
+  nnoremap <buffer> <Leader>@    :<C-u>LampDocumentHighlightClear<CR>
+  nnoremap <buffer> <Leader>f    :<C-u>LampFormatting<CR>
+  vnoremap <buffer> <Leader>f    :LampRangeFormatting<CR>
+  nnoremap <buffer> <Leader><CR> :<C-u>LampCodeAction<CR>
+  vnoremap <buffer> <Leader><CR> :LampCodeAction<CR>
 
-  nmap <buffer> gf<CR>         <Plug>(lamp-definition)
-  nmap <buffer> gfs            <Plug>(lamp-definition-split)
-  nmap <buffer> gfv            <Plug>(lamp-definition-vsplit)
-
-  nmap <buffer> tgf<CR>        <Plug>(lamp-type-definition)
-  nmap <buffer> tgfs           <Plug>(lamp-type-definition-split)
-  nmap <buffer> tgfv           <Plug>(lamp-type-definition-vsplit)
-
-  nmap <buffer> dgf<CR>        <Plug>(lamp-declaration)
-  nmap <buffer> dgfs           <Plug>(lamp-declaration-split)
-  nmap <buffer> dgfv           <Plug>(lamp-declaration-vsplit)
-
-  nmap <buffer> igf<CR>        <Plug>(lamp-implementation)
-  nmap <buffer> igfs           <Plug>(lamp-implementation-split)
-  nmap <buffer> igfv           <Plug>(lamp-implementation-vsplit)
-
-  nmap <buffer> <Leader>i      <Plug>(lamp-hover)
-
-  nmap <buffer> <Leader>r      <Plug>(lamp-rename)
-
-  nmap <buffer> <Leader>g      <Plug>(lamp-references)
-
-  nmap <buffer> <Leader>f      <Plug>(lamp-formatting)
-  vmap <buffer> <Leader>f      <Plug>(lamp-range-formatting)
-
-  nmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
-  vmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
-
-  nmap <buffer> @              <Plug>(lamp-document-highlight)
-  nmap <buffer> <Esc>          <Plug>(lamp-document-highlight-clear)
-  nnoremap <buffer><Esc>       :<C-u>call lamp#feature#document_highlight#clear()<CR>
-
-  imap <expr><Tab> vsnip#available() ? '<Plug>(vsnip-expand-or-jump)' : lamp#map#confirm('<Tab>')
-  smap <expr><Tab> vsnip#available() ? '<Plug>(vsnip-expand-or-jump)' : lamp#map#confirm('<Tab>')
+  imap <expr><Tab> vsnip#available(1)    ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
+  smap <expr><Tab> vsnip#available(1)    ? '<Plug>(vsnip-expand-or-jump)' : '<Tab>'
+  imap <expr><S-Tab> vsnip#available(-1) ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+  smap <expr><S-Tab> vsnip#available(-1) ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
 endfunction
 
 nnoremap H 20h

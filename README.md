@@ -37,7 +37,7 @@ Plug 'hrsh7th/vim-vsnip-integ'
 call plug#end()
 
 "
-" required options.
+" required options
 "
 set hidden
 set ambiwidth=double
@@ -48,11 +48,11 @@ augroup vimrc
 augroup END
 
 "
-" initialize servers.
+" initialize servers
 "
 autocmd! vimrc User lamp#initialized call s:on_initialized()
 function! s:on_initialized()
-  " Built-in settings.
+  " built-in setting
   call lamp#language#php()
   call lamp#language#html()
   call lamp#language#css()
@@ -62,7 +62,7 @@ function! s:on_initialized()
   call lamp#language#rust()
   call lamp#language#python()
 
-  " Custom settings.
+  " custom setting
   call lamp#register('example-server', {
         \   'command': ['example-server', '--stdio'],
         \   'filetypes': ['example'],
@@ -78,29 +78,52 @@ function! s:on_initialized()
 endfunction
 
 "
-" initialize buffers.
+" initialize buffers
 "
 autocmd! vimrc User lamp#text_document_did_open call s:on_text_document_did_open()
 function! s:on_text_document_did_open() abort
+  " completion
   setlocal omnifunc=lamp#complete
 
+  " commands
+  nnoremap <buffer> gf<CR>       :<C-u>LampDefinition edit<CR>
+  nnoremap <buffer> gfs          :<C-u>LampDefinition split<CR>
+  nnoremap <buffer> gfv          :<C-u>LampDefinition vsplit<CR>
+  nnoremap <buffer> tgf<CR>      :<C-u>LampTypeDefinition edit<CR>
+  nnoremap <buffer> tgfs         :<C-u>LampTypeDefinition split<CR>
+  nnoremap <buffer> tgfv         :<C-u>LampTypeDefinition vsplit<CR>
+  nnoremap <buffer> dgf<CR>      :<C-u>LampDeclaration edit<CR>
+  nnoremap <buffer> dgfs         :<C-u>LampDeclaration split<CR>
+  nnoremap <buffer> dgfv         :<C-u>LampDeclaration vsplit<CR>
+  nnoremap <buffer> <Leader>i    :<C-u>LampHover<CR>
+  nnoremap <buffer> <Leader>r    :<C-u>LampRename<CR>
+  nnoremap <buffer> <Leader>g    :<C-u>LampReferences<CR>
+  nnoremap <buffer> @            :<C-u>LampDocumentHighlight<CR>
+  nnoremap <buffer> <Leader>@    :<C-u>LampDocumentHighlightClear<CR>
+  nnoremap <buffer> <Leader>f    :<C-u>LampFormatting<CR>
+  vnoremap <buffer> <Leader>f    :LampRangeFormatting<CR>
+  nnoremap <buffer> <Leader><CR> :<C-u>LampCodeAction<CR>
+  vnoremap <buffer> <Leader><CR> :LampCodeAction<CR>
+
+  " mappings
   nmap <buffer> gf<CR>         <Plug>(lamp-definition)
   nmap <buffer> gfs            <Plug>(lamp-definition-split)
   nmap <buffer> gfv            <Plug>(lamp-definition-vsplit)
-  nmap <buffer> <Leader>g      <Plug>(lamp-references)
-
+  nmap <buffer> tgf<CR>        <Plug>(lamp-type-definition)
+  nmap <buffer> tgfs           <Plug>(lamp-type-definition-split)
+  nmap <buffer> tgfv           <Plug>(lamp-type-definition-vsplit)
+  nmap <buffer> dgf<CR>        <Plug>(lamp-declaration)
+  nmap <buffer> dgfs           <Plug>(lamp-declaration-split)
+  nmap <buffer> dgfv           <Plug>(lamp-declaration-vsplit)
   nmap <buffer> <Leader>i      <Plug>(lamp-hover)
   nmap <buffer> <Leader>r      <Plug>(lamp-rename)
-
+  nmap <buffer> <Leader>g      <Plug>(lamp-references)
   nmap <buffer> <Leader>f      <Plug>(lamp-formatting)
   vmap <buffer> <Leader>f      <Plug>(lamp-range-formatting)
-
-  nmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
-  vmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
-
   nmap <buffer> @              <Plug>(lamp-document-highlight)
   nmap <buffer> <Esc>          <Plug>(lamp-document-highlight-clear)
-  nnoremap <buffer><Esc>       :<C-u>call lamp#feature#document_highlight#clear()<CR>
+  nmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
+  vmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
 endfunction
 ```
 
