@@ -3,7 +3,9 @@ if exists('g:loaded_lamp')
 endif
 let g:loaded_lamp = v:true
 
-" initialize features.
+"
+" initialize features
+"
 for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
   try
     call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
@@ -13,7 +15,25 @@ for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:fa
 endfor
 
 "
-" mappings.
+" command
+"
+command! -nargs=1 LampDefinition          call lamp#feature#definition#do('<args>')
+command! -nargs=1 LampTypeDefinition      call lamp#feature#type_definition#do('<args>')
+command! -nargs=1 LampDeclaration         call lamp#feature#declaration#do('<args>')
+command! -nargs=1 LampImplementation      call lamp#feature#declaration#do('<args>')
+command! LampRename                       call lamp#feature#rename#do()
+command! LampHover                        call lamp#feature#hover#do()
+command! LampDocumentHighlight            call lamp#feature#document_highlight#do()
+command! LampDocumentHighlightClear       call lamp#feature#document_highlight#clear()
+command! LampFormatting                   call lamp#feature#formatting#do()
+command! LampRangeFormatting              call lamp#feature#range_formatting#do()
+command! LampReferences                   call lamp#feature#declaration#do(v:false)
+command! LampReferencesIncludeDeclaration call lamp#feature#declaration#do(v:true)
+command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
+      \  LampCodeAction                   call lamp#feature#code_action#do(<range>, '<args>')
+
+"
+" mappings
 "
 nnoremap <silent><Plug>(lamp-definition)                     :<C-u>call lamp#feature#definition#do('edit')<CR>
 nnoremap <silent><Plug>(lamp-definition-split)               :<C-u>call lamp#feature#definition#do('split')<CR>
@@ -35,11 +55,11 @@ nnoremap <silent><Plug>(lamp-references)                     :<C-u>call lamp#fea
 nnoremap <silent><Plug>(lamp-references-include-declaration) :<C-u>call lamp#feature#references#do(v:true)<CR>
 nnoremap <silent><Plug>(lamp-formatting)                     :<C-u>call lamp#feature#formatting#do()<CR>
 vnoremap <silent><Plug>(lamp-range-formatting)               :<C-u>call lamp#feature#range_formatting#do()<CR>
-nnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(0)<CR>
-vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(2)<CR>
+nnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(0, '')<CR>
+vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(2, '')<CR>
 
 "
-" events.
+" events
 "
 augroup lamp
   autocmd!

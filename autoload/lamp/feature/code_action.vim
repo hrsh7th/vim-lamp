@@ -17,9 +17,22 @@ function! lamp#feature#code_action#init() abort
 endfunction
 
 "
+" lamp#feature#code_action#complete
+"
+function! lamp#feature#code_action#complete(input, command, len) abort
+  let l:servers = lamp#server#registry#find_by_filetype(&filetype)
+  let l:servers = filter(l:servers, { _, server -> server.supports('capabilities.codeActionProvider') })
+  let l:kinds = []
+  for l:server in l:servers
+    let l:kinds += l:server.capability.get_code_action_kinds()
+  endfor
+  return filter(l:kinds, { _, k -> k =~ '^' . a:input })
+endfunction
+
+"
 " lamp#feature#code_action#do
 "
-function! lamp#feature#code_action#do(range) abort
+function! lamp#feature#code_action#do(range, action_name) abort
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { _, server -> server.supports('capabilities.codeActionProvider') })
@@ -42,7 +55,7 @@ function! lamp#feature#code_action#do(range) abort
   endfor
 
   let l:p = s:Promise.all(l:promises)
-  let l:p = l:p.then({ responses -> s:on_responses(responses) })
+  let l:p = l:p.then({ responses -> s:on_responses(a:action_name, responses) })
   let l:p = l:p.catch(lamp#rescue())
 endfunction
 
@@ -51,7 +64,7 @@ endfunction
 "
 " responses = [{ 'server': ..., 'data': [...CodeAction] }]
 "
-function! s:on_responses(responses) abort
+function! s:on_responses(action_name, responses) abort
   let l:code_actions = [] " [{ 'server': ..., 'action': CodeAction }]
   for l:response in a:responses
     let l:response.data = type(l:response.data) == type([]) ? l:response.data : []
@@ -71,9 +84,17 @@ function! s:on_responses(responses) abort
   if has_key(s:test, 'action_index')
     let l:index = s:test.action_index
   else
-    let l:index = lamp#view#input#select('Select code actions:', map(copy(l:code_actions), { k, v ->
-          \   substitute(v.action.title, '\r\n\|\n\|\r', '', 'g')
-          \ }))
+    let l:code_actions = filter(copy(l:code_actions), { _, a -> get(a.action, 'kind', '') =~ a:action_name })
+    if len(l:code_actions) > 1
+      let l:index = lamp#view#input#select('Select code actions:', map(copy(l:code_actions), { k, v ->
+            \   substitute(v.action.title, '\r\n\|\n\|\r', '', 'g')
+            \ }))
+    elseif len(l:code_actions) == 1
+      let l:index = 0
+    else
+      echoerr 'can not specified code action.'
+      return
+    endif
   endif
 
   if l:index < 0

@@ -23,6 +23,7 @@ function! s:Server.new(name, option) abort
         \   'filetypes': a:option.filetypes,
         \   'root_uri': get(a:option, 'root_uri', { -> '' }),
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
+        \   'trace': get(a:option, 'trace', 'off'),
         \   'workspace_path': v:null,
         \   'workspace_configurations': get(a:option, 'workspace_configurations', {}),
         \   'diff': s:Diff.new(),
@@ -104,9 +105,11 @@ function! s:Server.initialize() abort
   endfunction
 
   let self.state.initialized = self.channel.request('initialize', {
-        \   'processId': v:null,
+        \   'processId': getpid(),
+        \   'rootPath': self.root_uri(),
         \   'rootUri': lamp#protocol#document#encode_uri(self.root_uri()),
         \   'initializationOptions': self.initialization_options(),
+        \   'trace': self.trace,
         \   'capabilities': lamp#server#capability#get_default_capability(),
         \ }).then(function(l:ctx.callback, [], self))
   return self.state.initialized

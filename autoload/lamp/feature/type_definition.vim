@@ -11,6 +11,8 @@ endfunction
 " lamp#feature#type_definition#do
 "
 function! lamp#feature#type_definition#do(command) abort
+  let l:command = strlen(a:command) > 0 ? a:command : 'edit'
+
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype', ''))
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.typeDefinitionProvider') })
@@ -27,7 +29,7 @@ function! lamp#feature#type_definition#do(command) abort
         \   }).catch(lamp#rescue([]))
         \ })
   let l:p = s:Promise.all(l:promises)
-  let l:p = l:p.then({ responses -> s:on_response(a:command, l:bufnr, l:position, responses) })
+  let l:p = l:p.then({ responses -> s:on_response(l:command, l:bufnr, l:position, responses) })
   let l:p = l:p.catch(lamp#rescue())
 endfunction
 

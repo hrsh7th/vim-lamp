@@ -11,6 +11,8 @@ endfunction
 " lamp#feature#implementation#do
 "
 function! lamp#feature#implementation#do(command) abort
+  let l:command = strlen(a:command) > 0 ? a:command : 'edit'
+
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype', ''))
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.implementationProvider') })
@@ -27,7 +29,7 @@ function! lamp#feature#implementation#do(command) abort
         \   }).catch(lamp#rescue([]))
         \ })
   let l:p = s:Promise.all(l:promises)
-  let l:p = l:p.then({ responses -> s:on_response(a:command, l:bufnr, position, responses) })
+  let l:p = l:p.then({ responses -> s:on_response(l:command, l:bufnr, position, responses) })
   let l:p = l:p.catch(lamp#rescue())
 endfunction
 

@@ -192,10 +192,17 @@ function! s:Capability.get_completion_trigger_characters() abort
 endfunction
 
 "
-" get_signature_help_trigger_characters characters
+" get_signature_help_trigger_characters
 "
 function! s:Capability.get_signature_help_trigger_characters() abort
   return lamp#get(self.capability, 'capabilities.signatureHelpProvider.triggerCharacters', [])
+endfunction
+
+"
+" get_code_action_kinds
+"
+function! s:Capability.get_code_action_kinds() abort
+  return lamp#get(self.capability, 'capabilities.codeActionProvider.codeActionKinds', [])
 endfunction
 
 "
