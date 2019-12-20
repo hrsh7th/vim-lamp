@@ -34,9 +34,19 @@ let s:item_state = {}
 function! lamp#feature#completion#init() abort
   augroup lamp#feature#completion
     autocmd!
+    autocmd InsertLeave * call s:on_insert_leave()
     autocmd CompleteChanged * call s:on_complete_changed()
     autocmd CompleteDone * call s:on_complete_done()
   augroup END
+endfunction
+
+"
+" on_insert_leave
+"
+function! s:on_insert_leave() abort
+  call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
+  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
+  call timer_start(0, { -> s:floatwin.hide() })
 endfunction
 
 "
@@ -72,8 +82,8 @@ endfunction
 "
 function! s:on_complete_done() abort
   " clear.
-  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
+  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
   call s:floatwin.hide()
 
   let s:context.curpos = getpos('.')

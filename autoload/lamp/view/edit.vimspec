@@ -280,5 +280,53 @@ Describe lamp#view#edit
     call s:expect(s:catch).to_equal(v:true)
   End
 
+  It Should delete multiline 1
+    call s:edits("abcdefg\nhijklmn\nopqrstu\nvwxyg", [{
+          \   'start': [0, 0],
+          \   'end': [1, 0],
+          \   'text': ''
+          \ }, {
+          \   'start': [1, 0],
+          \   'end': [2, 0],
+          \   'text': ''
+          \ }], "opqrstu\nvwxyg")
+  End
+
+  It Should delete multiline 2
+    call s:edits("abcdefg\nhijklmn\nopqrstu\nvwxyg", [{
+          \   'start': [0, 0],
+          \   'end': [1, 4],
+          \   'text': ''
+          \ }, {
+          \   'start': [1, 4],
+          \   'end': [2, 4],
+          \   'text': ''
+          \ }], "stu\nvwxyg")
+  End
+
+  It Should add/delete multiline 1
+    call s:edits("abcdefg\nhijklmn\nopqrstu\nvwxyg", [{
+          \   'start': [0, 0],
+          \   'end': [1, 0],
+          \   'text': "12345\n"
+          \ }, {
+          \   'start': [1, 0],
+          \   'end': [2, 0],
+          \   'text': "67890\n"
+          \ }], "12345\n67890\nopqrstu\nvwxyg")
+  End
+
+  It Should add/delete multiline 2
+    call s:edits("abcdefg\nhijklmn\nopqrstu\nvwxyg", [{
+          \   'start': [0, 0],
+          \   'end': [1, 4],
+          \   'text': ''
+          \ }, {
+          \   'start': [1, 4],
+          \   'end': [2, 4],
+          \   'text': ''
+          \ }], "stu\nvwxyg")
+  End
+
 End
 

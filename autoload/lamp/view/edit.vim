@@ -113,8 +113,9 @@ function! s:edit(bufnr, edit, position) abort
 
   " delete.
   if l:lines_len <= l:range_len
+    let l:total_lines = len(getbufline(a:bufnr, '^', '$'))
     let l:start = a:edit.range.end.line - (l:range_len - l:lines_len)
-    let l:end = a:edit.range.end.line
+    let l:end = min([l:total_lines, a:edit.range.end.line])
     execute printf('%s,%sdelete _', l:start, l:end)
   endif
 endfunction
