@@ -35,7 +35,7 @@ Describe lamp#feature#code_action
 
     let l:buflines = getbufline(l:bufnr, 3)
     call lamp#feature#code_action#test({ 'action_index': 0 })
-    call lamp#feature#code_action#do(0)
+    call lamp#feature#code_action#do(0, '')
     call lamp#sync({ -> getbufline(l:bufnr, 3) != l:buflines })
     call s:expect(['']).to_equal(getbufline(l:bufnr, 3))
   End

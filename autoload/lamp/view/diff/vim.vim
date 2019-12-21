@@ -13,6 +13,7 @@ let s:Diff = {}
 "
 function! s:Diff.new() abort
   return extend(deepcopy(s:Diff), {
+        \   'type': 'vim',
         \   'bufs': {}
         \ })
 endfunction
@@ -25,7 +26,7 @@ function! s:Diff.attach(bufnr) abort
     call self.detach(a:bufnr)
   endif
 
-  let l:lines = getbufline(a:bufnr, '^', '$')
+  let l:lines = lamp#view#buffer#get_lines(a:bufnr)
   let self.bufs[a:bufnr] = {
         \   'id': listener_add({ bufnr, start, end, added, changes -> self._on_change({
         \     'bufnr': bufnr,
@@ -60,6 +61,27 @@ function! s:Diff.detach(bufnr) abort
 endfunction
 
 "
+" sync
+"
+function! s:Diff.sync(bufnr) abort
+  if has_key(self.bufs, a:bufnr)
+    let l:buf = self.bufs[a:bufnr]
+    let l:buf.lines = lamp#view#buffer#get_lines(a:bufnr)
+    let l:buf.diff = {
+          \   'fix': 0,
+          \   'old': {
+          \     'start': len(l:buf.lines),
+          \     'end': 0,
+          \   },
+          \   'new': {
+          \     'start': len(l:buf.lines),
+          \     'end': 0,
+          \   }
+          \ }
+  endif
+endfunction
+
+"
 " flush
 "
 function! s:Diff.flush(bufnr) abort
@@ -67,18 +89,28 @@ function! s:Diff.flush(bufnr) abort
 endfunction
 
 "
+" get_lines
+"
+function! s:Diff.get_lines(bufnr) abort
+  if !has_key(self.bufs, a:bufnr)
+    return lamp#view#buffer#get_lines(a:bufnr)
+  endif
+  return self.bufs[a:bufnr].lines
+endfunction
+
+"
 " compute
 "
 function! s:Diff.compute(bufnr) abort
   if !has_key(self.bufs, a:bufnr)
-    thro 'lamp(diffkit): vim: invalid bufnr.'
+    thro 'diffkit: vim: invalid bufnr.'
   endif
 
   call listener_flush(a:bufnr)
 
   let l:buf = self.bufs[a:bufnr]
   let l:old = l:buf.lines
-  let l:new = getbufline(a:bufnr, '^', '$')
+  let l:new = lamp#view#buffer#get_lines(a:bufnr)
   let l:buf.lines = l:new
 
   let l:diff = lamp#view#diff#compute(

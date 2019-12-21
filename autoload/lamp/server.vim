@@ -232,9 +232,10 @@ function! s:Server.change_document(bufnr) abort
   " full sync.
   if l:sync_kind == 1
     call l:doc.sync()
+    call self.diff.sync(a:bufnr)
     call self.channel.notify('textDocument/didChange', {
           \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-          \   'contentChanges': [{ 'text': join(l:doc.buffer, "\n") }]
+          \   'contentChanges': [{ 'text': join(self.diff.get_lines(a:bufnr), "\n") }]
           \ })
 
   " incremental sync.
