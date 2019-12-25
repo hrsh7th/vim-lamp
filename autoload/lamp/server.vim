@@ -19,7 +19,7 @@ let s:Server = {}
 function! s:Server.new(name, option) abort
   return extend(deepcopy(s:Server), {
         \   'name': a:name,
-        \   'channel': s:Channel.new({ 'command': a:option.command }),
+        \   'channel': s:Channel.new({ 'name': a:name, 'command': a:option.command }),
         \   'filetypes': a:option.filetypes,
         \   'root_uri': get(a:option, 'root_uri', { -> '' }),
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),

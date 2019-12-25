@@ -1,6 +1,8 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Job = lamp#server#channel#job#import()
 
+let s:log_name_len = 12
+
 "
 " lamp#server#channel#import
 "
@@ -15,6 +17,7 @@ let s:Channel = {}
 "
 function! s:Channel.new(option) abort
   return extend(deepcopy(s:Channel), {
+        \   'name': a:option.name,
         \   'command': a:option.command,
         \   'on_notification': { -> {} },
         \   'job': v:null,
@@ -73,7 +76,7 @@ function! s:Channel.request(method, ...) abort
           \   'reject': a:reject
           \ }
     call self.job.send(self.to_message(extend({ 'id': self.request_id }, a:message)))
-    call lamp#log(' -> [REQUEST]', self.request_id, a:message)
+    call self.log('-> [REQUEST]', self.request_id, a:message)
   endfunction
   return s:Promise.new(function(l:ctx.executor, [l:message], self))
 endfunction
@@ -87,7 +90,7 @@ function! s:Channel.response(id, ...) abort
     let l:message = extend(l:message, a:000[0])
   endif
 
-  call lamp#log(' -> [RESPONSE]', l:message)
+  call self.log('-> [RESPONSE]', l:message)
   call self.job.send(self.to_message(l:message))
 endfunction
 
@@ -100,7 +103,7 @@ function! s:Channel.notify(method, ...) abort
     let l:message = extend(l:message, { 'params': a:000[0] })
   endif
 
-  call lamp#log(' -> [NOTIFY]', l:message)
+  call self.log('-> [NOTIFY]', l:message)
   call self.job.send(self.to_message(l:message))
 endfunction
 
@@ -119,7 +122,7 @@ function! s:Channel.on_message(message) abort
   if has_key(a:message, 'id')
     " Response.
     if has_key(self.requests, a:message.id)
-      call lamp#log(' <- [RESPONSE]', a:message.id, a:message)
+      call self.log('<- [RESPONSE]', a:message.id, a:message)
       if has_key(a:message, 'error')
         call self.requests[a:message.id].reject(a:message.error)
       else
@@ -129,7 +132,7 @@ function! s:Channel.on_message(message) abort
 
     " Request.
     else
-      call lamp#log(' <- [REQUEST]', a:message)
+      call self.log('<- [REQUEST]', a:message)
       call self.on_notification(a:message)
     endif
     return
@@ -137,7 +140,7 @@ function! s:Channel.on_message(message) abort
 
   " Notification.
   if has_key(a:message, 'method')
-    call lamp#log(' <- [NOTIFY]', a:message)
+    call self.log('<- [NOTIFY]', a:message)
     call self.on_notification(a:message)
   endif
 endfunction
@@ -178,7 +181,7 @@ function! s:Channel.on_stdout(data) abort
       call self.on_stdout('')
     endif
   catch /.*/
-    echoerr string([v:exception, v:throwpoint])
+    call self.log('[ERROR]', a:data)
   endtry
 endfunction
 
@@ -187,7 +190,7 @@ endfunction
 "
 function! s:Channel.on_stderr(data) abort
   if strlen(a:data)
-    echomsg string(['on_stderr', a:data])
+    call self.log('[STDERR]', a:data)
   endif
 endfunction
 
@@ -196,5 +199,14 @@ endfunction
 "
 function! s:Channel.on_exit(code) abort
   " TODO: impl
+endfunction
+
+"
+" log
+"
+function! s:Channel.log(...) abort
+  let l:name = strcharpart(self.name, 0, s:log_name_len)
+  let l:name = l:name . repeat(' ', s:log_name_len - strlen(l:name))
+  call call('lamp#log', [l:name] + a:000)
 endfunction
 
