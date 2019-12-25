@@ -27,8 +27,8 @@ command! LampDocumentHighlight            call lamp#feature#document_highlight#d
 command! LampDocumentHighlightClear       call lamp#feature#document_highlight#clear()
 command! LampFormatting                   call lamp#feature#formatting#do()
 command! LampRangeFormatting              call lamp#feature#range_formatting#do()
-command! LampReferences                   call lamp#feature#declaration#do(v:false)
-command! LampReferencesIncludeDeclaration call lamp#feature#declaration#do(v:true)
+command! LampReferences                   call lamp#feature#references#do(v:false)
+command! LampReferencesIncludeDeclaration call lamp#feature#references#do(v:true)
 command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
       \  LampCodeAction                   call lamp#feature#code_action#do(<range>, '<args>')
 
