@@ -3,16 +3,7 @@ if exists('g:loaded_lamp')
 endif
 let g:loaded_lamp = v:true
 
-"
-" initialize features
-"
-for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
-  try
-    call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
-  catch /.*/
-    echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
-  endtry
-endfor
+let s:initialized = v:false
 
 "
 " command
@@ -73,6 +64,8 @@ augroup END
 " on_text_document_did_open
 "
 function! s:on_text_document_did_open() abort
+  call s:initialize()
+
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
 
@@ -147,6 +140,24 @@ function! s:on_vim_leave_pre() abort
       call lamp#sync(l:server.exit(), 200)
     catch /.*/
       call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
+    endtry
+  endfor
+endfunction
+
+"
+" initialize
+"
+function! s:initialize() abort
+  if s:initialized
+    return
+  endif
+  let s:initialized = v:true
+
+  for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
+    try
+      call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
+    catch /.*/
+      echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
     endtry
   endfor
 endfunction

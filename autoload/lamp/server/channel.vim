@@ -165,7 +165,8 @@ function! s:Channel.on_stdout(data) abort
   let l:end_of_content = l:header_length + l:content_length
 
   " content check.
-  if strlen(self.buffer) < l:end_of_content
+  let l:buffer_len = strlen(self.buffer)
+  if l:buffer_len < l:end_of_content
     return
   endif
 
@@ -177,7 +178,7 @@ function! s:Channel.on_stdout(data) abort
 
     call self.on_message(l:message)
 
-    if strlen(self.buffer) > 0
+    if l:buffer_len > l:end_of_content
       call self.on_stdout('')
     endif
   catch /.*/
@@ -205,8 +206,10 @@ endfunction
 " log
 "
 function! s:Channel.log(...) abort
-  let l:name = strcharpart(self.name, 0, s:log_name_len)
-  let l:name = l:name . repeat(' ', s:log_name_len - strlen(l:name))
-  call call('lamp#log', [l:name] + a:000)
+  if strlen(lamp#config('debug.log')) > 0
+    let l:name = strcharpart(self.name, 0, s:log_name_len)
+    let l:name = l:name . repeat(' ', s:log_name_len - strlen(l:name))
+    call call('lamp#log', [l:name] + a:000)
+  endif
 endfunction
 
