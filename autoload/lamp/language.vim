@@ -67,6 +67,37 @@ function! lamp#language#css(...) abort
 endfunction
 
 "
+" lamp#language#yaml
+"
+function! lamp#language#yaml(...) abort
+  if !executable('yaml-language-server')
+    echomsg '[vim-lamp] You should install `yaml-language-server`.'
+    echomsg '[vim-lamp] > npm install -g yaml-language-server'
+    return
+  endif
+
+  call lamp#register('yaml-language-server', lamp#merge({
+        \   'command': ['yaml-language-server', '--stdio'],
+        \   'filetypes': ['yaml', 'yaml.ansible'],
+        \   'workspace_configurations': {
+        \     '*': {
+        \       'yaml': {
+        \         'completion': v:true,
+        \         'hover': v:true,
+        \         'validate': v:true,
+        \         'schemas': {
+        \           'https://raw.githubusercontent.com/VSChina/vscode-ansible/master/snippets/ansible-data.json': '*ansible*/**/*.{yml,yaml}',
+        \         },
+        \         'format': {
+        \           'enable': v:true
+        \         }
+        \       }
+        \     }
+        \   }
+        \ }, get(a:000, 0, {})))
+endfunction
+
+"
 " lamp#language#typescript
 "
 function! lamp#language#typescript(...) abort
