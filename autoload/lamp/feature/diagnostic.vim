@@ -91,10 +91,6 @@ endfunction
 " update
 "
 function! s:update() abort
-  if mode() !=# 'n'
-    return
-  endif
-
   call lamp#log('[CALL] lamp#feature#diagnostic s:update')
 
   let l:updated_bufnrs = {}
