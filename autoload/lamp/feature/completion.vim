@@ -44,6 +44,7 @@ endfunction
 " on_insert_leave
 "
 function! s:on_insert_leave() abort
+  let s:item_state = {}
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
   call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
   call timer_start(0, { -> s:floatwin.hide() })
@@ -122,6 +123,7 @@ function! s:on_complete_done_after() abort
   if empty(l:completion_item)
     let l:completion_item = l:item_data.completion_item
   endif
+  let s:item_state = {}
 
   " snippet or textEdit.
   let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
