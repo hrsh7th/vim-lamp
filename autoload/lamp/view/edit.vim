@@ -83,7 +83,7 @@ function! s:edit(bufnr, edit, position) abort
   let l:lines_len = len(l:lines)
   let l:range_len = a:edit.range.end.line - a:edit.range.start.line
 
-  let l:total_lines = len(lamp#view#buffer#get_lines(a:bufnr))
+  let l:total_lines = len(getbufline(a:bufnr, '^', '$'))
 
   " fix cursor pos
   if a:edit.range.end.line <= a:position.line
