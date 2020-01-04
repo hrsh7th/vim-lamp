@@ -1,5 +1,6 @@
 let s:highlight_ns = 'lamp#feature#diagnostic:highlight'
 let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
+let s:insert_leave_timer_id = -1
 
 "
 " init
@@ -16,20 +17,30 @@ function! lamp#feature#diagnostic#update() abort
 endfunction
 
 "
+" wait for insert leave.
+"
+function! s:insert_leave() abort
+  call timer_stop(s:insert_leave_timer_id)
+
+  let l:ctx = {}
+  function! l:ctx.callback(timer_id) abort
+    if index(['i', 's'], mode()[0]) >= 0
+      return
+    endif
+    call lamp#feature#diagnostic#update()
+    call timer_start(0, { -> timer_stop(a:timer_id) })
+  endfunction
+  let s:insert_leave_timer_id = timer_start(200, { timer_id -> l:ctx.callback(timer_id) }, { 'repeat': -1 })
+endfunction
+
+"
 " update
 "
 function! s:update() abort
   if index(['i', 's'], mode()[0]) >= 0
-    augroup lamp#feature#diagnostic
-      autocmd!
-      autocmd InsertLeave * call lamp#feature#diagnostic#update()
-    augroup END
+    call s:insert_leave()
     return
   endif
-
-  augroup lamp#feature#diagnostic
-    autocmd!
-  augroup END
 
   let l:context = {}
 
