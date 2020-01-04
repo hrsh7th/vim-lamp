@@ -249,6 +249,7 @@ function! s:Server.change_document(bufnr) abort
             \ })
     endif
   endif
+  let l:doc.diagnostics = []
 endfunction
 
 "
