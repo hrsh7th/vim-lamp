@@ -98,7 +98,10 @@ function! s:get_document_map(uri) abort
   endif
   let l:document_map = {}
   for l:server in l:servers
-    let l:document_map[l:server.name] = l:server.documents[a:uri]
+    let l:doc = l:server.documents[a:uri]
+    if len(l:doc.diagnostics) > 0
+      let l:document_map[l:server.name] = l:server.documents[a:uri]
+    endif
   endfor
   return l:document_map
 endfunction
