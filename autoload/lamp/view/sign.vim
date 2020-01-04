@@ -59,7 +59,6 @@ endfunction
 " sign_place
 "
 function! s:sign_place(name, bufnr, lnum) abort
-  call lamp#log('[CALL] lamp#view#sign s:sign_place')
   call s:initialize()
   try
     return sign_place(0, s:sign_group, a:name, a:bufnr, { 'lnum': a:lnum, 'priority': 1000 })

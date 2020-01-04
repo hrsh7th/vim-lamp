@@ -38,7 +38,6 @@ endfunction
 " lamp#view#highlight#remove
 "
 function! lamp#view#highlight#remove(namespace, bufnr) abort
-  call lamp#log('[CALL] lamp#view#highlight#remove')
   call lamp#view#highlight#{s:ns}#remove(a:namespace, a:bufnr)
 endfunction
 
@@ -83,8 +82,6 @@ endfunction
 "
 function! s:add_highlight(namespace, bufnr, range, highlight) abort
   call s:initialize()
-
-  call lamp#log('[CALL] lamp#view#highlight s:add_highlight')
 
   " correct empty range.
   if !lamp#protocol#range#has_length(a:range)

@@ -5,24 +5,31 @@ let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 " init
 "
 function! lamp#feature#diagnostic#init() abort
-  augroup lamp#feature#diagnostic
-    autocmd!
-    autocmd InsertLeave * call lamp#feature#diagnostic#update()
-  augroup END
+  " noop
 endfunction
 
 "
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update() abort
-  call s:update()
+  call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 100)
 endfunction
 
 "
 " update
 "
 function! s:update() abort
-  call lamp#log('[CALL] lamp#feature#diagnostic s:update')
+  if index(['i', 's'], mode()[0]) >= 0
+    augroup lamp#feature#diagnostic
+      autocmd!
+      autocmd InsertLeave * call lamp#feature#diagnostic#update()
+    augroup END
+    return
+  endif
+
+  augroup lamp#feature#diagnostic
+    autocmd!
+  augroup END
 
   let l:context = {}
 
