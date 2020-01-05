@@ -37,6 +37,6 @@ endfunction
 " lamp#protocol#completion#get_kind_name
 "
 function! lamp#protocol#completion#get_kind_name(kind) abort
-  return get(s:kind_map, '' . a:kind, '')
+  return get(s:kind_map, string(a:kind), '')
 endfunction
 

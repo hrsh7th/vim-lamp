@@ -54,7 +54,7 @@ function! lamp#feature#completion#convert(server_name, response) abort
     call add(l:completed_items, {
           \   'word': l:word,
           \   'abbr': l:word . (l:is_expandable ? '~' : ''),
-          \   'menu': substitute(get(l:completion_item, 'detail'), "\\%(\r\n\\|\r\\|\n\\)", '', 'g'),
+          \   'menu': substitute(get(l:completion_item, 'detail', ''), "\\%(\r\n\\|\r\\|\n\\)", '', 'g'),
           \   'kind': lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
           \   'user_data': l:user_data_key,
           \   '_filter_text': get(l:completion_item, 'filterText', l:word),
