@@ -77,6 +77,7 @@ function! s:on_responses(bufnr, responses) abort
   if !empty(l:lines)
     let l:screenpos = lamp#view#floatwin#screenpos(line('.'), col('.'))
     call s:floatwin.show_tooltip(l:screenpos, [{ 'lines': l:lines }])
+    call lamp#view#mode#insert_leave({ -> s:close_signature_help() })
   endif
 endfunction
 
