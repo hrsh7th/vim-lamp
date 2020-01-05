@@ -58,6 +58,7 @@ function! s:Server.stop() abort
     if !empty(self.state.initialized)
       call lamp#sync(self.channel.request('shutdown'), 200)
       call self.channel.notify('exit')
+      doautocmd User lamp#server#exited
     endif
     call self.channel.stop()
     let self.state.started = v:false
@@ -74,6 +75,7 @@ function! s:Server.exit() abort
     if !empty(self.state.initialized)
       call lamp#sync(self.channel.request('shutdown'), 200)
       call self.channel.notify('exit')
+      doautocmd User lamp#server#exited
     endif
     call self.channel.stop()
     let self.state.initialized = v:null
@@ -101,6 +103,7 @@ function! s:Server.initialize() abort
   function! l:ctx.callback(response) abort dict
     call self.capability.merge(a:response)
     call self.channel.notify('initialized', {})
+    doautocmd User lamp#server#initialized
     return a:response
   endfunction
 
