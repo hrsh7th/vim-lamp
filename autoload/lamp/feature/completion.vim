@@ -41,11 +41,13 @@ function! lamp#feature#completion#convert(server_name, response) abort
     let l:word = get(l:completion_item, 'insertText', l:completion_item.label)
     let l:is_expandable = v:false
     if get(l:completion_item, 'insertTextFormat', 1) == 2
-      let l:is_expandable = l:word != l:completion_item.label
-      let l:word = l:completion_item.label
-    elseif has_key(l:completion_item, 'textEdit')
-      let l:is_expandable = l:word != l:completion_item.textEdit.newText
-      let l:word = l:completion_item.label
+      if has_key(l:completion_item, 'textEdit')
+        let l:word = l:completion_item.label
+        let l:is_expandable = l:word != l:completion_item.textEdit.newText
+      elseif has_key(l:completion_item, 'insertText')
+        let l:word = l:completion_item.label
+        let l:is_expandable = l:word != l:completion_item.insertText
+      endif
     endif
 
     let l:user_data_key = '{"lamp/key":"' . s:managed_user_data_key . '"}'
