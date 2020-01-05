@@ -44,7 +44,7 @@ function! lamp#language#html(...) abort
         \   } },
         \   'capabilities': {
         \     'completionProvider': {
-        \       'triggerCharacters': ['>']
+        \       'triggerCharacters': ['>', '"']
         \     }
         \   }
         \ }, get(a:000, 0, {})))
