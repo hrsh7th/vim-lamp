@@ -9,24 +9,12 @@ let s:context = {
       \ }
 
 "
-" TextEdit enabled if other completion engine plugin provides below user-data.
-"
-" v:completed_item.user_data['lamp'] = {
-"   'id': string | number;
-"   'server_name': string;
-"   'completion_item': CompletionItem;
-" }
-"
-let s:user_data_key = 'lamp'
-
-"
 " {
-"   [id]: {
-"     'resolve': Promise;
-"   }
+"   [id]: ...
 " }
 "
-let s:item_state = {}
+let s:managed_user_data_map = {}
+let s:managed_user_data_key = 0
 
 "
 " lamp#feature#completion#init
@@ -41,13 +29,70 @@ function! lamp#feature#completion#init() abort
 endfunction
 
 "
+" lamp#feature#completion#convert
+"
+function! lamp#feature#completion#convert(server_name, response) abort
+  let l:completed_items = []
+
+  let l:completion_items = []
+  let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
+  let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
+  for l:completion_item in l:completion_items
+    let l:word = get(l:completion_item, 'insertText', l:completion_item.label)
+    let l:is_expandable = v:false
+    if get(l:completion_item, 'insertTextFormat', 1) == 2
+      let l:is_expandable = l:word != l:completion_item.label
+      let l:word = l:completion_item.label
+    elseif has_key(l:completion_item, 'textEdit')
+      let l:is_expandable = l:word != l:completion_item.textEdit.newText
+      let l:word = l:completion_item.label
+    endif
+
+    let l:user_data_key = '{"lamp/key":"' . s:managed_user_data_key . '"}'
+    call add(l:completed_items, {
+          \   'word': l:word,
+          \   'abbr': l:word . (l:is_expandable ? '~' : ''),
+          \   'menu': substitute(get(l:completion_item, 'detail'), "\\%(\r\n\\|\r\\|\n\\)", '', 'g'),
+          \   'kind': lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
+          \   'user_data': l:user_data_key,
+          \   '_filter_text': get(l:completion_item, 'filterText', l:word),
+          \ })
+    let s:managed_user_data_map[l:user_data_key] = {
+          \   'server_name': a:server_name,
+          \   'completion_item': l:completion_item
+          \ }
+    let s:managed_user_data_key += 1
+  endfor
+
+  return l:completed_items
+endfunction
+
+"
+" get_managed_user_data
+"
+function! s:get_managed_user_data(completed_item) abort
+  if has_key(s:managed_user_data_map, get(a:completed_item, 'user_data'))
+    return s:managed_user_data_map[a:completed_item.user_data]
+  endif
+  return {}
+endfunction
+
+"
+" clear_managed_user_data
+"
+function! s:clear_managed_user_data() abort
+  let s:managed_user_data_map = {}
+  let s:managed_user_data_key = 0
+endfunction
+
+"
 " on_insert_leave
 "
 function! s:on_insert_leave() abort
-  let s:item_state = {}
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
   call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
   call timer_start(0, { -> s:floatwin.hide() })
+  call s:clear_managed_user_data()
 endfunction
 
 "
@@ -56,16 +101,16 @@ endfunction
 function! s:on_complete_changed() abort
   call s:floatwin.hide()
 
-  let l:item_data = s:get_item_data(v:completed_item)
-  if empty(l:item_data)
+  let l:user_data = s:get_managed_user_data(v:completed_item)
+  if empty(l:user_data)
     return
   endif
 
   let l:ctx = {}
   let l:ctx.event = copy(v:event)
-  let l:ctx.item_data = l:item_data
+  let l:ctx.user_data = l:user_data
   function! l:ctx.callback() abort
-    call s:resolve_completion_item(self.item_data).then({ completion_item ->
+    call s:resolve_completion_item(self.user_data).then({ completion_item ->
           \   s:show_documentation(self.event, completion_item)
           \ })
   endfunction
@@ -90,8 +135,10 @@ function! s:on_complete_done() abort
   let s:context.curpos = getpos('.')
   let s:context.line = getline('.')
   let s:context.completed_item = v:completed_item
+  let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
   if !empty(v:completed_item)
+    call s:clear_managed_user_data()
     call feedkeys(printf("\<C-r>=<SNR>%d_on_complete_done_after()\<CR>", s:SID()), 'n')
   endif
 endfunction
@@ -103,13 +150,13 @@ function! s:on_complete_done_after() abort
   let l:curpos = s:context.curpos
   let l:line = s:context.line
   let l:completed_item = s:context.completed_item
+  let l:user_data = s:context.user_data
 
   if mode()[0] ==# 'n'
     return ''
   endif
 
-  let l:item_data = s:get_item_data(l:completed_item)
-  if empty(l:item_data)
+  if empty(l:user_data)
     return ''
   endif
 
@@ -119,11 +166,10 @@ function! s:on_complete_done_after() abort
   endif
 
   " completionItem/resolve
-  let l:completion_item = lamp#sync(s:resolve_completion_item(l:item_data))
+  let l:completion_item = lamp#sync(s:resolve_completion_item(l:user_data))
   if empty(l:completion_item)
-    let l:completion_item = l:item_data.completion_item
+    let l:completion_item = l:user_data.completion_item
   endif
-  let s:item_state = {}
 
   " snippet or textEdit.
   let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
@@ -146,7 +192,7 @@ function! s:on_complete_done_after() abort
 
   " executeCommand.
   if has_key(l:completion_item, 'command')
-    let l:server = lamp#server#registry#get_by_name(l:item_data.server_name)
+    let l:server = lamp#server#registry#get_by_name(l:user_data.server_name)
     if !empty(l:server)
       call l:server.request('workspace/executeCommand', {
             \   'command': l:completion_item.command.command,
@@ -161,19 +207,18 @@ endfunction
 "
 " resolve_completion_item
 "
-function! s:resolve_completion_item(item_data) abort
-  let s:item_state[a:item_data.id] = get(s:item_state, a:item_data.id, {})
-  if has_key(s:item_state[a:item_data.id], 'resolve')
-    return s:item_state[a:item_data.id].resolve
+function! s:resolve_completion_item(user_data) abort
+  if has_key(a:user_data, 'resolve')
+    return a:user_data.resolve
   endif
 
-  let l:server = lamp#server#registry#get_by_name(a:item_data.server_name)
+  let l:server = lamp#server#registry#get_by_name(a:user_data.server_name)
   if empty(l:server) || !l:server.supports('capabilities.completionProvider.resolveProvider')
-    return s:Promise.resolve(a:item_data.completion_item)
+    return s:Promise.resolve(a:user_data.completion_item)
   endif
 
-  let s:item_state[a:item_data.id].resolve = l:server.request('completionItem/resolve', a:item_data.completion_item).catch(lamp#rescue({}))
-  return s:item_state[a:item_data.id].resolve
+  let a:user_data.resolve = l:server.request('completionItem/resolve', a:user_data.completion_item).catch(lamp#rescue({}))
+  return a:user_data.resolve
 endfunction
 
 "
@@ -284,45 +329,6 @@ function! s:get_floatwin_screenpos(event, contents) abort
   endif
 
   return [l:row, l:col]
-endfunction
-
-"
-" get_item_data
-"
-function! s:get_item_data(completed_item) abort
-  if empty(a:completed_item)
-    return {}
-  endif
-
-  if !has_key(a:completed_item, 'user_data')
-    return {}
-  endif
-
-  if type(a:completed_item.user_data) == type({})
-    let l:user_data = a:completed_item.user_data
-  else
-    try
-      let l:user_data = json_decode(a:completed_item.user_data)
-      if type(l:user_data) != type({}) " vim's json_decode is not throw exception.
-        let l:user_data = {}
-      endif
-    catch /.*/
-      let l:user_data = {}
-    endtry
-  endif
-
-  if !has_key(l:user_data, s:user_data_key)
-    return {}
-  endif
-
-  let l:item_data = l:user_data[s:user_data_key]
-  if !has_key(l:item_data, 'id')
-        \ || !has_key(l:item_data, 'server_name')
-        \ || !has_key(l:item_data, 'completion_item')
-    return {}
-  endif
-
-  return l:item_data
 endfunction
 
 "

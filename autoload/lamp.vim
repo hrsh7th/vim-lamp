@@ -260,45 +260,14 @@ function! lamp#complete(find_start, base) abort
 
   " consume response.
   let l:returns = { 'words': [], 'refresh': 'always' }
-
   for [l:server_name, l:request] in items(s:context.requests)
-    let l:response = lamp#sync(l:request)
-
-    let l:items = []
-    let l:items = type(l:response) == type({}) ? get(l:response, 'items', []) : l:items
-    let l:items = type(l:response) == type([]) ? l:response : l:items
-    for l:item in l:items
-      let l:filter_text = get(l:item, 'filterText', l:item.label)
-      if l:filter_text !~ '^' . a:base && strlen(a:base) >= 1
+    for l:completed_item in lamp#feature#completion#convert(l:server_name, lamp#sync(l:request))
+      if l:completed_item._filter_text !~ '^' . a:base && strlen(a:base) >= 1
         continue
       endif
-
-      let l:word = get(l:item, 'insertText', l:item.label)
-      let l:is_expandable = v:false
-      if get(l:item, 'insertTextFormat', 1) == 2
-        let l:word = l:item.label
-        let l:is_expandable = v:true
-      elseif has_key(l:item, 'textEdit')
-        let l:word = l:item.label
-      endif
-
-      let s:context.id += 1
-      let l:vim_item = {}
-      let l:vim_item.word = l:word
-      let l:vim_item.kind = lamp#protocol#completion#get_kind_name(l:item.kind) . ' ' . substitute(get(l:item, 'detail', ''), '\%(\r\n\|\r\|\n\)', ' ', 'g')
-      let l:vim_item.abbr = l:is_expandable ? l:word . '~' : l:word
-      let l:vim_item.menu = '[LAMP]'
-      let l:vim_item.user_data = json_encode({
-            \   'lamp': {
-            \     'id': s:context.id,
-            \     'server_name': l:server_name,
-            \     'completion_item': l:item
-            \   }
-            \ })
-      call add(l:returns.words, l:vim_item)
+      call add(l:returns.words, l:completed_item)
     endfor
   endfor
-
   return l:returns
 endfunction
 
