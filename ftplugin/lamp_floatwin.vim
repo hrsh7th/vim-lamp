@@ -38,6 +38,9 @@ function! s:update()
   if &filetype !=# 'lamp_floatwin'
     return
   endif
+  if !has('nvim') && !LampFloatwinSyntaxShouldUpdate(bufnr('%'))
+    return
+  endif
 
   " initialize state.
   let b:lamp_floatwin_state = get(b:, 'lamp_floatwin_state', {
