@@ -5,25 +5,23 @@ let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 " init
 "
 function! lamp#feature#diagnostic#init() abort
-  " noop
+  augroup lamp#feature#diagnostic
+    autocmd!
+    autocmd TextChanged,TextChangedI,TextChangedP * call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 1000)
+  augroup END
 endfunction
 
 "
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update() abort
-  call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 100)
+  call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 1000)
 endfunction
 
 "
 " update
 "
 function! s:update() abort
-  if index(['i', 's'], mode()[0]) >= 0
-    call lamp#view#mode#insert_leave({ -> lamp#feature#diagnostic#update() })
-    return
-  endif
-
   let l:context = {}
 
   for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))

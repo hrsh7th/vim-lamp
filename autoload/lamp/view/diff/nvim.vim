@@ -20,7 +20,9 @@ function! lamp#view#diff#nvim#import() abort
 endfunction
 
 
-let s:Diff = {}
+let s:Diff = {
+      \   'type': 'nvim'
+      \ }
 
 "
 " new

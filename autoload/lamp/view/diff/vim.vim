@@ -6,7 +6,9 @@ function! lamp#view#diff#vim#import() abort
 endfunction
 
 
-let s:Diff = {}
+let s:Diff = {
+      \   'type': 'vim'
+      \ }
 
 "
 " new

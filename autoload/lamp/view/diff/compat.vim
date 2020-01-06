@@ -6,7 +6,9 @@ function! lamp#view#diff#compat#import() abort
 endfunction
 
 
-let s:Diff = {}
+let s:Diff = {
+      \   'type': 'compat'
+      \ }
 
 "
 " new
