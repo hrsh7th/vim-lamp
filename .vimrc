@@ -16,6 +16,9 @@ execute printf('source %s', expand('~/.vim/plugged/vim-plug/plug.vim'))
 call plug#begin('~/.vim/plugged')
 Plug expand('<sfile>:p:h:h') . '/vim-lamp'
 Plug expand('<sfile>:p:h:h') . '/vim-vsnip'
+Plug expand('<sfile>:p:h:h') . '/vim-vsnip-integ'
+Plug expand('<sfile>:p:h:h') . '/asyncomplete-lamp'
+Plug 'prabirshrestha/asyncomplete.vim'
 Plug 'https://github.com/gruvbox-community/gruvbox'
 call plug#end()
 
@@ -46,30 +49,15 @@ augroup END
 autocmd! vimrc User lamp#initialized call s:on_initialized()
 function! s:on_initialized()
   call lamp#config('debug.log', '/tmp/lamp.log')
-  call lamp#config('feature.completion.snippet.expand', { option -> vsnip#anonymous(option.body) })
-
-  call lamp#register('vim-language-server', {
-        \   'command': ['vim-language-server', '--stdio'],
-        \   'filetypes': ['vim'],
-        \ })
-
-  call lamp#register('html-languageserver', {
-        \   'command': ['html-languageserver', '--stdio'],
-        \   'filetypes': ['html', 'css'],
-        \   'initialization_options': { -> {
-        \     'embeddedLanguages': []
-        \   } },
-        \   'capabilities': {
-        \     'completionProvider': {
-        \       'triggerCharacters': ['>'],
-        \     }
-        \   }
-        \ })
-
-  call lamp#register('intelephense', {
-        \   'command': ['intelephense', '--stdio'],
-        \   'filetypes': ['php'],
-        \ })
+  call lamp#language#python()
+  call lamp#language#rust()
+  call lamp#language#go()
+  call lamp#language#vim()
+  call lamp#language#typescript()
+  call lamp#language#yaml()
+  call lamp#language#css()
+  call lamp#language#html()
+  call lamp#language#php()
 endfunction
 
 "

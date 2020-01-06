@@ -34,6 +34,8 @@ call plug#begin('~/.vim/plugged')
 Plug 'hrsh7th/vim-lamp'
 Plug 'hrsh7th/vim-vsnip'
 Plug 'hrsh7th/vim-vsnip-integ'
+Plug 'hrsh7th/asyncomplete-lamp'
+Plug 'prabirshrestha/asyncomplete.vim'
 call plug#end()
 
 "
