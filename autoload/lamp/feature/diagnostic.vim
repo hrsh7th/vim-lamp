@@ -5,17 +5,14 @@ let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 " init
 "
 function! lamp#feature#diagnostic#init() abort
-  augroup lamp#feature#diagnostic
-    autocmd!
-    autocmd TextChanged,TextChangedI,TextChangedP * call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 1000)
-  augroup END
+  " noop
 endfunction
 
 "
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update() abort
-  call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, 1000)
+  call s:update()
 endfunction
 
 "

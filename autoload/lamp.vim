@@ -10,6 +10,7 @@ let s:state = {
 let s:config = {
       \   'root': expand('<sfile>:p:h:h'),
       \   'debug.log': v:null,
+      \   'protocol.text_document_did_change.delay': 800,
       \   'feature.completion.snippet.expand': v:null,
       \   'view.location.on_location': { locations -> [
       \     setqflist(locations, 'r'),
