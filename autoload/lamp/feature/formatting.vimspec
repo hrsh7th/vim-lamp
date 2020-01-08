@@ -30,7 +30,7 @@ Describe lamp#feature#formatting
 
     let l:bufnr = bufnr('%')
     let l:lines = lamp#view#buffer#get_lines(l:bufnr)
-    call lamp#feature#formatting#do()
+    call lamp#feature#formatting#do({})
     call lamp#sync({ -> lamp#view#buffer#get_lines(l:bufnr) != l:lines })
     call s:expect([
           \   'if (true) {',
@@ -57,7 +57,7 @@ Describe lamp#feature#formatting
 
     let l:bufnr = bufnr('%')
     let l:lines = lamp#view#buffer#get_lines(l:bufnr)
-    call lamp#feature#formatting#do()
+    call lamp#feature#formatting#do({})
     call lamp#sync({ -> lamp#view#buffer#get_lines(l:bufnr) != l:lines })
     call s:expect([
           \   'if (true) {',
