@@ -47,8 +47,8 @@ nnoremap <silent><Plug>(lamp-references)                     :<C-u>call lamp#fea
 nnoremap <silent><Plug>(lamp-references-include-declaration) :<C-u>call lamp#feature#references#do(v:true)<CR>
 nnoremap <silent><Plug>(lamp-formatting)                     :<C-u>call lamp#feature#formatting#do()<CR>
 vnoremap <silent><Plug>(lamp-range-formatting)               :<C-u>call lamp#feature#range_formatting#do()<CR>
-nnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(0, '')<CR>
-vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do(2, '')<CR>
+nnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do({ 'range': v:false, 'query': '', 'sync': v:false })<CR>
+vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#feature#code_action#do({ 'range': v:true, 'query': '', 'sync': v:false })<CR>
 
 "
 " events
