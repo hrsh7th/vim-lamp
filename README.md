@@ -11,7 +11,7 @@ Language Server Protocol client for Vim.
     - Snippet support (by vim-vsnip)
 
 # Status
-Well works but not docummented.
+Well works but not docummented and APIs aren't stable.
 
 # Setting
 
