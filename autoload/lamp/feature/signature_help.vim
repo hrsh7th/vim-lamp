@@ -3,7 +3,7 @@ let s:Floatwin  = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({ 'max_height': 12 })
 
 function! lamp#feature#signature_help#init() abort
-  augroup lamp#feature#signature_help
+  execute printf('augroup lamp#feature#signature_help_%d', bufnr('%'))
     autocmd!
     autocmd InsertLeave,CursorMoved <buffer> call s:close_signature_help()
     autocmd CursorMoved,CursorMovedI <buffer> call s:trigger_signature_help()

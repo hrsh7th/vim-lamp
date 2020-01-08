@@ -13,9 +13,9 @@ endfunction
 " lamp#feature#hover#init
 "
 function! lamp#feature#hover#init() abort
-  augroup lamp#feature#hover
+  execute printf('augroup lamp#feature#hover_%d', bufnr('%'))
     autocmd!
-    autocmd InsertEnter,CursorMoved * call s:close()
+    autocmd InsertEnter,CursorMoved <buffer> call s:close()
   augroup END
 endfunction
 

@@ -20,7 +20,7 @@ let s:managed_user_data_key = 0
 " lamp#feature#completion#init
 "
 function! lamp#feature#completion#init() abort
-  augroup lamp#feature#completion
+  execute printf('augroup lamp#feature#completion_%d', bufnr('%'))
     autocmd!
     autocmd InsertLeave <buffer> call s:on_insert_leave()
     autocmd CompleteChanged <buffer> call s:on_complete_changed()

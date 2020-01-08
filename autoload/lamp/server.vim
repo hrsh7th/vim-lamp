@@ -252,7 +252,7 @@ function! s:Server.change_document(bufnr) abort
             \ })
     endif
   endif
-  let l:doc.diagnostics = []
+  let l:doc.dirty = v:true
 endfunction
 
 "

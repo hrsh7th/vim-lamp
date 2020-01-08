@@ -20,8 +20,9 @@ function! s:text_document_publish_diagnostics(server, notification) abort
   endif
 
   let l:doc = a:server.documents[a:notification.params.uri]
+  let l:increase_diagnostics = len(l:doc.diagnostics) <= len(a:notification.params.diagnostics)
   call l:doc.set_diagnostics(a:notification.params.diagnostics)
-  call lamp#feature#diagnostic#update()
+  call lamp#feature#diagnostic#update(l:increase_diagnostics)
 endfunction
 
 "
