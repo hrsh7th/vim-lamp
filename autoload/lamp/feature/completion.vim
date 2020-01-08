@@ -22,9 +22,9 @@ let s:managed_user_data_key = 0
 function! lamp#feature#completion#init() abort
   augroup lamp#feature#completion
     autocmd!
-    autocmd InsertLeave * call s:on_insert_leave()
-    autocmd CompleteChanged * call s:on_complete_changed()
-    autocmd CompleteDone * call s:on_complete_done()
+    autocmd InsertLeave <buffer> call s:on_insert_leave()
+    autocmd CompleteChanged <buffer> call s:on_complete_changed()
+    autocmd CompleteDone <buffer> call s:on_complete_done()
   augroup END
 endfunction
 

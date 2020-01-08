@@ -5,8 +5,8 @@ let s:floatwin = s:Floatwin.new({ 'max_height': 12 })
 function! lamp#feature#signature_help#init() abort
   augroup lamp#feature#signature_help
     autocmd!
-    autocmd InsertLeave,CursorMoved * call s:close_signature_help()
-    autocmd CursorMoved,CursorMovedI * call s:trigger_signature_help()
+    autocmd InsertLeave,CursorMoved <buffer> call s:close_signature_help()
+    autocmd CursorMoved,CursorMovedI <buffer> call s:trigger_signature_help()
   augroup END
 endfunction
 

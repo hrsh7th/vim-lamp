@@ -3,8 +3,6 @@ if exists('g:loaded_lamp')
 endif
 let g:loaded_lamp = v:true
 
-let s:initialized = v:false
-
 "
 " command
 "
@@ -71,12 +69,11 @@ augroup END
 " on_text_document_did_open
 "
 function! s:on_text_document_did_open() abort
-  call s:initialize()
-
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
 
   if !empty(l:servers)
+    call s:initialize_buffer()
     doautocmd User lamp#text_document_did_open
   endif
 
@@ -152,14 +149,9 @@ function! s:on_vim_leave_pre() abort
 endfunction
 
 "
-" initialize
+" initialize_buffer
 "
-function! s:initialize() abort
-  if s:initialized
-    return
-  endif
-  let s:initialized = v:true
-
+function! s:initialize_buffer() abort
   for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
     try
       call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
