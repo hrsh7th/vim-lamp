@@ -203,7 +203,5 @@ endfunction
 # TODO
 - Custom highlighting in fenced language (e.g. underlined)
 - Improve documentation
-- Create asyncomplete source
 - Design canceling outdated request
-- Design event handling (like vim-lsc's once)
 - Trim floatwin sizes when completion
