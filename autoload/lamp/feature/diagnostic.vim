@@ -2,8 +2,7 @@ let s:highlight_ns = 'lamp#feature#diagnostic:highlight'
 let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 
 let s:context = {
-      \   'has_changed_contents': v:false,
-      \   'increase_diagnostics': v:false
+      \   'has_content_changed': v:false,
       \ }
 
 "
@@ -19,9 +18,8 @@ endfunction
 "
 " lamp#feature#diagnostic#update
 "
-function! lamp#feature#diagnostic#update(increase_diagnostics) abort
-  let s:context.has_changed_contents = v:true
-  let s:context.increase_diagnostics = a:increase_diagnostics
+function! lamp#feature#diagnostic#update() abort
+  let s:context.has_content_changed = v:true
   call s:check()
 endfunction
 
@@ -29,20 +27,17 @@ endfunction
 " check
 "
 function! s:check() abort
+  if !s:context.has_content_changed
+    return
+  endif
+
   let l:ctx = {}
   function! l:ctx.callback() abort
-    if s:context.has_changed_contents
-      call s:update()
-      let s:context.has_changed_contents = v:false
-    endif
+    call s:update()
+    let s:context.has_content_changed = v:false
   endfunction
-  call lamp#debounce(
-        \   'lamp#feature#diagnostic:check',
-        \   { -> l:ctx.callback() },
-        \   s:context.increase_diagnostics
-        \     ? lamp#config('feature.diagnostic.increase.delay')
-        \     : lamp#config('feature.diagnostic.decrease.delay')
-        \ )
+
+  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, lamp#config('feature.diagnostic.delay'))
 endfunction
 
 "

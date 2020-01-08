@@ -86,7 +86,7 @@ function! s:on_text_document_did_open() abort
   call lamp#debounce(
         \   's:on_text_document_did_open:' . l:bufnr,
         \   { -> l:ctx.callback(l:bufnr, l:servers) },
-        \   100
+        \   200
         \ )
 endfunction
 
@@ -105,7 +105,7 @@ function! s:on_text_document_did_change() abort
   call lamp#debounce(
         \   's:on_text_document_did_change:' . l:bufnr,
         \   { -> l:ctx.callback(l:bufnr) },
-        \   100
+        \   200
         \ )
 endfunction
 
@@ -129,7 +129,7 @@ function! s:on_text_document_did_close() abort
   call lamp#debounce(
         \   's:on_text_document_did_close:' . l:bufnr,
         \   { -> l:ctx.callback(l:bufnr) },
-        \   100
+        \   200
         \ )
 endfunction
 

@@ -11,8 +11,7 @@ let s:config = {
       \   'root': expand('<sfile>:p:h:h'),
       \   'debug.log': v:null,
       \   'feature.completion.snippet.expand': v:null,
-      \   'feature.diagnostic.increase.delay': 300,
-      \   'feature.diagnostic.decrease.delay': 0,
+      \   'feature.diagnostic.delay': 800,
       \   'view.location.on_location': { locations -> [
       \     setqflist(locations, 'r'),
       \     execute('copen')

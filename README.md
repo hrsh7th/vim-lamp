@@ -140,12 +140,12 @@ endfunction
         - [ ] $/cancelRequest
 
     - Window
-        - [ ] window/showMessage
-        - [ ] window/showMessageRequest
-        - [ ] window/logMessage
+        - [x] window/showMessage
+        - [x] window/showMessageRequest
+        - [x] window/logMessage
 
     - Telemetry
-        - [ ] telemetry/event
+        - [x] telemetry/event
 
     - Client
         - [ ] ~~client/registerCapability~~ (Maybe unneeded)
