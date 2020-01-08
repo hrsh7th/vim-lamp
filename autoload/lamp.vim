@@ -12,6 +12,8 @@ let s:config = {
       \   'debug.log': v:null,
       \   'protocol.text_document_did_change.delay': 200,
       \   'feature.completion.snippet.expand': v:null,
+      \   'feature.diagnostic.increase.delay': 300,
+      \   'feature.diagnostic.decrease.delay': 0,
       \   'view.location.on_location': { locations -> [
       \     setqflist(locations, 'r'),
       \     execute('copen')

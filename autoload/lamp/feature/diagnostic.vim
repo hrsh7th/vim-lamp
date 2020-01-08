@@ -39,7 +39,9 @@ function! s:check() abort
   call lamp#debounce(
         \   'lamp#feature#diagnostic:check',
         \   { -> l:ctx.callback() },
-        \   s:context.increase_diagnostics ? 800 : 0
+        \   s:context.increase_diagnostics
+        \     ? lamp#config('feature.diagnostic.increase.delay')
+        \     : lamp#config('feature.diagnostic.decrease.delay')
         \ )
 endfunction
 
