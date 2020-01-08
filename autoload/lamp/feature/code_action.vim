@@ -32,7 +32,11 @@ endfunction
 "
 " lamp#feature#code_action#do
 "
-function! lamp#feature#code_action#do(range, action_name) abort
+function! lamp#feature#code_action#do(option) abort
+  let l:range = get(a:option, 'range', v:false)
+  let l:query = get(a:option, 'query', '')
+  let l:sync = get(a:option, 'sync', v:false)
+
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { _, server -> server.supports('capabilities.codeActionProvider') })
@@ -43,10 +47,10 @@ function! lamp#feature#code_action#do(range, action_name) abort
 
   let l:promises = []
   for l:server in l:servers
-    let l:diagnostic = s:get_nearest_diagnostic(a:range, l:bufnr, l:server)
+    let l:diagnostic = s:get_nearest_diagnostic(l:range, l:bufnr, l:server)
     call add(l:promises, l:server.request('textDocument/codeAction', {
           \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
-          \   'range': s:get_range(a:range, l:diagnostic),
+          \   'range': s:get_range(l:range, l:diagnostic),
           \   'context': {
           \     'diagnostics': !empty(l:diagnostic) ? [l:diagnostic] : [],
           \     'only': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
@@ -55,8 +59,12 @@ function! lamp#feature#code_action#do(range, action_name) abort
   endfor
 
   let l:p = s:Promise.all(l:promises)
-  let l:p = l:p.then({ responses -> s:on_responses(a:action_name, responses) })
+  let l:p = l:p.then({ responses -> s:on_responses(l:query, responses) })
   let l:p = l:p.catch(lamp#rescue())
+
+  if l:sync
+    call lamp#sync(l:p)
+  endif
 endfunction
 
 "
@@ -64,7 +72,7 @@ endfunction
 "
 " responses = [{ 'server': ..., 'data': [...CodeAction] }]
 "
-function! s:on_responses(action_name, responses) abort
+function! s:on_responses(query, responses) abort
   let l:code_actions = [] " [{ 'server': ..., 'action': CodeAction }]
   for l:response in a:responses
     let l:response.data = type(l:response.data) == type([]) ? l:response.data : []
@@ -84,7 +92,7 @@ function! s:on_responses(action_name, responses) abort
   if has_key(s:test, 'action_index')
     let l:index = s:test.action_index
   else
-    let l:code_actions = filter(copy(l:code_actions), { _, a -> get(a.action, 'kind', '') =~ a:action_name })
+    let l:code_actions = filter(copy(l:code_actions), { _, a -> get(a.action, 'kind', '') =~ a:query })
     if len(l:code_actions) > 1
       let l:index = lamp#view#input#select('Select code actions:', map(copy(l:code_actions), { k, v ->
             \   substitute(v.action.title, '\r\n\|\n\|\r', '', 'g')

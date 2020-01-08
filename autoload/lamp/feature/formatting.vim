@@ -2,7 +2,9 @@ function! lamp#feature#formatting#init() abort
   " noop
 endfunction
 
-function! lamp#feature#formatting#do() abort
+function! lamp#feature#formatting#do(option) abort
+  let l:sync = get(a:option, 'sync', v:false)
+
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.documentFormattingProvider') })
@@ -19,6 +21,10 @@ function! lamp#feature#formatting#do() abort
         \ })
   let l:p = l:p.then({ response -> s:on_response(l:bufnr, response) })
   let l:p = l:p.catch(lamp#rescue())
+
+  if l:sync
+    call lamp#sync(l:p)
+  endif
 endfunction
 
 function! s:on_response(bufnr, response) abort

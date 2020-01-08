@@ -16,12 +16,15 @@ command! LampRename                       call lamp#feature#rename#do()
 command! LampHover                        call lamp#feature#hover#do()
 command! LampDocumentHighlight            call lamp#feature#document_highlight#do()
 command! LampDocumentHighlightClear       call lamp#feature#document_highlight#clear()
-command! LampFormatting                   call lamp#feature#formatting#do()
+command! LampFormatting                   call lamp#feature#formatting#do({ 'sync': v:false })
+command! LampFormattingSync               call lamp#feature#formatting#do({ 'sync': v:true })
 command! LampRangeFormatting              call lamp#feature#range_formatting#do()
 command! LampReferences                   call lamp#feature#references#do(v:false)
 command! LampReferencesIncludeDeclaration call lamp#feature#references#do(v:true)
 command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
-      \  LampCodeAction                   call lamp#feature#code_action#do(<range>, '<args>')
+      \  LampCodeAction                   call lamp#feature#code_action#do({ 'range': <range> != 0, 'query': '<args>', 'sync': v:false })
+command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
+      \  LampCodeActionSync               call lamp#feature#code_action#do({ 'range': <range> != 0, 'query': '<args>', 'sync': v:true })
 
 "
 " mappings
