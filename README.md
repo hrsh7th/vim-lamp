@@ -4,11 +4,8 @@ Language Server Protocol client for Vim.
 # Concept
 - Works on vim/nvim both
 - High performance
-    - Use listener_add/nvim_buf_attach
 - Well supported LSP spec
-    - completionItem/resolve
-        - show floatwin/popupwin document during completion
-    - Snippet support (by vim-vsnip)
+- Well visualize diagnostics
 
 # Status
 Well works but not docummented and APIs aren't stable.
