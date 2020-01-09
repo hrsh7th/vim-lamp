@@ -92,8 +92,8 @@ endfunction
 "
 function! s:on_insert_leave() abort
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
-  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
-  call timer_start(0, { -> s:floatwin.hide() })
+  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 0)
+  call s:floatwin.hide()
   call s:clear_managed_user_data()
 endfunction
 
@@ -131,7 +131,7 @@ endfunction
 function! s:on_complete_done() abort
   " clear.
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
-  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 100)
+  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 0)
   call s:floatwin.hide()
 
   let s:context.curpos = getpos('.')

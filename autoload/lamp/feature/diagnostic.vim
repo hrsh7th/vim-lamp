@@ -11,7 +11,7 @@ let s:context = {
 function! lamp#feature#diagnostic#init() abort
   execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
     autocmd!
-    autocmd TextChanged,TextChangedI,TextChangedP <buffer> call s:check()
+    autocmd InsertLeave,TextChanged,TextChangedI,TextChangedP <buffer> call s:check()
     autocmd BufWritePost <buffer> call s:update()
   augroup END
 endfunction
@@ -38,8 +38,10 @@ function! s:check() abort
     let s:context.has_content_changed = v:false
   endfunction
 
-  let l:factor = mode()[0] ==# 'n' ? 0.8 : 1
-  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, lamp#config('feature.diagnostic.delay') * l:factor)
+  let l:timeout = mode()[0] ==# 'n'
+        \ ? lamp#config('feature.diagnostic.delay.normal')
+        \ : lamp#config('feature.diagnostic.delay.insert')
+  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, l:timeout)
 endfunction
 
 "
