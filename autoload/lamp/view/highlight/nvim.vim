@@ -20,44 +20,47 @@ endfunction
 "
 " lamp#view#highlight#nvim#add
 "
-function! lamp#view#highlight#nvim#add(namespace, bufnr, positions, highlight) abort
-  if !exists('*nvim_buf_add_highlight')
-    return
-  endif
+if exists('*nvim_buf_add_highlight')
+  function! lamp#view#highlight#nvim#add(namespace, bufnr, positions, highlight) abort
+    if !has_key(s:namespaces, a:namespace)
+      let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
+    endif
 
-  if !has_key(s:namespaces, a:namespace)
-    let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
-  endif
-
-  for l:position in a:positions
-    call add(s:highlights, {
-          \   'namespace': a:namespace,
-          \   'bufnr': a:bufnr,
-          \   'position': l:position,
-          \   'highlight': a:highlight
-          \ })
-    call nvim_buf_add_highlight(
-          \   a:bufnr,
-          \   s:namespaces[a:namespace],
-          \   a:highlight,
-          \   l:position[0],
-          \   l:position[1],
-          \   l:position[2]
-          \ )
-  endfor
-endfunction
+    for l:position in a:positions
+      call add(s:highlights, {
+            \   'namespace': a:namespace,
+            \   'bufnr': a:bufnr,
+            \   'position': l:position,
+            \   'highlight': a:highlight
+            \ })
+      call nvim_buf_add_highlight(
+            \   a:bufnr,
+            \   s:namespaces[a:namespace],
+            \   a:highlight,
+            \   l:position[0],
+            \   l:position[1],
+            \   l:position[2]
+            \ )
+    endfor
+  endfunction
+else
+  function! lamp#view#highlight#nvim#add(namespace, bufnr, positions, highlight) abort
+  endfunction
+endif
 
 "
 " lamp#view#highlight#nvim#get
 "
-function! lamp#view#highlight#nvim#get(position) abort
-  if !exists('*nvim_buf_add_highlight')
+if exists('*nvim_buf_add_highlight')
+  function! lamp#view#highlight#nvim#get(position) abort
+    return filter(copy(s:highlights), { _, h ->
+          \   h.position[0] == a:position.line
+          \   && h.position[1] <= a:position.character && a:position.character <= h.position[2]
+          \ })
+  endfunction
+else
+  function! lamp#view#highlight#nvim#get(position) abort
     return []
-  endif
-
-  return filter(copy(s:highlights), { _, h ->
-        \   h.position[0] == a:position.line
-        \   && h.position[1] <= a:position.character && a:position.character <= h.position[2]
-        \ })
-endfunction
+  endfunction
+endif
 

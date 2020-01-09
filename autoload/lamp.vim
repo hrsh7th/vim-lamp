@@ -3,6 +3,8 @@ let s:Server = lamp#server#import()
 
 let s:debounce_ids = {}
 
+let s:profiles = {}
+
 let s:state = {
       \   'exiting': v:false,
       \ }
@@ -32,6 +34,40 @@ let s:config = {
       \ }
 
 call s:Promise.on_unhandled_rejection({ err -> lamp#log('[ERROR]', err) })
+
+"
+" lamp#profile
+"
+function! lamp#profile(name, ...) abort
+  if !has_key(s:profiles, a:name)
+    let s:profiles[a:name] = {
+          \   'count': 0,
+          \   'start': reltime(),
+          \   'end': -1,
+          \ }
+  endif
+
+  if get(a:000, 0, v:false)
+    let s:profiles[a:name].end = reltimefloat(reltime(s:profiles[a:name].start)) * 1000
+  else
+    let s:profiles[a:name].count += 1
+    let s:profiles[a:name].start = reltime()
+  endif
+endfunction
+
+"
+" lamp#profile_finish
+"
+function! lamp#profile_finish() abort
+  for [l:name, l:profile] in items(s:profiles)
+    echomsg string({
+          \   'name': l:name,
+          \   'count': l:profile.count,
+          \   'time': l:profile.end
+          \ })
+  endfor
+  let s:profiles = {}
+endfunction
 
 "
 " lamp#register

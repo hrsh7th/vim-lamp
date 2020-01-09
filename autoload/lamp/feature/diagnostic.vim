@@ -38,7 +38,8 @@ function! s:check() abort
     let s:context.has_content_changed = v:false
   endfunction
 
-  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, lamp#config('feature.diagnostic.delay'))
+  let l:factor = mode()[0] ==# 'n' ? 0.8 : 1
+  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, lamp#config('feature.diagnostic.delay') * l:factor)
 endfunction
 
 "

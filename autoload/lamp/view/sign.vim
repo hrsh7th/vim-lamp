@@ -1,5 +1,3 @@
-let s:initialized = v:false
-
 let s:sign_group = 'LampSign'
 
 "
@@ -59,7 +57,6 @@ endfunction
 " sign_place
 "
 function! s:sign_place(name, bufnr, lnum) abort
-  call s:initialize()
   try
     return sign_place(0, s:sign_group, a:name, a:bufnr, { 'lnum': a:lnum, 'priority': 1000 })
   catch /.*/
@@ -71,10 +68,6 @@ endfunction
 " initialize
 "
 function! s:initialize() abort
-  if s:initialized
-    return
-  endif
-
   let l:sign_column_bg = synIDattr(hlID('SignColumn'), 'bg', 'gui')
   let l:sign_column_guibg = !empty(l:sign_column_bg) ? printf('guibg=%s', l:sign_column_bg) : ''
   execute printf('highlight! LampSignError guifg=red %s', l:sign_column_guibg)
@@ -99,4 +92,5 @@ function! s:initialize() abort
         \   'texthl': 'LampSignHint',
         \ })
 endfunction
+call s:initialize()
 

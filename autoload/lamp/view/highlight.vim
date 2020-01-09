@@ -1,4 +1,3 @@
-let s:initialized = v:false
 let s:ns = has('nvim') ? 'nvim' : 'vim'
 
 let s:colors = reverse([
@@ -81,8 +80,6 @@ endfunction
 " add_highlight
 "
 function! s:add_highlight(namespace, bufnr, range, highlight) abort
-  call s:initialize()
-
   " correct empty range.
   if !lamp#protocol#range#has_length(a:range)
     let l:text = get(getbufline(a:bufnr, a:range.end.line), 0, '')
@@ -131,11 +128,6 @@ endfunction
 " initialize
 "
 function! s:initialize() abort
-  if s:initialized
-    return
-  endif
-  let s:initialized = v:true
-
   execute printf('highlight! link LampError Error')
   execute printf('highlight! link LampWarning WarningMsg')
   execute printf('highlight! link LampInformation MoreMsg')
@@ -157,4 +149,5 @@ function! s:initialize() abort
     endfor
   endif
 endfunction
+call s:initialize()
 

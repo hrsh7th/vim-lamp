@@ -1,5 +1,4 @@
 let s:namespaces = {}
-let s:initialized = v:false
 
 "
 " lamp#view#virtual_text#remove
@@ -44,32 +43,28 @@ endfunction
 "
 " add_virtual_text
 "
-function! s:add_virtual_text(namespace, bufnr, line, text, highlight) abort
-  if !exists('*nvim_buf_set_virtual_text')
-    return
-  endif
-
-  call s:initialize()
-  if !has_key(s:namespaces, a:namespace)
-    let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
-  endif
-  call nvim_buf_set_virtual_text(a:bufnr, s:namespaces[a:namespace], a:line, [
-        \   [a:text, a:highlight]
-        \ ], {})
-endfunction
+if exists('*nvim_buf_set_virtual_text')
+  function! s:add_virtual_text(namespace, bufnr, line, text, highlight) abort
+    if !has_key(s:namespaces, a:namespace)
+      let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
+    endif
+    call nvim_buf_set_virtual_text(a:bufnr, s:namespaces[a:namespace], a:line, [
+          \   [a:text, a:highlight]
+          \ ], {})
+  endfunction
+else
+  function! s:add_virtual_text(namespace, bufnr, line, text, highlight) abort
+  endfunction
+endif
 
 "
 " initialize
 "
 function! s:initialize() abort
-  if s:initialized
-    return
-  endif
-  let s:initialized = v:true
-
   execute printf('highlight! link LampVirtualError Error')
   execute printf('highlight! link LampVirtualWarning WarningMsg')
   execute printf('highlight! link LampVirtualInformation MoreMsg')
   execute printf('highlight! link LampVirtualHint NonText')
 endfunction
+call s:initialize()
 
