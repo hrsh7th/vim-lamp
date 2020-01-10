@@ -113,12 +113,15 @@ function! s:on_complete_changed() abort
   let l:ctx.completed_item = copy(v:completed_item)
   let l:ctx.user_data = l:user_data
   function! l:ctx.callback() abort
+    if empty(v:completed_item) || get(v:completed_item, 'user_data', '') !=# get(self.completed_item, 'user_data', '')
+      return
+    endif
+
     call s:resolve_completion_item(self.user_data).then({ completion_item ->
           \   s:show_documentation(self.event, self.completed_item, completion_item)
           \ })
   endfunction
 
-  let l:event = copy(v:event)
   call lamp#debounce(
         \   'lamp#feature#completion:show_documentation',
         \   { -> l:ctx.callback() },
