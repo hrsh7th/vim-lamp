@@ -93,7 +93,7 @@ function! s:on_responses(query, responses) abort
     let l:index = s:test.action_index
   else
     let l:code_actions = filter(copy(l:code_actions), { _, a -> get(a.action, 'kind', '') =~ a:query })
-    if len(l:code_actions) > 1
+    if len(l:code_actions) > 1 || empty(a:query)
       let l:index = lamp#view#input#select('Select code actions:', map(copy(l:code_actions), { k, v ->
             \   substitute(v.action.title, '\r\n\|\n\|\r', '', 'g')
             \ }))
