@@ -124,7 +124,7 @@ function! s:on_complete_changed() abort
   call lamp#debounce(
         \   'lamp#feature#completion:show_documentation',
         \   { -> l:ctx.callback() },
-        \   200
+        \   10
         \ )
 endfunction
 
