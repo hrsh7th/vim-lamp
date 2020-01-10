@@ -101,10 +101,9 @@ endfunction
 " on_complete_changed
 "
 function! s:on_complete_changed() abort
-  call s:floatwin.hide()
-
   let l:user_data = s:get_managed_user_data(v:completed_item)
   if empty(l:user_data)
+    call s:floatwin.hide()
     return
   endif
 
