@@ -73,17 +73,13 @@ function! s:update() abort
     call lamp#view#highlight#remove(l:highlight_ns, l:document.bufnr)
     call lamp#view#virtual_text#remove(l:virtual_text_ns, l:document.bufnr)
 
-    " remove buffer state.
-    for [l:line, l:server_name_map] in items(s:context.state[l:document.bufnr])
-      if has_key(l:server_name_map, l:server.name)
-        unlet l:server_name_map[l:server.name]
-      endif
-    endfor
-
     " update.
     for l:diagnostic in l:change.document.diagnostics
       let l:line = l:diagnostic.range.start.line
       let s:context.state[l:document.bufnr][l:line] = get(s:context.state[l:document.bufnr], l:line, {})
+      if has_key(s:context.state[l:document.bufnr][l:line], l:server.name)
+        unlet s:context.state[l:document.bufnr][l:line][l:server.name]
+      endif
       if len(keys(s:context.state[l:document.bufnr][l:line])) != 0
         continue
       endif
