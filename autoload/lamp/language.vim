@@ -155,11 +155,15 @@ function! lamp#language#go() abort
   call lamp#register('gopls', {
         \   'command': ['gopls'],
         \   'filetypes': ['go'],
+        \   'root_uri': { -> lamp#findup('go.mod', '.git') },
         \   'initialization_options': { -> {
         \     'usePlaceholders': v:true,
-        \     'completeUnimported': v:true
+        \     'completeUnimported': v:true,
+        \     'hoverKind': 'FullDocumentation',
         \   } }
         \ })
+
+  autocmd! lamp#language BufWritePre *.go call execute('LampFormattingSync') | call execute('LampCodeActionSync source.organizeImports')
 endfunction
 
 "

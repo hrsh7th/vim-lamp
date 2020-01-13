@@ -81,7 +81,7 @@ endfunction
 " window_log_message
 "
 function! s:window_log_message(server, notification) abort
-  call lamp#log('[window/logMessage]', a:server.name, a:notification.params)
+  " call lamp#log('[window/logMessage]', a:server.name, a:notification.params)
 endfunction
 
 "

@@ -76,15 +76,6 @@ function! s:update() abort
     " update.
     for l:diagnostic in l:change.document.diagnostics
       let l:line = l:diagnostic.range.start.line
-      let s:context.state[l:document.bufnr][l:line] = get(s:context.state[l:document.bufnr], l:line, {})
-      if has_key(s:context.state[l:document.bufnr][l:line], l:server.name)
-        unlet s:context.state[l:document.bufnr][l:line][l:server.name]
-      endif
-      if len(keys(s:context.state[l:document.bufnr][l:line])) != 0
-        continue
-      endif
-      let s:context.state[l:document.bufnr][l:line][l:server.name] = v:true
-
       let l:severity = get(l:diagnostic, 'severity', 1)
       if l:severity == 1
         call lamp#view#sign#error(l:document.bufnr, l:line + 1)
