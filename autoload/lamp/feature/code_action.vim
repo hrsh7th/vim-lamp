@@ -59,7 +59,7 @@ function! lamp#feature#code_action#do(option) abort
   endfor
 
   let l:p = s:Promise.all(l:promises)
-  let l:p = l:p.then({ responses -> s:on_responses(l:query, responses) })
+  let l:p = l:p.then({ responses -> s:on_responses(l:query, l:sync, responses) })
   let l:p = l:p.catch(lamp#rescue())
 
   if l:sync
@@ -72,7 +72,7 @@ endfunction
 "
 " responses = [{ 'server': ..., 'data': [...CodeAction] }]
 "
-function! s:on_responses(query, responses) abort
+function! s:on_responses(query, sync, responses) abort
   let l:code_actions = [] " [{ 'server': ..., 'action': CodeAction }]
   for l:response in a:responses
     let l:response.data = type(l:response.data) == type([]) ? l:response.data : []
@@ -111,6 +111,8 @@ function! s:on_responses(query, responses) abort
 
   let l:code_action = l:code_actions[l:index]
 
+  let l:p = s:Promise.resolve()
+
   " has WorkspaceEdit.
   if has_key(l:code_action.action, 'edit')
     let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(l:code_action.action.edit)
@@ -118,17 +120,21 @@ function! s:on_responses(query, responses) abort
 
   " Command
   elseif has_key(l:code_action.action, 'command') && type(l:code_action.action.command) == type('')
-    call l:code_action.server.request('workspace/executeCommand', {
+    let l:p = l:code_action.server.request('workspace/executeCommand', {
           \   'command': l:code_action.action.command,
           \   'arguments': get(l:code_action.action, 'arguments', v:null)
           \ })
 
   " has Command
   elseif has_key(l:code_action.action, 'command') && type(l:code_action.action.command) == type({})
-    call l:code_action.server.request('workspace/executeCommand', {
+    let l:p = l:code_action.server.request('workspace/executeCommand', {
           \   'command': l:code_action.action.command.command,
           \   'arguments': get(l:code_action.action.command, 'arguments', v:null)
           \ })
+  endif
+
+  if a:sync
+    call lamp#sync(l:p)
   endif
 endfunction
 
