@@ -1,7 +1,7 @@
 let s:Floatwin = lamp#view#floatwin#import()
 let s:expect = themis#helper('expect')
 
-execute printf('source %s/ftplugin/lamp_floatwin.vim', lamp#config('root'))
+execute printf('source %s/ftplugin/lamp_floatwin.vim', lamp#config('global.root'))
 
 Describe lamp#view#floatwin
 
@@ -10,8 +10,8 @@ Describe lamp#view#floatwin
   End
 
   It Should compat layer has same api
-    execute printf('source %s/%s', lamp#config('root'), 'autoload/lamp/view/floatwin/nvim.vim')
-    execute printf('source %s/%s', lamp#config('root'), 'autoload/lamp/view/floatwin/vim.vim')
+    execute printf('source %s/%s', lamp#config('global.root'), 'autoload/lamp/view/floatwin/nvim.vim')
+    execute printf('source %s/%s', lamp#config('global.root'), 'autoload/lamp/view/floatwin/vim.vim')
 
     for s:namespace in ['nvim', 'vim']
       for [s:function, s:args] in items({

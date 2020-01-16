@@ -7,7 +7,7 @@ Describe lamp#view#buffer
   End
 
   It Should open buffer
-    let s:filename = lamp#config('root') . '/misc/typescript/src/index.ts'
+    let s:filename = lamp#config('global.root') . '/misc/typescript/src/index.ts'
     call lamp#view#buffer#open('edit', { 'filename': s:filename, 'lnum': 3, 'col': 3 })
     call s:expect(fnamemodify(bufname('%'), ':p')).to_equal(s:filename)
     call s:expect(3).to_equal(line('.'))

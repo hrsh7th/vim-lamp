@@ -206,7 +206,7 @@ endfunction
 " log
 "
 function! s:Channel.log(...) abort
-  if strlen(lamp#config('debug.log')) > 0
+  if strlen(lamp#config('global.debug')) > 0
     let l:name = strcharpart(self.name, 0, s:log_name_len)
     let l:name = l:name . repeat(' ', s:log_name_len - strlen(l:name))
     call call('lamp#log', [l:name] + a:000)

@@ -4,9 +4,9 @@ Describe lamp#feature#range_formatting
 
   Before each
     let s:server = lamp#register('typescript-language-server', {
-          \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
+          \   'command': [lamp#config('global.root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
           \   'filetypes': ['typescript', 'typescript.tsx'],
-          \   'root_uri': { -> lamp#config('root') . '/misc/typescript/' }
+          \   'root_uri': { -> lamp#config('global.root') . '/misc/typescript/' }
           \ })
     call lamp#sync(s:server.start())
     call lamp#sync(s:server.initialize())
@@ -25,7 +25,7 @@ Describe lamp#feature#range_formatting
     let &shiftwidth = 2
 
     call lamp#view#buffer#open('edit', {
-          \   'filename': lamp#config('root') . '/misc/typescript/src/formatting.ts',
+          \   'filename': lamp#config('global.root') . '/misc/typescript/src/formatting.ts',
           \   'lnum': 1,
           \   'col': 1
           \ })

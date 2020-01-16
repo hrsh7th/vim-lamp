@@ -152,7 +152,7 @@ endfunction
 " initialize_buffer
 "
 function! s:initialize_buffer() abort
-  for s:feature in glob(lamp#config('root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
+  for s:feature in glob(lamp#config('global.root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
     try
       call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
     catch /.*/

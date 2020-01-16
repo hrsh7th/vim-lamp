@@ -10,8 +10,9 @@ let s:state = {
       \ }
 
 let s:config = {
-      \   'root': expand('<sfile>:p:h:h'),
-      \   'debug.log': v:null,
+      \   'global.root': expand('<sfile>:p:h:h'),
+      \   'global.debug': v:null,
+      \   'global.timeout': 1000,
       \   'feature.completion.snippet.expand': v:null,
       \   'feature.diagnostic.delay.insert': 800,
       \   'feature.diagnostic.delay.normal': 200,
@@ -92,10 +93,10 @@ endfunction
 "
 function! lamp#log(...) abort
   if exists('$LAMP_TEST')
-    call lamp#config('debug.log', '/tmp/lamp.log')
+    call lamp#config('global.debug', '/tmp/lamp.log')
   endif
-  if !empty(lamp#config('debug.log'))
-    call writefile([join([strftime('%H:%M:%S')] + a:000, "\t")], lamp#config('debug.log'), 'a')
+  if !empty(lamp#config('global.debug'))
+    call writefile([join([strftime('%H:%M:%S')] + a:000, "\t")], lamp#config('global.debug'), 'a')
   endif
 endfunction
 
@@ -160,8 +161,9 @@ endfunction
 " lamp#sync
 "
 function! lamp#sync(promise_or_fn, ...) abort
-  let l:count = floor(get(a:000, 0, 10 * 1000) / 10)
-  while l:count > 0
+  let l:timeout = get(a:000, 0, lamp#config('global.timeout'))
+  let l:reltime = reltime()
+  while v:true
     if type(a:promise_or_fn) == v:t_func
       if a:promise_or_fn()
         return
@@ -174,9 +176,11 @@ function! lamp#sync(promise_or_fn, ...) abort
       endif
     endif
     sleep 10m
-    let l:count -= 1
+
+    if l:timeout != -1 && l:timeout < reltimefloat(reltime(l:reltime)) * 1000
+      throw 'lamp#sync: timeout'
+    endif
   endwhile
-  throw 'lamp#sync: timeout'
 endfunction
 
 "

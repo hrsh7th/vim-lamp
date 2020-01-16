@@ -6,9 +6,9 @@ Describe lamp#server
 
   Before each
     let s:server = s:Server.new('typescript-language-server', {
-          \   'command': [lamp#config('root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
+          \   'command': [lamp#config('global.root') . '/node_modules/.bin/typescript-language-server', '--stdio'],
           \   'filetypes': ['typescript', 'typescript.tsx'],
-          \   'root_uri': { -> lamp#config('root') . '/misc/typescript/' },
+          \   'root_uri': { -> lamp#config('global.root') . '/misc/typescript/' },
           \   'initialization_options': { -> {} }
           \ })
   End
