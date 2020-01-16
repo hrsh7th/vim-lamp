@@ -142,8 +142,7 @@ function! s:on_complete_done() abort
   let s:context.completed_item = v:completed_item
   let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
-  if !empty(v:completed_item)
-    call s:clear_managed_user_data()
+  if !empty(v:completed_item) && strlen(get(v:completed_item, 'word', '')) > 0
     call feedkeys(printf("\<C-r>=<SNR>%d_on_complete_done_after()\<CR>", s:SID()), 'n')
   endif
 endfunction
@@ -169,6 +168,8 @@ function! s:on_complete_done_after() abort
   if strlen(getline('.')) < strlen(l:line)
     return ''
   endif
+
+  call s:clear_managed_user_data()
 
   " completionItem/resolve
   let l:completion_item = lamp#sync(s:resolve_completion_item(l:user_data))
