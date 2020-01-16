@@ -14,10 +14,10 @@ function! s:Document.new(bufnr) abort
   return extend(deepcopy(s:Document), {
         \   'uri': lamp#protocol#document#encode_uri(a:bufnr),
         \   'bufnr': a:bufnr,
-        \   'dirty': v:true,
         \   'filetype': getbufvar(a:bufnr, '&filetype'),
         \   'language_id': lamp#protocol#document#language_id(a:bufnr),
         \   'changedtick': getbufvar(a:bufnr, 'changedtick'),
+        \   'changedtick_pending': getbufvar(a:bufnr, 'changedtick'),
         \   'diagnostics': [],
         \ })
 endfunction
@@ -37,10 +37,17 @@ function! s:Document.out_of_date() abort
 endfunction
 
 "
+" pending_diagnostics
+"
+function! s:Document.pending_diagnostics() abort
+  return self.changedtick != self.changedtick_pending
+endfunction
+
+"
 " set_diagnostics
 "
 function! s:Document.set_diagnostics(diagnostics) abort
   let self.diagnostics = a:diagnostics
-  let self.dirty = v:false
+  let self.changedtick_pending = self.changedtick
 endfunction
 

@@ -1,64 +1,56 @@
-let s:sign_group = 'LampSign'
-
-"
-" lamp#view#sign#get_line
-"
-function! lamp#view#sign#get_line(bufnr, lnum) abort
-  let l:signs = get(sign_getplaced(a:bufnr, {
-        \   'group': s:sign_group,
-        \   'lnum': a:lnum
-        \ }), 0, {})
-  return get(l:signs, 'signs', [])
-endfunction
-
 "
 " lamp#view#sign#remove
 "
-function! lamp#view#sign#remove(...) abort
+function! lamp#view#sign#remove(namespace, bufnr) abort
   call s:initialize()
-  if len(a:000) > 0 
-    call sign_unplace(s:sign_group, {
-          \   'buffer': a:000[0]
-          \ })
-  else
-    call sign_unplace(s:sign_group)
-  endif
+  call sign_unplace(a:namespace, {
+        \   'buffer': a:bufnr
+        \ })
 endfunction
 
 "
 " lamp#view#sign#error
 "
-function! lamp#view#sign#error(bufnr, lnum) abort
-  return s:sign_place('LampSignError', a:bufnr, a:lnum)
+function! lamp#view#sign#error(namespace, bufnr, lnum) abort
+  return s:sign_place(a:namespace, a:bufnr, a:lnum, 'LampSignError')
 endfunction
 
 "
 " lamp#view#sign#warning
 "
-function! lamp#view#sign#warning(bufnr, lnum) abort
-  return s:sign_place('LampSignWarning', a:bufnr, a:lnum)
+function! lamp#view#sign#warning(namespace, bufnr, lnum) abort
+  return s:sign_place(a:namespace, a:bufnr, a:lnum, 'LampSignWarning')
 endfunction
 
 "
 " lamp#view#sign#information
 "
-function! lamp#view#sign#information(bufnr, lnum) abort
-  return s:sign_place('LampSignInformation', a:bufnr, a:lnum)
+function! lamp#view#sign#information(namespace, bufnr, lnum) abort
+  return s:sign_place(a:namespace, a:bufnr, a:lnum, 'LampSignInformation')
 endfunction
 
 "
 " lamp#view#sign#hint
 "
-function! lamp#view#sign#hint(bufnr, lnum) abort
-  return s:sign_place('LampSignHint', a:bufnr, a:lnum)
+function! lamp#view#sign#hint(namespace, bufnr, lnum) abort
+  return s:sign_place(a:namespace, a:bufnr, a:lnum, 'LampSignHint')
 endfunction
 
 "
 " sign_place
 "
-function! s:sign_place(name, bufnr, lnum) abort
+function! s:sign_place(namespace, bufnr, lnum, highlight) abort
   try
-    return sign_place(0, s:sign_group, a:name, a:bufnr, { 'lnum': a:lnum, 'priority': 1000 })
+    return sign_place(
+          \   0,
+          \   a:namespace,
+          \   a:highlight,
+          \   a:bufnr,
+          \   {
+          \     'lnum': a:lnum,
+          \     'priority': 1000
+          \   }
+          \ )
   catch /.*/
     call lamp#log('[ERROR]', { 'excption': v:exception, 'throwpoint': v:throwpoint })
   endtry

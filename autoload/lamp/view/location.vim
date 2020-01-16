@@ -15,6 +15,7 @@ function! lamp#view#location#handle(command, position, locations, ...) abort
     else
       call lamp#view#buffer#open(a:command, a:locations[0])
     endif
+    normal! zz
 
   " no locations found.
   else

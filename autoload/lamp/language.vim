@@ -154,7 +154,7 @@ function! lamp#language#go() abort
 
   call lamp#register('gopls', {
         \   'command': ['gopls'],
-        \   'filetypes': ['go'],
+        \   'filetypes': ['go', 'gomod'],
         \   'root_uri': { -> lamp#findup('go.mod', '.git') },
         \   'initialization_options': { -> {
         \     'usePlaceholders': v:true,
