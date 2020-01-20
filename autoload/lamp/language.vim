@@ -81,13 +81,37 @@ function! lamp#language#yaml(...) abort
         \   'filetypes': ['yaml', 'yaml.ansible'],
         \   'workspace_configurations': {
         \     '*': {
-        \       'yaml': {
+        \       'json': {
         \         'completion': v:true,
         \         'hover': v:true,
         \         'validate': v:true,
-        \         'schemas': {
-        \           'https://raw.githubusercontent.com/VSChina/vscode-ansible/master/snippets/ansible-data.json': '*ansible*/**/*.{yml,yaml}',
-        \         },
+        \         'schemas': json_decode(join(readfile(lamp#config('global.root') . '/misc/json/catalog.json'), "\n")).schemas,
+        \         'format': {
+        \           'enable': v:true
+        \         }
+        \       }
+        \     }
+        \   }
+        \ }, get(a:000, 0, {})))
+endfunction
+
+"
+" lamp#language#json
+"
+function! lamp#language#json(...) abort
+  if !executable('json-languageserver')
+    echomsg '[vim-lamp] You should install `json-languageserver`.'
+    echomsg '[vim-lamp] > npm install -g vscode-json-languageserver'
+    return
+  endif
+
+  call lamp#register('json-languageserver', lamp#merge({
+        \   'command': ['json-languageserver', '--stdio'],
+        \   'filetypes': ['json'],
+        \   'workspace_configurations': {
+        \     '*': {
+        \       'json': {
+        \         'schemas': json_decode(join(readfile(lamp#config('global.root') . '/misc/json/catalog.json'), "\n")).schemas,
         \         'format': {
         \           'enable': v:true
         \         }
@@ -112,7 +136,9 @@ function! lamp#language#typescript(...) abort
         \   'filetypes': ['typescript', 'typescript.tsx', 'typescriptreact', 'javascript', 'javascript.jsx', 'javascriptreact'],
         \   'root_uri': { -> lamp#findup('tsconfig.json', '.git') },
         \   'capabilities': {
-        \     'triggerCharacters': [',']
+        \     'completionProvider': {
+        \       'triggerCharacters': [',']
+        \     }
         \   }
         \ }, get(a:000, 0, {})))
 endfunction
@@ -160,7 +186,7 @@ function! lamp#language#go() abort
         \     'usePlaceholders': v:true,
         \     'completeUnimported': v:true,
         \     'hoverKind': 'FullDocumentation',
-        \   } }
+        \   } },
         \ })
 
   autocmd! lamp#language BufWritePre *.go call execute('LampFormattingSync') | call execute('LampCodeActionSync source.organizeImports')

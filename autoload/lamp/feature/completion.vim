@@ -38,32 +38,34 @@ function! lamp#feature#completion#convert(server_name, response) abort
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
   for l:completion_item in l:completion_items
+    " create `word` and `abbr`
     let l:word = get(l:completion_item, 'insertText', l:completion_item.label)
-    let l:is_expandable = v:false
-    if get(l:completion_item, 'insertTextFormat', 1) == 2
-      if has_key(l:completion_item, 'textEdit')
-        let l:word = l:completion_item.label
-        let l:is_expandable = l:word != l:completion_item.textEdit.newText
-      elseif has_key(l:completion_item, 'insertText')
-        let l:word = l:completion_item.label
-        let l:is_expandable = l:word != l:completion_item.insertText
-      endif
+    let l:abbr = l:word
+    if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
+      let l:word = trim(l:completion_item.label)
+      let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
+    elseif has_key(l:completion_item, 'insertText') && get(l:completion_item, 'insertTextFormat', 1) == 2
+      let l:word = l:completion_item.label
+      let l:abbr = l:word . (l:word !=# l:completion_item.insertText ? '~' : '')
     endif
 
+    " create user_data
     let l:user_data_key = '{"lamp/key":"' . s:managed_user_data_key . '"}'
-    call add(l:completed_items, {
-          \   'word': trim(l:word),
-          \   'abbr': trim(l:word) . (l:is_expandable ? '~' : ''),
-          \   'menu': substitute(get(l:completion_item, 'detail', ''), "\\%(\r\n\\|\r\\|\n\\)", '', 'g'),
-          \   'kind': lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
-          \   'user_data': l:user_data_key,
-          \   '_filter_text': get(l:completion_item, 'filterText', l:word),
-          \ })
     let s:managed_user_data_map[l:user_data_key] = {
           \   'server_name': a:server_name,
           \   'completion_item': l:completion_item
           \ }
     let s:managed_user_data_key += 1
+
+    " create item
+    call add(l:completed_items, {
+          \   'word': trim(l:word),
+          \   'abbr': l:abbr,
+          \   'menu': substitute(get(l:completion_item, 'detail', ''), "\\%(\r\n\\|\r\\|\n\\)", '', 'g'),
+          \   'kind': lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
+          \   'user_data': l:user_data_key,
+          \   '_filter_text': get(l:completion_item, 'filterText', l:word),
+          \ })
   endfor
 
   return l:completed_items
@@ -73,9 +75,27 @@ endfunction
 " get_managed_user_data
 "
 function! s:get_managed_user_data(completed_item) abort
-  if has_key(s:managed_user_data_map, get(a:completed_item, 'user_data'))
-    return s:managed_user_data_map[a:completed_item.user_data]
+  let l:user_data_string = get(a:completed_item, 'user_data')
+
+  " just key.
+  if has_key(s:managed_user_data_map, l:user_data_string)
+    return s:managed_user_data_map[l:user_data_string]
   endif
+
+  " modified json string.
+  if stridx(l:user_data_string, '"lamp/key"') != -1
+    try
+      let l:user_data = json_decode(l:user_data_string)
+      if has_key(l:user_data, 'lamp/key')
+        let l:key = '{"lamp/key":"' . l:user_data['lamp/key'] . '"}'
+        if has_key(s:managed_user_data_map, l:key)
+          return s:managed_user_data_map[l:key]
+        endif
+      endif
+    catch /.*/
+    endtry
+  endif
+
   return {}
 endfunction
 
@@ -172,7 +192,11 @@ function! s:on_complete_done_after() abort
   call s:clear_managed_user_data()
 
   " completionItem/resolve
-  let l:completion_item = lamp#sync(s:resolve_completion_item(l:user_data))
+  try
+    let l:completion_item = lamp#sync(s:resolve_completion_item(l:user_data))
+  catch /.*/
+    return l:completion_item
+  endtry
   if empty(l:completion_item)
     let l:completion_item = l:user_data.completion_item
   endif

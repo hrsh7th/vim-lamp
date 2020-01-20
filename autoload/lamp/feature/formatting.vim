@@ -23,7 +23,11 @@ function! lamp#feature#formatting#do(option) abort
   let l:p = l:p.catch(lamp#rescue())
 
   if l:sync
-    call lamp#sync(l:p)
+    try
+      call lamp#sync(l:p)
+    catch /.*/
+      echomsg string({ 'exception': v:exception, 'throwpint': v:throwpoint })
+    endtry
   endif
 endfunction
 

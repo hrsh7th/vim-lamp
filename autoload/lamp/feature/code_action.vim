@@ -63,7 +63,11 @@ function! lamp#feature#code_action#do(option) abort
   let l:p = l:p.catch(lamp#rescue())
 
   if l:sync
-    call lamp#sync(l:p)
+    try
+      call lamp#sync(l:p)
+    catch /.*/
+      echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+    endtry
   endif
 endfunction
 
@@ -134,7 +138,11 @@ function! s:on_responses(query, sync, responses) abort
   endif
 
   if a:sync
-    call lamp#sync(l:p)
+    try
+      call lamp#sync(l:p)
+    catch /.*/
+      echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+    endtry
   endif
 endfunction
 

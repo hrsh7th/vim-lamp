@@ -23,7 +23,10 @@ endfunction
 " lamp#view#floatwin#nvim#write
 "
 function! lamp#view#floatwin#nvim#write(floatwin, lines) abort
-  call nvim_buf_set_lines(a:floatwin.bufnr, 0, -1, v:true, a:lines)
+  try
+    call nvim_buf_set_lines(a:floatwin.bufnr, 0, -1, v:true, a:lines)
+  catch /.*/
+  endtry
 endfunction
 
 "

@@ -12,7 +12,7 @@ let s:state = {
 let s:config = {
       \   'global.root': expand('<sfile>:p:h:h'),
       \   'global.debug': v:null,
-      \   'global.timeout': 1000,
+      \   'global.timeout': 3000,
       \   'feature.completion.snippet.expand': v:null,
       \   'feature.diagnostic.delay.insert': 800,
       \   'feature.diagnostic.delay.normal': 200,
@@ -274,7 +274,7 @@ endfunction
 function! lamp#complete(find_start, base) abort
   if a:find_start == 1
     let l:before_line = lamp#view#cursor#get_before_line()
-    return strlen(substitute(l:before_line, '\k*$', '', 'g'))
+    return strlen(substitute(l:before_line, s:get_keyword_pattern() . '$', '', 'g'))
   endif
 
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
@@ -303,13 +303,28 @@ function! lamp#complete(find_start, base) abort
   " consume response.
   let l:returns = { 'words': [], 'refresh': 'always' }
   for [l:server_name, l:request] in items(s:context.requests)
-    for l:completed_item in lamp#feature#completion#convert(l:server_name, lamp#sync(l:request))
-      if l:completed_item._filter_text !~ '^' . a:base && strlen(a:base) >= 1
-        continue
-      endif
-      call add(l:returns.words, l:completed_item)
-    endfor
+    try
+      for l:completed_item in lamp#feature#completion#convert(l:server_name, lamp#sync(l:request))
+        if l:completed_item._filter_text !~ '^' . a:base && strlen(a:base) >= 1
+          continue
+        endif
+        call add(l:returns.words, l:completed_item)
+      endfor
+    catch /.*/
+      echomsg 'lamp#complete: request timeout.'
+    endtry
   endfor
   return l:returns
+endfunction
+
+"
+" get_keyword_pattern
+"
+function! s:get_keyword_pattern() abort
+  let l:keywords = split(&iskeyword, ',')
+  let l:keywords = filter(l:keywords, { _, k -> match(k, '\d\+-\d\+') == -1 })
+  let l:keywords = filter(l:keywords, { _, k -> k !=# '@' })
+  let l:pattern = '\%(' . join(map(l:keywords, { _, v -> '\V' . escape(v, '\') . '\m' }), '\|') . '\|\w\)*'
+  return l:pattern
 endfunction
 
