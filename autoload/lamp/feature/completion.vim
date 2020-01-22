@@ -201,7 +201,7 @@ function! s:on_complete_done_after() abort
     let l:completion_item = l:user_data.completion_item
   endif
 
-  " snippet or textEdit.
+  " Clear completed string if needed.
   let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
   if !empty(l:expandable_state)
     undojoin | call s:clear_completed_string(
@@ -210,9 +210,6 @@ function! s:on_complete_done_after() abort
           \   l:completed_item,
           \   l:completion_item
           \ )
-    undojoin | call lamp#config('feature.completion.snippet.expand')({
-          \   'body': l:expandable_state.text
-          \ })
   endif
 
   " additionalTextEdits.
@@ -224,11 +221,22 @@ function! s:on_complete_done_after() abort
   if has_key(l:completion_item, 'command')
     let l:server = lamp#server#registry#get_by_name(l:user_data.server_name)
     if !empty(l:server)
-      call l:server.request('workspace/executeCommand', {
+      let l:p = l:server.request('workspace/executeCommand', {
             \   'command': l:completion_item.command.command,
             \   'arguments': get(l:completion_item.command, 'arguments', [])
             \ }).catch(lamp#rescue())
+      try
+        call lamp#sync(l:p)
+      catch /.*/
+      endtry
     endif
+  endif
+
+  " snippet or textEdit.
+  if !empty(l:expandable_state)
+    undojoin | call lamp#config('feature.completion.snippet.expand')({
+          \   'body': l:expandable_state.text
+          \ })
   endif
 
   return ''
