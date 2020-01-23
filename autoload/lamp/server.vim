@@ -292,6 +292,6 @@ endfunction
 " on_notification.
 "
 function! s:Server.on_notification(notification) abort
-  call lamp#server#notification#on(self, a:notification)
+  call timer_start(0, { -> lamp#server#notification#on(self, a:notification) })
 endfunction
 
