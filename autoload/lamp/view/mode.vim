@@ -22,6 +22,6 @@ function! lamp#view#mode#insert_leave(fn) abort
     let s:insert_leave_queue = []
     call timer_start(0, { -> timer_stop(a:timer_id) })
   endfunction
-  let s:insert_leave_timer_id = timer_start(200, { timer_id -> l:ctx.callback(timer_id) }, { 'repeat': -1 })
+  let s:insert_leave_timer_id = timer_start(100, { timer_id -> l:ctx.callback(timer_id) }, { 'repeat': -1 })
 endfunction
 

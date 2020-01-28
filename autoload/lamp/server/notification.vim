@@ -29,7 +29,9 @@ function! s:text_document_publish_diagnostics(server, notification) abort
 
   let l:doc = a:server.documents[a:notification.params.uri]
   call l:doc.set_diagnostics(a:notification.params.diagnostics)
-  call lamp#feature#diagnostic#update(a:server, l:doc)
+  if !l:doc.pending_diagnostics()
+    call lamp#feature#diagnostic#update(a:server, l:doc)
+  endif
 endfunction
 
 "

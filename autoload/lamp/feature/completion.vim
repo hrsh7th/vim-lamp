@@ -38,15 +38,20 @@ function! lamp#feature#completion#convert(server_name, response) abort
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
   for l:completion_item in l:completion_items
-    " create `word` and `abbr`
-    let l:word = get(l:completion_item, 'insertText', l:completion_item.label)
-    let l:abbr = l:word
+    " textEdit
     if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
-      let l:word = trim(l:completion_item.label)
+      let l:word = matchstr(l:completion_item.label, '\k\+')
       let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
+
+    " snippet
     elseif has_key(l:completion_item, 'insertText') && get(l:completion_item, 'insertTextFormat', 1) == 2
-      let l:word = l:completion_item.label
+      let l:word = matchstr(l:completion_item.label, '\k\+')
       let l:abbr = l:word . (l:word !=# l:completion_item.insertText ? '~' : '')
+
+    " normal
+    else
+      let l:word = get(l:completion_item, 'insertText', l:completion_item.label)
+      let l:abbr = l:word
     endif
 
     " create user_data
@@ -61,7 +66,7 @@ function! lamp#feature#completion#convert(server_name, response) abort
     call add(l:completed_items, {
           \   'word': trim(l:word),
           \   'abbr': l:abbr,
-          \   'menu': substitute(get(l:completion_item, 'detail', ''), "\\%(\r\n\\|\r\\|\n\\)", '', 'g'),
+          \   'menu': get(split(get(l:completion_item, 'detail', ''), "\n"), 0, 0),
           \   'kind': lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
           \   'user_data': l:user_data_key,
           \   '_filter_text': get(l:completion_item, 'filterText', l:word),
@@ -121,6 +126,10 @@ endfunction
 " on_complete_changed
 "
 function! s:on_complete_changed() abort
+  if !lamp#config('feature.completion.floating_docs')
+    return
+  endif
+
   let l:user_data = s:get_managed_user_data(v:completed_item)
   if empty(l:user_data)
     call s:floatwin.hide()
@@ -163,7 +172,7 @@ function! s:on_complete_done() abort
   let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
   if !empty(v:completed_item) && strlen(get(v:completed_item, 'word', '')) > 0
-    call feedkeys(printf("\<C-r>=<SNR>%d_on_complete_done_after()\<CR>", s:SID()), 'n')
+    undojoin | call feedkeys(printf("\<C-r>=<SNR>%d_on_complete_done_after()\<CR>", s:SID()), 'n')
   endif
 endfunction
 
@@ -171,6 +180,8 @@ endfunction
 " on_complete_done_after
 "
 function! s:on_complete_done_after() abort
+  echo ''
+
   let l:curpos = s:context.curpos
   let l:line = s:context.line
   let l:completed_item = s:context.completed_item
@@ -284,15 +295,11 @@ endfunction
 " clear_completed_string
 "
 function! s:clear_completed_string(curpos, line, completed_item, completion_item) abort
-  " Remove last typed characters.
-  call setline('.', a:line)
-
   let l:position = {
         \   'line': a:curpos[1] - 1,
         \   'character': (a:curpos[2] + a:curpos[3]) - 1,
         \ }
 
-  " Remove completed string.
   let l:range = {
         \   'start': {
         \     'line': l:position.line,
@@ -303,10 +310,11 @@ function! s:clear_completed_string(curpos, line, completed_item, completion_item
   if has_key(a:completion_item, 'textEdit')
     let l:range = lamp#protocol#range#merge_expand(l:range, a:completion_item.textEdit.range)
   endif
-  call lamp#view#edit#apply(bufnr('%'), [{
-        \   'range': l:range,
-        \   'newText': '',
-        \ }])
+
+  let l:line = ''
+  let l:line .= strcharpart(a:line, 0, l:range.start.character)
+  let l:line .= strcharpart(a:line, l:range.end.character, strchars(a:line) - l:range.end.character)
+  undojoin | call setline('.', l:line)
   call cursor([l:range.start.line + 1, l:range.start.character + 1])
 endfunction
 

@@ -48,6 +48,5 @@ endfunction
 "
 function! s:Document.set_diagnostics(diagnostics) abort
   let self.diagnostics = a:diagnostics
-  let self.changedtick_pending = self.changedtick
 endfunction
 

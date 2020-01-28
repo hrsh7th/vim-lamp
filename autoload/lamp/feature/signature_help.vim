@@ -56,7 +56,7 @@ function! s:trigger_signature_help() abort
     let l:p = l:p.then({ responses -> s:on_responses(l:bufnr, responses) })
     let l:p = l:p.catch(lamp#rescue())
   endfunction
-  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> l:ctx.callback() }, 100)
+  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> l:ctx.callback() }, 400)
 endfunction
 
 "
@@ -64,7 +64,7 @@ endfunction
 "
 function! s:on_responses(bufnr, responses) abort
   if index(['i', 's'], mode()[0]) == -1
-    return 
+    return
   endif
 
   let l:lines = []

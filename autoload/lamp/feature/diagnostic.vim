@@ -72,10 +72,6 @@ function! s:update() abort
     let l:server = l:change.server
     let l:document = l:change.document
 
-    if l:document.pending_diagnostics()
-      continue
-    endif
-
     " remove per server.
     let l:highlight_ns = printf('%s:%s', s:highlight_ns, l:server.name)
     let l:virtual_text_ns = printf('%s:%s', s:virtual_text_ns, l:server.name)
