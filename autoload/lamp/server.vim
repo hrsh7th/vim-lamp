@@ -24,7 +24,8 @@ function! s:Server.new(name, option) abort
         \   'root_uri': get(a:option, 'root_uri', { -> '' }),
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
         \   'trace': get(a:option, 'trace', 'off'),
-        \   'workspace_path': v:null,
+        \   'workspace_path': '',
+        \   'workspace_folders': [],
         \   'workspace_configurations': get(a:option, 'workspace_configurations', {}),
         \   'diff': s:Diff.new(),
         \   'documents': {},
@@ -171,7 +172,8 @@ endfunction
 function! s:Server.ensure_document(bufnr) abort
   call self.start()
   return self.initialize().then({ -> [
-        \   self.configuration(a:bufnr),
+        \   self.workspace_folder(a:bufnr),
+        \   self.workspace_configuration(a:bufnr),
         \   self.open_document(a:bufnr),
         \   self.close_document(a:bufnr),
         \   self.change_document(a:bufnr)
@@ -179,9 +181,37 @@ function! s:Server.ensure_document(bufnr) abort
 endfunction
 
 "
-" configuration.
+" workspace_folder.
 "
-function! s:Server.configuration(bufnr) abort
+function! s:Server.workspace_folder(bufnr) abort
+  if !self.capability.is_workspace_folder_supported()
+    return
+  endif
+
+  let l:root_uri = self.root_uri()
+  for l:folder in self.workspace_folders
+    if l:folder.uri == l:root_uri
+      return
+    endif
+  endfor
+
+  let l:folder = {
+  \   'uri': l:root_uri,
+  \   'name': 'auto detected workspace'
+  \ }
+
+  call self.channel.notify('workspace/didChangeWorkspaceFolders', {
+  \   'event': {
+  \     'added': [l:folder]
+  \   }
+  \ })
+  let self.workspace_folders += [l:folder]
+endfunction
+
+"
+" workspace_configuration.
+"
+function! s:Server.workspace_configuration(bufnr) abort
   let l:workspace_path = '*'
 
   let l:path = fnamemodify(bufname(a:bufnr), ':p')

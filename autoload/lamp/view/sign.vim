@@ -3,9 +3,12 @@
 "
 function! lamp#view#sign#remove(namespace, bufnr) abort
   call s:initialize()
-  call sign_unplace(a:namespace, {
-        \   'buffer': a:bufnr
-        \ })
+  try
+    call sign_unplace(a:namespace, {
+    \   'buffer': a:bufnr
+    \ })
+  catch /.*/
+  endtry
 endfunction
 
 "

@@ -164,24 +164,33 @@ endfunction
 function! lamp#sync(promise_or_fn, ...) abort
   let l:timeout = get(a:000, 0, lamp#config('global.timeout'))
   let l:reltime = reltime()
-  while v:true
-    if type(a:promise_or_fn) == v:t_func
-      if a:promise_or_fn()
+
+  if type(a:promise_or_fn) == type({ -> {} })
+    while v:true
+      if  a:promise_or_fn()
         return
       endif
-    else
+
+      if l:timeout != -1 && reltimefloat(reltime(l:reltime)) * 1000 > l:timeout
+        throw 'lamp#sync: timeout'
+      endif
+      sleep 1m
+    endwhile
+  elseif type(a:promise_or_fn) == type({}) && has_key(a:promise_or_fn, '_vital_promise')
+    while v:true
       if a:promise_or_fn._state == 1
         return a:promise_or_fn._result
       elseif a:promise_or_fn._state == 2
         throw json_encode(a:promise_or_fn._result)
       endif
-    endif
-    sleep 10m
 
-    if l:timeout != -1 && l:timeout < reltimefloat(reltime(l:reltime)) * 1000
-      throw 'lamp#sync: timeout'
-    endif
-  endwhile
+      if l:timeout != -1 && reltimefloat(reltime(l:reltime)) * 1000 > l:timeout
+        throw 'lamp#sync: timeout'
+      endif
+
+      sleep 1m
+    endwhile
+  endif
 endfunction
 
 "
@@ -212,17 +221,17 @@ endfunction
 " lamp#findup
 "
 function! lamp#findup(...) abort
-  let l:path = fnamemodify(bufname('%'), ':p')
-  while index(['', '/'], l:path) == -1
-    for l:marker in a:000
+  for l:marker in a:000
+    let l:path = fnamemodify(bufname('%'), ':p')
+    while index(['', '/'], l:path) == -1
       let l:candidate = l:path . '/' . l:marker
       if isdirectory(l:candidate) || filereadable(l:candidate)
         return l:path
       endif
-    endfor
-    let l:path = substitute(l:path, '/[^/]*$', '', 'g')
-  endwhile
-  return getcwd()
+      let l:path = substitute(l:path, '/[^/]*$', '', 'g')
+    endwhile
+  endfor
+  return fnamemodify(bufname('%'), ':p:h')
 endfunction
 
 "

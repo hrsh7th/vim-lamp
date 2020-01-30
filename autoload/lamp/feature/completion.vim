@@ -1,6 +1,8 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
-let s:floatwin = s:Floatwin.new({})
+let s:floatwin = s:Floatwin.new({
+\   'max_height': &lines / 3
+\ })
 
 let s:context = {
       \   'curpos': [],
@@ -145,6 +147,10 @@ function! s:on_complete_changed() abort
       return
     endif
 
+    if self.event.width >= float2nr(&columns / 2)
+      return
+    endif
+
     call s:resolve_completion_item(self.user_data).then({ completion_item ->
           \   s:show_documentation(self.event, self.completed_item, completion_item)
           \ })
@@ -206,11 +212,8 @@ function! s:on_complete_done_after() abort
   try
     let l:completion_item = lamp#sync(s:resolve_completion_item(l:user_data))
   catch /.*/
-    return l:completion_item
-  endtry
-  if empty(l:completion_item)
     let l:completion_item = l:user_data.completion_item
-  endif
+  endtry
 
   " Clear completed string if needed.
   let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
@@ -263,10 +266,13 @@ function! s:resolve_completion_item(user_data) abort
 
   let l:server = lamp#server#registry#get_by_name(a:user_data.server_name)
   if empty(l:server) || !l:server.supports('capabilities.completionProvider.resolveProvider')
-    return s:Promise.resolve(a:user_data.completion_item)
+    let a:user_data.resolve = s:Promise.resolve(a:user_data.completion_item)
+    return a:user_data.resolve
   endif
 
-  let a:user_data.resolve = l:server.request('completionItem/resolve', a:user_data.completion_item).catch(lamp#rescue({}))
+  let a:user_data.resolve = l:server.request('completionItem/resolve',a:user_data.completion_item)
+  let a:user_data.resolve = a:user_data.resolve.then({ item -> empty(item) ? a:user_data.completion_item : item })
+  let a:user_data.resolve = a:user_data.resolve.catch(lamp#rescue(a:user_data.completion_item))
   return a:user_data.resolve
 endfunction
 
@@ -295,15 +301,12 @@ endfunction
 " clear_completed_string
 "
 function! s:clear_completed_string(curpos, line, completed_item, completion_item) abort
-  let l:position = {
-        \   'line': a:curpos[1] - 1,
-        \   'character': (a:curpos[2] + a:curpos[3]) - 1,
-        \ }
+  let l:position = lamp#protocol#position#vim_to_lsp('%', a:curpos[1 : 3])
 
   let l:range = {
         \   'start': {
         \     'line': l:position.line,
-        \     'character': l:position.character - strlen(a:completed_item.word)
+        \     'character': l:position.character - strchars(a:completed_item.word)
         \   },
         \   'end': l:position
         \ }
@@ -315,7 +318,7 @@ function! s:clear_completed_string(curpos, line, completed_item, completion_item
   let l:line .= strcharpart(a:line, 0, l:range.start.character)
   let l:line .= strcharpart(a:line, l:range.end.character, strchars(a:line) - l:range.end.character)
   undojoin | call setline('.', l:line)
-  call cursor([l:range.start.line + 1, l:range.start.character + 1])
+  call cursor(lamp#protocol#position#lsp_to_vim('%', l:range.start))
 endfunction
 
 "
@@ -355,7 +358,7 @@ endfunction
 "
 function! s:get_floatwin_screenpos(event, contents) abort
   if empty(a:event)
-    return {}
+    return []
   endif
 
   let l:total_item_count = a:event.size

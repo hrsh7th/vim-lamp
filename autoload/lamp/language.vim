@@ -181,7 +181,7 @@ function! lamp#language#go() abort
   call lamp#register('gopls', {
         \   'command': ['gopls'],
         \   'filetypes': ['go', 'gomod'],
-        \   'root_uri': { -> lamp#findup('go.mod', '.git') },
+        \   'root_uri': { -> lamp#findup('go.mod', 'main.go') },
         \   'initialization_options': { -> {
         \     'usePlaceholders': v:true,
         \     'completeUnimported': v:true,

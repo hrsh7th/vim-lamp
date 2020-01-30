@@ -52,7 +52,7 @@ function! lamp#server#capability#get_default_capability() abort
         \     'executeCommand': {
         \       'dynamicRegistration': v:false,
         \     },
-        \     'workspaceFolders': v:false,
+        \     'workspaceFolders': v:true,
         \     'configuration': v:false,
         \   },
         \   'textDocument': {
@@ -214,5 +214,17 @@ function! s:Capability.get_text_document_sync_kind() abort
     return l:kind_or_option
   endif
   return lamp#get(l:kind_or_option, 'change', 0)
+endfunction
+
+"
+" is_workspace_folder_supported
+"
+function! s:Capability.is_workspace_folder_supported() abort
+  let l:is_supported = lamp#get(self.capability, 'capabilities.workspace.workspaceFolders.supported', v:false)
+  if !l:is_supported
+    return v:false
+  endif
+  let l:change_notifications = lamp#get(self.capability, 'capabilities.workspace.workspaceFolders.changeNotifications', v:true)
+  return type(l:change_notifications) == type(v:true) || strlen(l:change_notifications) > 0
 endfunction
 

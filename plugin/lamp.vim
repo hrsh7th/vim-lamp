@@ -55,7 +55,7 @@ vnoremap <silent><Plug>(lamp-code-action)                    :<C-u>call lamp#fea
 "
 augroup lamp
   autocmd!
-  autocmd BufWinEnter,FileType * call <SID>on_text_document_did_open()
+  autocmd BufEnter,BufWinEnter,FileType * call <SID>on_text_document_did_open()
   if lamp#view#diff#import().type ==# 'compat'
     autocmd TextChanged,InsertLeave * call <SID>on_text_document_did_change()
   else

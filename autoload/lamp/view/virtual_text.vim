@@ -8,7 +8,10 @@ function! lamp#view#virtual_text#remove(namespace, bufnr) abort
     return
   endif
   if has_key(s:namespaces, a:namespace)
-    call nvim_buf_clear_namespace(a:bufnr, s:namespaces[a:namespace], 0, -1)
+    try
+      call nvim_buf_clear_namespace(a:bufnr, s:namespaces[a:namespace], 0, -1)
+    catch /.*/
+    endtry
   endif
 endfunction
 

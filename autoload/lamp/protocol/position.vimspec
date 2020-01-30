@@ -1,0 +1,67 @@
+let s:expect = themis#helper('expect')
+
+Describe lamp#protocol#position
+
+  After each
+    call lamp#view#buffer#reset()
+  End
+
+  Describe lamp#protocol#position#vim_to_lsp
+
+    It Should return lsp-position from vim-position 1
+      new!
+      call setline(1, [
+      \   'あいうえお',
+      \   'aiueo'
+      \ ])
+      call s:expect(lamp#protocol#position#vim_to_lsp('%', [1, 10, 0])).to_equal({
+      \   'line': 0,
+      \   'character': 3
+      \ })
+    End
+
+    It Should return lsp-position from vim-position 2
+      new!
+      call setline(1, [
+      \   'あいうえお',
+      \   'aiueo'
+      \ ])
+      call s:expect(lamp#protocol#position#vim_to_lsp('%', [2, 4, 0])).to_equal({
+      \   'line': 1,
+      \   'character': 3
+      \ })
+    End
+
+  End
+
+  Describe lamp#protocol#position#lsp_to_vim
+
+    It Should return vim-position from lsp-position 1
+      new!
+      call setline(1, [
+      \   'あいうえお',
+      \   'aiueo'
+      \ ])
+      call s:expect(lamp#protocol#position#lsp_to_vim('%', {
+      \   'line': 0,
+      \   'character': 3
+      \ })).to_equal([1, 10])
+    End
+
+    It Should return lsp-position from vim-position 2
+      new!
+      call setline(1, [
+      \   'あいうえお',
+      \   'aiueo'
+      \ ])
+      call s:expect(lamp#protocol#position#lsp_to_vim('%', {
+      \   'line': 1,
+      \   'character': 3
+      \ })).to_equal([2, 4])
+    End
+  End
+
+End
+
+
+

@@ -37,12 +37,20 @@ function! lamp#protocol#position#vim_to_lsp(expr, pos) abort
   let l:bufnr = bufnr(a:expr)
   if bufloaded(l:bufnr)
     let l:line = getbufline(l:bufnr, a:pos[0])[0]
-  else
+  elseif filereadable(bufname(a:expr))
     let l:line = readfile(bufname(a:expr), '', a:pos[0])[-1]
+  else
+    return {
+    \   'line': a:pos[0] - 1,
+    \   'character': a:pos[1] + a:pos[2] - 1
+    \ }
   endif
+
+  let l:lnum = a:pos[0]
+  let l:col = a:pos[1] + get(a:pos, 2, 0)
   return {
   \   'line': a:pos[0] - 1,
-  \   'character': strchars(l:line[0 : a:pos[1] + get(a:pos, 2, 0) - 2])
+  \   'character': strchars(strpart(l:line, 0, l:col - 1))
   \ }
 endfunction
 
@@ -52,9 +60,12 @@ endfunction
 function! lamp#protocol#position#lsp_to_vim(expr, position) abort
   if bufloaded(bufnr(a:expr))
     let l:line = getbufline(a:expr, a:position.line + 1)[0]
-  else
+  elseif filereadable(bufname(a:expr))
     let l:line = readfile(bufname(a:expr), '', a:position.line + 1)[-1]
+  else
+    return [a:position.line + 1, a:position.character + 1]
   endif
+
   return [
   \   a:position.line + 1,
   \   strlen(strcharpart(l:line, 0, a:position.character)) + 1
