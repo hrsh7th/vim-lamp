@@ -26,11 +26,6 @@ let s:context = {
 " init
 "
 function! lamp#feature#diagnostic#init() abort
-  execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
-  autocmd!
-  autocmd InsertLeave,TextChanged,TextChangedI,TextChangedP <buffer> call s:check()
-  autocmd BufWritePost <buffer> call s:update()
-augroup END
 endfunction
 
 "
