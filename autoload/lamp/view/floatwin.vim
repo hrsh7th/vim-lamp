@@ -83,6 +83,10 @@ endfunction
 " show
 "
 function! s:Floatwin.show(screenpos, contents) abort
+  if getcmdwintype() !=# ''
+    return
+  endif
+
   let self.screenpos = a:screenpos
   let self.contents = self.fix_contents(a:contents)
 
