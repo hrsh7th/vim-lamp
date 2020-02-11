@@ -4,3 +4,4 @@ lamp
 Async.Promise
 LSP.Position
 LSP.TextEdit
+RPC.JSON

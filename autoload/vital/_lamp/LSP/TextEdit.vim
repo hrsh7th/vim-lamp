@@ -13,15 +13,13 @@ delfunction s:_SID
 function! s:apply(expr, text_edits) abort
   let l:current_bufnr = bufnr('%')
   let l:target_bufnr = bufnr(a:expr)
-  let l:cursor_pos = getpos('.')[1 : 2]
+  let l:cursor_pos = getpos('.')[1 : 3]
 
   execute printf('keepalt keepjumps %sbuffer!', l:target_bufnr)
   for l:text_edit in s:_normalize(l:target_bufnr, a:text_edits)
     call s:_apply(l:target_bufnr, l:text_edit, l:cursor_pos)
   endfor
   execute printf('keepalt keepjumps %sbuffer!', l:current_bufnr)
-
-  let g:cursor_pos = l:cursor_pos
 
   if l:current_bufnr == l:target_bufnr
     call cursor(l:cursor_pos)
@@ -32,10 +30,11 @@ endfunction
 " _apply
 "
 function! s:_apply(bufnr, text_edit, cursor_pos) abort
+  " create before/after line.
   let l:start_line = getline(a:text_edit.range.start.line + 1)
   let l:end_line = getline(a:text_edit.range.end.line + 1)
   let l:before_line = strcharpart(l:start_line, 0, a:text_edit.range.start.character)
-  let l:after_line = strcharpart(l:end_line, a:text_edit.range.end.character, strlen(l:end_line) - a:text_edit.range.end.character)
+  let l:after_line = strcharpart(l:end_line, a:text_edit.range.end.character, strchars(l:end_line) - a:text_edit.range.end.character)
 
   " create new lines.
   let l:new_lines = split(a:text_edit.newText, "\n", v:true)
@@ -43,7 +42,7 @@ function! s:_apply(bufnr, text_edit, cursor_pos) abort
   let l:new_lines[-1] = l:new_lines[-1] . l:after_line
   let l:new_lines_len = len(l:new_lines)
 
-  " cursor pos
+  " fix cursor pos
   if a:text_edit.range.end.line <= a:cursor_pos[0]
     let a:cursor_pos[0] += l:new_lines_len - (a:text_edit.range.end.line - a:text_edit.range.start.line) - 1
   endif
