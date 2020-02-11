@@ -99,7 +99,7 @@ function! s:get_contents(response) abort
   let l:parameter_doc = ''
   if !empty(l:parameter) && has_key(l:parameter, 'documentation') && !empty(l:parameter.documentation)
     let l:parameter_doc = ''
-    let l:parameter_doc .= '**' . s:get_parameter_label(l:signature, l:parameter) . '**'
+    let l:parameter_doc .= '__' . s:get_parameter_label(l:signature, l:parameter) . '__'
     let l:parameter_doc .= ' - '
     let l:parameter_doc .= lamp#protocol#markup_content#to_string(l:parameter.documentation)
     let l:parameter_doc .= "\n"

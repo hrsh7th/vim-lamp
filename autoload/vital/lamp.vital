@@ -1,4 +1,6 @@
 lamp
-aff802c74faf6263e35289e5f552e2a89380a2d0
+4d1d1575d25ab1f5c02c69d0d256d15f0cb0f69f
 
 Async.Promise
+LSP.Position
+LSP.TextEdit

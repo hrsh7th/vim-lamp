@@ -43,7 +43,8 @@ function! lamp#feature#completion#convert(server_name, response) abort
     " textEdit
     if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
       let l:word = matchstr(l:completion_item.label, '\k\+')
-      let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
+      let l:abbr = get(l:completion_item, 'insertText', l:completion_item.label)
+      let l:abbr = l:abbr . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
 
     " snippet
     elseif has_key(l:completion_item, 'insertText') && get(l:completion_item, 'insertTextFormat', 1) == 2
@@ -68,7 +69,7 @@ function! lamp#feature#completion#convert(server_name, response) abort
     call add(l:completed_items, {
           \   'word': trim(l:word),
           \   'abbr': l:abbr,
-          \   'menu': get(split(get(l:completion_item, 'detail', ''), "\n"), 0, 0),
+          \   'menu': get(split(trim(get(l:completion_item, 'detail', '')), "\n"), 0, ''),
           \   'kind': lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
           \   'user_data': l:user_data_key,
           \   '_filter_text': get(l:completion_item, 'filterText', l:word),
