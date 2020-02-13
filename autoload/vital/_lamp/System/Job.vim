@@ -55,7 +55,7 @@ function! s:Nvim.start() abort
   let self.job = jobstart(self.command, {
   \   'on_stdout': { id, data, event -> self.emitter.emit('stdout', join(data, "\n")) },
   \   'on_stderr': { id, data, event -> self.emitter.emit('stderr', join(data, "\n")) },
-  \   'on_exit': { id, data, event -> self.emitter.emit('exit', join(data, "\n")) },
+  \   'on_exit': { id, data, event -> self.emitter.emit('exit', data) },
   \ })
 endfunction
 

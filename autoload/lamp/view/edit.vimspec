@@ -90,38 +90,6 @@ Describe lamp#view#edit
     call s:expect(lamp#view#buffer#get_lines(bufnr(s:filepath2))[0]).to_equal("export const module2 = () => {")
   End
 
-  It Should keep cursor position 1
-    call s:buffer([
-          \ "_______",
-          \ "___#___",
-          \ "_______"])
-    call setpos('.', [bufnr('%'), 2, 4, 0])
-    call lamp#view#edit#apply(bufnr('%'), [{
-          \   'range': {
-          \     'start': { 'line': 0, 'character': 0 },
-          \     'end': { 'line': 1, 'character': 0 }
-          \   },
-          \   'newText': "e\neeee"
-          \ }])
-    call s:expect([2, 8, 0]).to_equal(getpos('.')[1 : -1])
-  End
-
-  It Should keep cursor position 2
-    call s:buffer([
-          \ "_______",
-          \ "___#___",
-          \ "_______"])
-    call setpos('.', [bufnr('%'), 2, 4, 0])
-    call lamp#view#edit#apply(bufnr('%'), [{
-          \   'range': {
-          \     'start': { 'line': 0, 'character': 0 },
-          \     'end': { 'line': 1, 'character': 0 }
-          \   },
-          \   'newText': "1\n2\n2345"
-          \ }])
-    call s:expect([3, 8, 0]).to_equal(getpos('.')[1 : -1])
-  End
-
   " @see https://github.com/microsoft/vscode-languageserver-node/blob/master/textDocument/src/test/edits.test.ts
 
   It Should edit inserts 1

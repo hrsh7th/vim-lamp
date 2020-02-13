@@ -39,13 +39,13 @@ let s:Connection = {}
 " new
 "
 function! s:Connection.new(args) abort
-  return extend(deepcopy(s:Connection, {
-  \   'job': s:Job.new(a:args.command),
+  return extend(deepcopy(s:Connection), {
+  \   'job': s:Job.new({ 'command': a:args.command }),
   \   'emitter': s:Emitter.new(),
   \   'buffer':  '',
   \   'request_id': 0,
   \   'request_map': {},
-  \ }))
+  \ })
 endfunction
 
 "
@@ -93,7 +93,7 @@ function! s:Connection.request(method, ...) abort
   endfunction
 
   let l:message = extend({ 'method': a:method }, len(a:000) > 0 ? { 'params': a:000[0] } : {})
-  return s:Promise.new(function(self._request, [l:message], self))
+  return s:Promise.new(function(l:ctx.callback, [l:message], self))
 endfunction
 
 "
@@ -124,13 +124,13 @@ endfunction
 function! s:Connection.on_message(message) abort
   if has_key(a:message, 'id')
     " Response from server.
-    if has_key(self.requests, a:message.id)
+    if has_key(self.request_map, a:message.id)
       if has_key(a:message, 'error')
-        call self.requests[a:message.id].reject(a:message.error)
+        call self.request_map[a:message.id].reject(a:message.error)
       else
-        call self.requests[a:message.id].resolve(get(a:message, 'result', v:null))
+        call self.request_map[a:message.id].resolve(get(a:message, 'result', v:null))
       endif
-      unlet self.requests[a:message.id]
+      call remove(self.request_map, a:message.id)
 
     " Request from server.
     else
@@ -172,7 +172,7 @@ function! s:Connection.on_stdout(data) abort
 
   " try content.
   try
-    let l:message = json_decode(self.buffer[l:header_length : l:end_of_content - 1])
+    let l:message = json_decode(trim(self.buffer[l:header_length : l:end_of_content - 1]))
     let self.buffer = self.buffer[l:end_of_content : ]
 
     call self.on_message(l:message)

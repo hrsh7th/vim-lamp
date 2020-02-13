@@ -1,3 +1,4 @@
+let s:Position = vital#lamp#import('LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({
@@ -301,7 +302,7 @@ endfunction
 " clear_completed_string
 "
 function! s:clear_completed_string(curpos, line, completed_item, completion_item) abort
-  let l:position = lamp#protocol#position#vim_to_lsp('%', a:curpos[1 : 3])
+  let l:position = s:Position.vim_to_lsp('%', a:curpos[1 : 3])
 
   let l:range = {
         \   'start': {
@@ -310,6 +311,7 @@ function! s:clear_completed_string(curpos, line, completed_item, completion_item
         \   },
         \   'end': l:position
         \ }
+
   if has_key(a:completion_item, 'textEdit')
     let l:range = lamp#protocol#range#merge_expand(l:range, a:completion_item.textEdit.range)
     let l:range.start = a:completion_item.textEdit.range.start
@@ -319,7 +321,7 @@ function! s:clear_completed_string(curpos, line, completed_item, completion_item
   let l:line .= strcharpart(a:line, 0, l:range.start.character)
   let l:line .= strcharpart(a:line, l:range.end.character, strchars(a:line) - l:range.end.character)
   undojoin | call setline('.', l:line)
-  call cursor(lamp#protocol#position#lsp_to_vim('%', l:range.start))
+  call cursor(s:Position.lsp_to_vim('%', l:range.start))
 endfunction
 
 "

@@ -4,7 +4,7 @@
 function! s:_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze__SID$')
 endfunction
-execute join(['function! vital#_lamp#Async#Promise#import() abort', printf("return map({'on_unhandled_rejection': '', 'resolve': '', '_vital_depends': '', 'wait': '', '_vital_created': '', 'all': '', 'noop': '', 'is_promise': '', 'race': '', 'is_available': '', 'reject': '', 'new': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
+execute join(['function! vital#_lamp#Async#Promise#import() abort', printf("return map({'resolve': '', '_vital_depends': '', 'wait': '', '_vital_created': '', 'all': '', 'noop': '', 'on_unhandled_rejection': '', 'is_promise': '', 'race': '', 'is_available': '', 'reject': '', 'new': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
 delfunction s:_SID
 " ___vital___
 " ECMAScript like Promise library for asynchronous operations.
@@ -42,10 +42,6 @@ endfunction
 " @vimlint(EVL103, 0, a:resolve)
 " @vimlint(EVL103, 0, a:reject)
 let s:NOOP = funcref('s:noop')
-
-function! s:on_unhandled_rejection_default(...) abort
-endfunction
-let s:ON_UNHANDLED_REJECTION = function('s:on_unhandled_rejection_default')
 
 " Internal APIs
 
@@ -103,6 +99,9 @@ function! s:_publish(promise, ...) abort
   endif
 
   if empty(a:promise._children)
+    if settled == s:REJECTED
+      call s:_on_unhandled_rejection(a:promise._result)
+    endif
     return
   endif
 
@@ -212,10 +211,6 @@ function! s:_race(promises, resolve, reject) abort
 endfunction
 
 " Public APIs
-"
-function! s:on_unhandled_rejection(CB) abort
-  let s:ON_UNHANDLED_REJECTION = a:CB
-endfunction
 
 function! s:new(resolver) abort
   let promise = deepcopy(s:PROMISE)
@@ -285,6 +280,11 @@ function! s:wait(promise, ...) abort
   else
     return [v:null, a:promise._result]
   endif
+endfunction
+
+let s:_on_unhandled_rejection = s:NOOP
+function! s:on_unhandled_rejection(on_unhandled_rejection) abort
+  let s:_on_unhandled_rejection = a:on_unhandled_rejection
 endfunction
 
 function! s:_promise_then(...) dict abort

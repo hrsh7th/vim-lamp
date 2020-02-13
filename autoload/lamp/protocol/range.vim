@@ -122,18 +122,3 @@ function! lamp#protocol#range#has_length(range) abort
         \ )
 endfunction
 
-"
-" lamp#protocol#range#to_vim
-"
-function! lamp#protocol#range#to_vim(range) abort
-  return {
-        \   'start': {
-        \     'line': a:range.start.line + 1,
-        \     'character': a:range.start.character + 1
-        \   },
-        \   'end': {
-        \     'line': a:range.end.line + 1,
-        \     'character': a:range.end.character + 1
-        \   }
-        \ }
-endfunction
