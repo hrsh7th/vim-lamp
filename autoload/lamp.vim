@@ -1,3 +1,4 @@
+let s:Position = vital#lamp#import('LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Server = lamp#server#import()
 
@@ -302,7 +303,7 @@ function! lamp#complete(find_start, base) abort
   for l:server in l:servers
     let s:context.requests[l:server.name] = l:server.request('textDocument/completion', {
           \   'textDocument': lamp#protocol#document#identifier(bufnr('%')),
-          \   'position': lamp#protocol#position#get(),
+          \   'position': s:Position.cursor(),
           \   'context': {
           \     'triggerKind': 2,
           \     'triggerCharacter': lamp#view#cursor#get_before_char_skip_white()

@@ -1,3 +1,5 @@
+let s:Position = vital#lamp#import('LSP.Position')
+
 let s:highlight_id = 0
 let s:highlight_namespace = 'lamp#feature#document_highlight'
 
@@ -31,7 +33,7 @@ endfunction
 " lamp#feature#document_highlight#do
 "
 function! lamp#feature#document_highlight#do() abort
-  let l:highlights_under_cursor = lamp#view#highlight#get(lamp#protocol#position#get())
+  let l:highlights_under_cursor = lamp#view#highlight#get(s:Position.cursor())
 
   " remove highlight under cursor if already highlighted.
   if len(l:highlights_under_cursor) != 0
@@ -51,7 +53,7 @@ function! lamp#feature#document_highlight#do() abort
   endif
   let l:p = l:servers[0].request('textDocument/documentHighlight', {
         \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
-        \   'position': lamp#protocol#position#get()
+        \   'position': s:Position.cursor()
         \ })
   let l:p = l:p.then({ response -> s:on_response(l:bufnr, response) })
   let l:p = l:p.catch(lamp#rescue())

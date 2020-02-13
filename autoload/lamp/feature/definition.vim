@@ -1,3 +1,4 @@
+let s:Position = vital#lamp#import('LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
 
 "
@@ -21,7 +22,7 @@ function! lamp#feature#definition#do(command) abort
     return
   endif
 
-  let l:position = lamp#protocol#position#get()
+  let l:position = s:Position.cursor()
   let l:promises = map(l:servers, { k, v ->
         \   v.request('textDocument/definition', {
         \     'textDocument': lamp#protocol#document#identifier(bufnr('%')),

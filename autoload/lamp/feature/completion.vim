@@ -42,13 +42,12 @@ function! lamp#feature#completion#convert(server_name, response) abort
   for l:completion_item in l:completion_items
     " textEdit
     if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
-      let l:word = matchstr(l:completion_item.label, '\k\+')
-      let l:abbr = get(l:completion_item, 'insertText', l:completion_item.label)
-      let l:abbr = l:abbr . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
+      let l:word = trim(l:completion_item.label)
+      let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
 
     " snippet
     elseif has_key(l:completion_item, 'insertText') && get(l:completion_item, 'insertTextFormat', 1) == 2
-      let l:word = matchstr(l:completion_item.label, '\k\+')
+      let l:word = l:completion_item.label
       let l:abbr = l:word . (l:word !=# l:completion_item.insertText ? '~' : '')
 
     " normal
@@ -313,6 +312,7 @@ function! s:clear_completed_string(curpos, line, completed_item, completion_item
         \ }
   if has_key(a:completion_item, 'textEdit')
     let l:range = lamp#protocol#range#merge_expand(l:range, a:completion_item.textEdit.range)
+    let l:range.start = a:completion_item.textEdit.range.start
   endif
 
   let l:line = ''

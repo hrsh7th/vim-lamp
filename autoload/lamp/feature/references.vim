@@ -1,3 +1,4 @@
+let s:Position = vital#lamp#import('LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
 
 "
@@ -22,7 +23,7 @@ function! lamp#feature#references#do(include_declaration) abort
   let l:promises = map(l:servers, { k, v ->
         \   v.request('textDocument/references', {
         \     'textDocument': lamp#protocol#document#identifier(bufnr('%')),
-        \     'position': lamp#protocol#position#get(),
+        \     'position': s:Position.cursor(),
         \     'context': {
         \       'includeDeclaration': a:include_declaration
         \     }

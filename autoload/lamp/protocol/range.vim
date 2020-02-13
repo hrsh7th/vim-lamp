@@ -1,8 +1,10 @@
+let s:Position = vital#lamp#import('LSP.Position')
+
 "
 " lamp#protocol#range#in_line
 "
 function! lamp#protocol#range#in_line(range) abort
-  let l:position = lamp#protocol#position#get()
+  let l:position = s:Position.cursor()
   return a:range.start.line <= l:position.line && l:position.line <= a:range.end.line
 endfunction
 

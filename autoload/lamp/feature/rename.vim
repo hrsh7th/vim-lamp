@@ -1,3 +1,4 @@
+let s:Position = vital#lamp#import('LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
 
 "
@@ -42,7 +43,7 @@ function! s:request_prepare(bufnr, server) abort
   if a:server.supports('capabilities.renameProvider.prepareProvider')
     return a:server.request('textDocument/prepareRename', {
           \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
-          \   'position': lamp#protocol#position#get()
+          \   'position': s:Position.cursor()
           \ })
   endif
 
@@ -67,7 +68,7 @@ function! s:request_rename(bufnr, server, target) abort
 
   return a:server.request('textDocument/rename', {
         \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
-        \   'position': lamp#protocol#position#get(),
+        \   'position': s:Position.cursor(),
         \   'newName': l:new_name
         \ })
 endfunction

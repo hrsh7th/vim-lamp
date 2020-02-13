@@ -1,3 +1,4 @@
+let s:Position = vital#lamp#import('LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({})
@@ -39,7 +40,7 @@ function! lamp#feature#hover#do() abort
   let l:promises = map(l:servers, { k, v ->
         \   v.request('textDocument/hover', {
         \     'textDocument': lamp#protocol#document#identifier(l:bufnr),
-        \     'position': lamp#protocol#position#get()
+        \     'position': s:Position.cursor()
         \   }).catch(lamp#rescue(v:null))
         \ })
   let l:p = s:Promise.all(l:promises)
