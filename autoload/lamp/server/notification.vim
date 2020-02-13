@@ -27,9 +27,9 @@ function! s:text_document_publish_diagnostics(server, notification) abort
     return
   endif
 
-  let l:doc = a:server.documents[a:notification.params.uri]
-  call l:doc.set_diagnostics(a:notification.params.diagnostics)
-  call lamp#feature#diagnostic#update(a:server, l:doc)
+  let l:document = a:server.documents[a:notification.params.uri]
+  call l:document.set_diagnostics(a:notification.params.diagnostics)
+  call lamp#feature#diagnostic#update(a:server, l:document)
 endfunction
 
 "

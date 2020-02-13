@@ -101,7 +101,6 @@ function! s:update(server_name, document) abort
     endif
 
     " add diagnostic
-    call lamp#profile('diagnostic update')
     let s:context.state[a:document.bufnr][l:line][a:server_name] = l:diagnostic
     let l:severity = get(l:diagnostic, 'severity', 1)
     if l:severity == 1
