@@ -1,4 +1,4 @@
-let s:TextEdit = vital#lamp#import('LSP.TextEdit')
+let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 
 "
 " lamp#view#edit#normalize_workspace_edit

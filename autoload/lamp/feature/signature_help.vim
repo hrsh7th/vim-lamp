@@ -1,4 +1,4 @@
-let s:Position = vital#lamp#import('LSP.Position')
+let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin  = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({ 'max_height': 12 })

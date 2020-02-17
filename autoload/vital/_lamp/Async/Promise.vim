@@ -100,7 +100,11 @@ function! s:_publish(promise, ...) abort
 
   if empty(a:promise._children)
     if settled == s:REJECTED
-      call s:_on_unhandled_rejection(a:promise._result)
+      try
+        call s:_on_unhandled_rejection(a:promise._result)
+      catch /.*/
+        echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+      endtry
     endif
     return
   endif

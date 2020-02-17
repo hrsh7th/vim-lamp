@@ -4,21 +4,21 @@
 function! s:_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze__SID$')
 endfunction
-execute join(['function! vital#_lamp#System#Job#import() abort', printf("return map({'_vital_depends': '', 'new': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
+execute join(['function! vital#_lamp#VS#System#Job#import() abort', printf("return map({'_vital_depends': '', 'new': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
 delfunction s:_SID
 " ___vital___
 "
 " _vital_loaded
 "
 function! s:_vital_loaded(V) abort
-  let s:Emitter = a:V.import('Event.Emitter')
+  let s:Emitter = a:V.import('VS.Event.Emitter')
 endfunction
 
 "
 " _vital_depends
 "
 function! s:_vital_depends() abort
-  return ['Event.Emitter']
+  return ['VS.Event.Emitter']
 endfunction
 
 "

@@ -4,40 +4,40 @@
 function! s:_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze__SID$')
 endfunction
-execute join(['function! vital#_lamp#LSP#TextEdit#import() abort', printf("return map({'_vital_depends': '', 'apply': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
+execute join(['function! vital#_lamp#VS#LSP#TextEdit#import() abort', printf("return map({'_vital_depends': '', 'apply': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
 delfunction s:_SID
 " ___vital___
 "
 " _vital_loaded
 "
 function! s:_vital_loaded(V) abort
-  let s:Text = a:V.import('LSP.Text')
+  let s:Text = a:V.import('VS.LSP.Text')
 endfunction
 
 "
 " _vital_depends
 "
 function! s:_vital_depends() abort
-  return ['LSP.Text']
+  return ['VS.LSP.Text']
 endfunction
 
 "
 " apply
 "
-function! s:apply(expr, text_edits) abort
-  let l:current_bufnr = bufnr('%')
-  let l:target_bufnr = bufnr(a:expr)
+function! s:apply(path, text_edits) abort
+  let l:current_bufname = bufname('%')
+  let l:target_bufname = a:path
   let l:cursor_pos = getpos('.')[1 : 3]
   let l:cursor_offset = 0
   let l:topline = line('w0')
 
-  execute printf('keepalt keepjumps %sbuffer!', l:target_bufnr)
-  for l:text_edit in s:_normalize(l:target_bufnr, a:text_edits)
-    let l:cursor_offset += s:_apply(l:target_bufnr, l:text_edit, l:cursor_pos)
+  call s:_switch(l:target_bufname)
+  for l:text_edit in s:_normalize(a:text_edits)
+    let l:cursor_offset += s:_apply(bufnr(l:target_bufname), l:text_edit, l:cursor_pos)
   endfor
-  execute printf('keepalt keepjumps %sbuffer!', l:current_bufnr)
+  call s:_switch(l:current_bufname)
 
-  if l:current_bufnr == l:target_bufnr
+  if l:current_bufname == l:target_bufname
     let l:length = strlen(getline(l:cursor_pos[0]))
     let l:cursor_pos[2] = max([0, l:cursor_pos[1] + l:cursor_pos[2] - l:length])
     let l:cursor_pos[1] = min([l:length, l:cursor_pos[1] + l:cursor_pos[2]])
@@ -84,18 +84,18 @@ endfunction
 "
 " _normalize
 "
-function! s:_normalize(bufnr, text_edits) abort
+function! s:_normalize(text_edits) abort
   let l:text_edits = type(a:text_edits) == type([]) ? a:text_edits : [a:text_edits]
-  let l:text_edits = s:_range(a:bufnr, l:text_edits)
+  let l:text_edits = s:_range(l:text_edits)
   let l:text_edits = sort(copy(l:text_edits), function('s:_compare', [], {}))
-  let l:text_edits = s:_check(a:bufnr, l:text_edits)
+  let l:text_edits = s:_check(l:text_edits)
   return reverse(l:text_edits)
 endfunction
 
 "
 " _range
 "
-function! s:_range(bufnr, text_edits) abort
+function! s:_range(text_edits) abort
   for l:text_edit in a:text_edits
     if l:text_edit.range.start.line > l:text_edit.range.end.line || (
           \   l:text_edit.range.start.line == l:text_edit.range.end.line &&
@@ -110,7 +110,7 @@ endfunction
 "
 " _check
 "
-function! s:_check(bufnr, text_edits) abort
+function! s:_check(text_edits) abort
   if len(a:text_edits) > 1
     let l:range = a:text_edits[0].range
     for l:text_edit in a:text_edits[1 : -1]
@@ -118,7 +118,7 @@ function! s:_check(bufnr, text_edits) abort
       \   l:range.end.line == l:text_edit.range.start.line &&
       \   l:range.end.character > l:text_edit.range.start.character
       \ )
-        throw 'LSP.TextEdit: range overlapped.'
+        throw 'VS.LSP.TextEdit: range overlapped.'
       endif
       let l:range = l:text_edit.range
     endfor
@@ -135,5 +135,16 @@ function! s:_compare(text_edit1, text_edit2) abort
     return a:text_edit1.range.start.character - a:text_edit2.range.start.character
   endif
   return l:diff
+endfunction
+
+"
+" _switch
+"
+function! s:_switch(path) abort
+  if bufnr(a:path) >= 0
+    execute printf('keepalt keepjumps %sbuffer!', bufnr(a:path))
+  else
+    execute printf('keepalt keepjumps edit! %s', fnameescape(a:path))
+  endif
 endfunction
 

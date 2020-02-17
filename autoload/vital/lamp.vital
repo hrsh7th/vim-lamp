@@ -1,7 +1,7 @@
 lamp
-ae5e38c8cb09a0a4778f53e42a41b7bd284d9b9d
+637cae33a3efc5e838f1b736cc436bf13a77733e
 
 Async.Promise
-LSP.Position
-LSP.TextEdit
-RPC.JSON
+VS.LSP.Position
+VS.LSP.TextEdit
+VS.RPC.JSON

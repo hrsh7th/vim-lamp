@@ -1,4 +1,4 @@
-let s:Position = vital#lamp#import('LSP.Position')
+let s:Position = vital#lamp#import('VS.LSP.Position')
 
 let s:highlight_id = 0
 let s:highlight_namespace = 'lamp#feature#document_highlight'
