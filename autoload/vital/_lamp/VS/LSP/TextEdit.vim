@@ -37,7 +37,7 @@ function! s:apply(path, text_edits) abort
   endfor
   call s:_switch(l:current_bufname)
 
-  if l:current_bufname == l:target_bufname
+  if bufnr(l:current_bufname) == bufnr(l:target_bufname)
     let l:length = strlen(getline(l:cursor_pos[0]))
     let l:cursor_pos[2] = max([0, l:cursor_pos[1] + l:cursor_pos[2] - l:length])
     let l:cursor_pos[1] = min([l:length, l:cursor_pos[1] + l:cursor_pos[2]])
@@ -75,7 +75,7 @@ function! s:_apply(bufnr, text_edit, cursor_pos) abort
   " remove old lines
   execute printf('%s,%sdelete _',
   \   l:new_lines_len + a:text_edit.range.start.line + 1,
-  \   l:new_lines_len + a:text_edit.range.end.line + 1
+  \   min([l:new_lines_len + a:text_edit.range.end.line + 1, line('$')])
   \ )
 
   return l:cursor_offset
