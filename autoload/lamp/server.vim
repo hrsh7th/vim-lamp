@@ -104,7 +104,11 @@ function! s:Server.initialize() abort
   function! l:ctx.callback(response) abort dict
     call self.capability.merge(a:response)
     call self.channel.notify('initialized', {})
+
     doautocmd User lamp#server#initialized
+
+    call lamp#view#notice#add({ 'lines': [printf('`%s` initialized', self.name)] })
+
     return a:response
   endfunction
 
