@@ -4,7 +4,7 @@
 function! s:_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze__SID$')
 endfunction
-execute join(['function! vital#_lamp#VS#LSP#Text#import() abort', printf("return map({'normalize_eol': '', 'split_eol': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
+execute join(['function! vital#_lamp#VS#LSP#Text#import() abort', printf("return map({'normalize_eol': '', 'split_by_eol': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
 delfunction s:_SID
 " ___vital___
 "
@@ -18,9 +18,9 @@ function! s:normalize_eol(text) abort
 endfunction
 
 "
-" split_eol
+" split_by_eol
 "
-function! s:split_eol(text) abort
+function! s:split_by_eol(text) abort
   return split(s:normalize_eol(a:text), "\n", v:true)
 endfunction
 

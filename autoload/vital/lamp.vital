@@ -1,7 +1,8 @@
 lamp
-637cae33a3efc5e838f1b736cc436bf13a77733e
+7bc5410a9a5b7a43362e545bab41e1383fdbbfed
 
 Async.Promise
 VS.LSP.Position
 VS.LSP.TextEdit
 VS.RPC.JSON
+VS.Text.Diff
