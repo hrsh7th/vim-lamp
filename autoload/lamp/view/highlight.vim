@@ -128,10 +128,22 @@ endfunction
 " initialize
 "
 function! s:initialize() abort
-  execute printf('highlight! link LampError Error')
-  execute printf('highlight! link LampWarning WarningMsg')
-  execute printf('highlight! link LampInformation MoreMsg')
-  execute printf('highlight! link LampHint NonText')
+  for l:definition in [{
+  \   'kind': 'Error',
+  \   'guifg': 'Red'
+  \ }, {
+  \   'kind': 'Warning',
+  \   'guifg': 'Orange'
+  \ }, {
+  \   'kind': 'Information',
+  \   'guifg': 'LightYellow'
+  \ }, {
+  \   'kind': 'Hint',
+  \   'guifg': 'LightGray'
+  \ }]
+    execute printf('highlight! default Lamp%s gui=underline cterm=underline guifg=%s', l:definition.kind, l:definition.guifg)
+  endfor
+
   for l:color in s:colors
     execute printf('highlight! Lamp%s guibg=%s', l:color, l:color)
   endfor

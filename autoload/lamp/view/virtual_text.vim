@@ -52,7 +52,7 @@ if exists('*nvim_buf_set_virtual_text')
       let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
     endif
     call nvim_buf_set_virtual_text(a:bufnr, s:namespaces[a:namespace], a:line, [
-          \   [a:text, a:highlight]
+          \   ['>> ' . a:text, a:highlight]
           \ ], {})
   endfunction
 else
@@ -64,10 +64,10 @@ endif
 " initialize
 "
 function! s:initialize() abort
-  execute printf('highlight! link LampVirtualError Error')
-  execute printf('highlight! link LampVirtualWarning WarningMsg')
-  execute printf('highlight! link LampVirtualInformation MoreMsg')
-  execute printf('highlight! link LampVirtualHint NonText')
+  execute printf('highlight! LampVirtualError guifg=Red')
+  execute printf('highlight! LampVirtualWarning guifg=orange')
+  execute printf('highlight! LampVirtualInformation guifg=LightBlue')
+  execute printf('highlight! LampVirtualHint guifg=LightGrey')
 endfunction
 call s:initialize()
 
