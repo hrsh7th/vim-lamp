@@ -147,7 +147,9 @@ function! s:on_complete_changed() abort
     return
   endif
 
-  call timer_start(0, { -> s:remove_just_after_keyword() })
+  if !empty(v:completed_item)
+    call timer_start(0, { -> s:remove_just_after_keyword() })
+  endif
 
   let l:user_data = s:get_managed_user_data(v:completed_item)
   if empty(l:user_data)
