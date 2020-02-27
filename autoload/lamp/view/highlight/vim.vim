@@ -1,3 +1,5 @@
+let s:Position = vital#lamp#import('VS.LSP.Position')
+
 let s:highlights = []
 
 "
@@ -21,24 +23,26 @@ endfunction
 " lamp#view#highlight#vim#add
 "
 if exists('*prop_add')
-  function! lamp#view#highlight#vim#add(namespace, bufnr, positions, highlight) abort
-    for l:position in a:positions
-      call add(s:highlights, {
-            \   'namespace': a:namespace,
-            \   'bufnr': a:bufnr,
-            \   'position': l:position,
-            \   'highlight': a:highlight
-            \ })
-      call prop_add(l:position[0] + 1, l:position[1] + 1, {
-            \   'id': a:namespace,
-            \   'bufnr': a:bufnr,
-            \   'end_col': l:position[2] + 1,
-            \   'type': a:highlight
-            \ })
-    endfor
+  function! lamp#view#highlight#vim#add(namespace, bufnr, range, highlight) abort
+    call add(s:highlights, {
+    \   'namespace': a:namespace,
+    \   'bufnr': a:bufnr,
+    \   'range': a:range,
+    \   'highlight': a:highlight
+    \ })
+
+    let l:start = s:Position.lsp_to_vim(a:bufnr, a:range.start)
+    let l:end = s:Position.lsp_to_vim(a:bufnr, a:range.end)
+    call prop_add(l:start[0], l:start[1], {
+    \   'id': a:namespace,
+    \   'bufnr': a:bufnr,
+    \   'end_lnum': l:end[0],
+    \   'end_col': l:end[1],
+    \   'type': a:highlight
+    \ })
   endfunction
 else
-  function! lamp#view#highlight#vim#add(namespace, bufnr, positions, highlight) abort
+  function! lamp#view#highlight#vim#add(namespace, bufnr, range, highlight) abort
   endfunction
 endif
 
@@ -47,10 +51,7 @@ endif
 "
 if exists('*prop_add')
   function! lamp#view#highlight#vim#get(position) abort
-    return filter(copy(s:highlights), { _, h ->
-          \   h.position[0] == a:position.line
-          \   && h.position[1] <= a:position.character && a:position.character <= h.position[2]
-          \ })
+    return filter(copy(s:highlights), { _, h -> lamp#protocol#position#in_range(a:position, h.range) })
   endfunction
 else
   function! lamp#view#highlight#vim#get(position) abort

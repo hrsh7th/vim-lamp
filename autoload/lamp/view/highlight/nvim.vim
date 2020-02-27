@@ -1,3 +1,5 @@
+let s:Position = vital#lamp#import('VS.LSP.Position')
+
 let s:namespaces = {}
 let s:highlights = []
 
@@ -21,30 +23,33 @@ endfunction
 " lamp#view#highlight#nvim#add
 "
 if exists('*nvim_buf_add_highlight')
-  function! lamp#view#highlight#nvim#add(namespace, bufnr, positions, highlight) abort
+  function! lamp#view#highlight#nvim#add(namespace, bufnr, range, highlight) abort
     if !has_key(s:namespaces, a:namespace)
       let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
     endif
 
-    for l:position in a:positions
+    for l:range in s:ranges(a:bufnr, a:range)
       call add(s:highlights, {
             \   'namespace': a:namespace,
             \   'bufnr': a:bufnr,
-            \   'position': l:position,
+            \   'range': l:range,
             \   'highlight': a:highlight
             \ })
+
+      let l:start = s:Position.lsp_to_vim(a:bufnr, l:range.start)
+      let l:end = s:Position.lsp_to_vim(a:bufnr, l:range.end)
       call nvim_buf_add_highlight(
             \   a:bufnr,
             \   s:namespaces[a:namespace],
             \   a:highlight,
-            \   l:position[0],
-            \   l:position[1],
-            \   l:position[2]
+            \   l:start[0] - 1,
+            \   l:start[1] - 1,
+            \   l:end[1] - 1
             \ )
     endfor
   endfunction
 else
-  function! lamp#view#highlight#nvim#add(namespace, bufnr, positions, highlight) abort
+  function! lamp#view#highlight#nvim#add(namespace, bufnr, range, highlight) abort
   endfunction
 endif
 
@@ -54,8 +59,8 @@ endif
 if exists('*nvim_buf_add_highlight')
   function! lamp#view#highlight#nvim#get(position) abort
     return filter(copy(s:highlights), { _, h ->
-          \   h.position[0] == a:position.line
-          \   && h.position[1] <= a:position.character && a:position.character <= h.position[2]
+          \   h.range.start.line == a:position.line
+          \   && h.range.start.line <= a:position.character && a:position.character <= h.range.start.character
           \ })
   endfunction
 else
@@ -64,3 +69,50 @@ else
   endfunction
 endif
 
+"
+" ranges
+"
+function! s:ranges(bufnr, range) abort
+  if a:range.start.line == a:range.end.line
+    return [a:range]
+  endif
+
+  let l:ranges = []
+  for l:line in range(a:range.start.line, a:range.end.line)
+    if a:range.start.line == l:line
+      let l:ranges += [{
+      \   'start': {
+      \     'line': l:line,
+      \     'character': a:range.start.character
+      \   },
+      \   'end': {
+      \     'line': l:line,
+      \     'character': strchars(get(getbufline(a:bufnr, l:line + 1), 0 , ''))
+      \   }
+      \ }]
+    elseif a:range.end.line == l:line
+      let l:ranges += [{
+      \   'start': {
+      \     'line': l:line,
+      \     'character': 0
+      \   },
+      \   'end': {
+      \     'line': l:line,
+      \     'character': a:range.end.character
+      \   }
+      \ }]
+    else
+      let l:ranges += [{
+      \   'start': {
+      \     'line': l:line,
+      \     'character': 0
+      \   },
+      \   'end': {
+      \     'line': l:line,
+      \     'character': strchars(get(getbufline(a:bufnr, l:line + 1), 0 , ''))
+      \   }
+      \ }]
+    endif
+  endfor
+  return l:ranges
+endfunction

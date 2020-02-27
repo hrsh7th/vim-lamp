@@ -91,37 +91,7 @@ function! s:add_highlight(namespace, bufnr, range, highlight) abort
   endif
 
   " add highlight.
-  call lamp#view#highlight#{s:ns}#add(a:namespace, a:bufnr, s:positions(a:bufnr, a:range), a:highlight)
-endfunction
-
-"
-" positions
-"
-function! s:positions(bufnr, range) abort
-  " to inclusive.
-  if a:range.end.character == 0
-    let a:range.end.character = strlen(get(getbufline(a:bufnr, a:range.end.line), 0, ''))
-    let a:range.end.line -= 1
-  endif
-
-  " same line.
-  if a:range.start.line == a:range.end.line
-    return [[a:range.start.line, a:range.start.character, a:range.end.character]]
-  endif
-
-  " multiline.
-  let l:positions = []
-  for l:line in range(a:range.start.line, a:range.end.line)
-    if a:range.start.line == l:line
-      call add(l:positions, [l:line, a:range.start.character, a:range.end.character])
-    elseif a:range.end.line == l:line
-      call add(l:positions, [l:line, 0, a:range.end.character])
-    else
-      let l:text = get(getbufline(a:bufnr, l:line + 1), 0, '')
-      call add(l:positions, [l:line, 0, strlen(l:text)])
-    endif
-  endfor
-  return l:positions
+  call lamp#view#highlight#{s:ns}#add(a:namespace, a:bufnr, a:range, a:highlight)
 endfunction
 
 "
