@@ -116,20 +116,6 @@ function! s:clear_managed_user_data() abort
 endfunction
 
 "
-" remove_just_after_keyword
-"
-function! s:remove_just_after_keyword() abort
-  let l:line = getline('.')
-  let l:before = l:line[0 : col('.') - 2]
-  let l:after = l:line[col('.') - 2 : -1]
-  let l:after_keyword = matchstr(l:after, '^\k\+')
-
-  if l:after_keyword !=# ''
-    cal setline('.', l:before . l:after[strlen(l:after_keyword) : -1])
-  endif
-endfunction
-
-"
 " on_insert_leave
 "
 function! s:on_insert_leave() abort
@@ -145,10 +131,6 @@ endfunction
 function! s:on_complete_changed() abort
   if !lamp#config('feature.completion.floating_docs')
     return
-  endif
-
-  if !empty(v:completed_item)
-    call timer_start(0, { -> s:remove_just_after_keyword() })
   endif
 
   let l:user_data = s:get_managed_user_data(v:completed_item)
