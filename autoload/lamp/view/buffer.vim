@@ -27,7 +27,9 @@ function! lamp#view#buffer#open(command, location) abort
   let l:bufnr = bufnr(a:location.filename, v:true)
   call setbufvar(l:bufnr, '&buflisted', v:true)
 
-  execute printf('%s %s', a:command, a:location.filename)
+  if l:bufnr != bufnr('%') || a:command !=# 'edit'
+    execute printf('%s %s', a:command, a:location.filename)
+  endif
 
   if has_key(a:location, 'lnum')
     call cursor([a:location.lnum, get(a:location, 'col', 1)])

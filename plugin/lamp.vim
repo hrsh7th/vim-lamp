@@ -57,9 +57,9 @@ augroup lamp
   autocmd!
   autocmd BufEnter,BufWinEnter,FileType * call <SID>on_text_document_did_open()
   if lamp#view#diff#import().type ==# 'compat'
-    autocmd TextChanged,InsertLeave * call <SID>on_text_document_did_change()
+    autocmd BufWritePost,TextChanged,InsertLeave * call <SID>on_text_document_did_change()
   else
-    autocmd TextChanged,TextChangedI,TextChangedP * call <SID>on_text_document_did_change()
+    autocmd BufWritePost,TextChanged,TextChangedI,TextChangedP * call <SID>on_text_document_did_change()
   endif
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
   autocmd VimLeavePre * call <SID>on_vim_leave_pre()
