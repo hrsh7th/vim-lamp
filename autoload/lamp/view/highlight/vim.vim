@@ -12,7 +12,8 @@ function! lamp#view#highlight#vim#remove(namespace, bufnr) abort
 
   call prop_remove({
         \   'id': a:namespace,
-        \   'bufnr': a:bufnr
+        \   'bufnr': a:bufnr,
+        \   'all': v:true
         \ })
   let s:highlights = filter(s:highlights, { _, h ->
         \   h.namespace != a:namespace || h.bufnr != a:bufnr

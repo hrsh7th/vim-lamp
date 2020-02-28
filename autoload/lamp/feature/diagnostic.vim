@@ -5,8 +5,7 @@ let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 "
 " {
 "   changes: {
-"     server: Server,
-"     document: Document
+"     [server_name] Document
 "   }[]
 "   state: {
 "     [bufnr]: {
@@ -55,9 +54,10 @@ function! s:check() abort
   let l:ctx = {}
   function! l:ctx.callback() abort
     for [l:server_name, l:document] in items(s:context.changes)
-      call s:update(l:server_name, l:document)
+      if s:update(l:server_name, l:document)
+        call remove(s:context.changes, l:server_name)
+      endif
     endfor
-    let s:context.changes = {}
   endfunction
 
   let l:timeout = mode()[0] ==# 'n'
@@ -71,7 +71,7 @@ endfunction
 "
 function! s:update(server_name, document) abort
   if a:document.out_of_date() && !a:document.diagnostics_decreased
-    return
+    return v:false
   endif
 
   " remove per server.
@@ -121,5 +121,7 @@ function! s:update(server_name, document) abort
       call lamp#view#virtual_text#hint(l:virtual_text_ns, a:document.bufnr, l:line, l:diagnostic.message)
     endif
   endfor
+
+  return v:true
 endfunction
 

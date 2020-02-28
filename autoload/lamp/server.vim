@@ -74,7 +74,10 @@ endfunction
 function! s:Server.exit() abort
   if self.state.started
     if !empty(self.state.initialized)
-      call lamp#sync(self.channel.request('shutdown'), 200)
+      try
+        call lamp#sync(self.channel.request('shutdown'), 200)
+      catch /.*/
+      endtry
       call self.channel.notify('exit')
       doautocmd User lamp#server#exited
     endif
@@ -278,7 +281,7 @@ function! s:Server.change_document(bufnr) abort
   " incremental sync.
   elseif l:sync_kind == 2
     let l:diff = self.diff.compute(a:bufnr)
-    call l:doc.sync()
+      call l:doc.sync()
     if l:diff.rangeLength != 0 || l:diff.text !=# ''
       call self.channel.notify('textDocument/didChange', {
             \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
