@@ -25,10 +25,10 @@ let s:config = {
       \   'view.location.on_fallback': { command, position -> [
       \     lamp#view#notice({ 'lines': ['`Location`: no locations found.'] })
       \   ] },
-      \   'view.sign.error.text': 'x',
-      \   'view.sign.warning.text': '!',
-      \   'view.sign.information.text': 'i',
-      \   'view.sign.hint.text': '?',
+      \   'view.sign.error.text': '>>',
+      \   'view.sign.warning.text': '>>',
+      \   'view.sign.information.text': '>>',
+      \   'view.sign.hint.text': '>>',
       \   'view.floatwin.fenced_languages': {
       \     'help': ['help'],
       \     'vim': ['vim'],

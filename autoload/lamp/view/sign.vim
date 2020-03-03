@@ -73,18 +73,22 @@ function! s:initialize() abort
   call sign_define('LampSignError', {
         \   'text': lamp#config('view.sign.error.text'),
         \   'texthl': 'LampSignError',
+        \   'numhl': 'LampSignError',
         \ })
   call sign_define('LampSignWarning', {
         \   'text': lamp#config('view.sign.warning.text'),
         \   'texthl': 'LampSignWarning',
+        \   'numhl': 'LampSignWarning',
         \ })
   call sign_define('LampSignInformation', {
         \   'text': lamp#config('view.sign.information.text'),
         \   'texthl': 'LampSignInformation',
+        \   'numhl': 'LampSignInformation',
         \ })
   call sign_define('LampSignHint', {
         \   'text': lamp#config('view.sign.hint.text'),
         \   'texthl': 'LampSignHint',
+        \   'numhl': 'LampSignHint',
         \ })
 endfunction
 call s:initialize()
