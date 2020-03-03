@@ -122,9 +122,10 @@ function! s:on_responses(query, sync, responses) abort
   if has_key(l:code_action.action, 'edit')
     let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(l:code_action.action.edit)
     call lamp#view#edit#apply_workspace(l:workspace_edit)
+  endif
 
   " Command
-  elseif has_key(l:code_action.action, 'command') && type(l:code_action.action.command) == type('')
+  if has_key(l:code_action.action, 'command') && type(l:code_action.action.command) == type('')
     let l:p = l:code_action.server.request('workspace/executeCommand', {
           \   'command': l:code_action.action.command,
           \   'arguments': get(l:code_action.action, 'arguments', v:null)
