@@ -4,6 +4,10 @@
 function! lamp#server#notification#on(server, notification) abort
   if a:notification.method ==# 'textDocument/publishDiagnostics'
     call s:text_document_publish_diagnostics(a:server, a:notification)
+  elseif a:notification.method ==# 'workspace/workspaceFolders'
+    call s:workspace_workspace_folders(a:server, a:notification)
+  elseif a:notification.method ==# 'workspace/configuration'
+    call s:workspace_configuration(a:server, a:notification)
   elseif a:notification.method ==# 'workspace/applyEdit'
     call s:workspace_apply_edit(a:server, a:notification)
   elseif a:notification.method ==# 'window/showMessage'
@@ -30,6 +34,27 @@ function! s:text_document_publish_diagnostics(server, notification) abort
   let l:document = a:server.documents[a:notification.params.uri]
   call l:document.set_diagnostics(a:notification.params.diagnostics)
   call lamp#feature#diagnostic#update(a:server, l:document)
+endfunction
+
+"
+" workspace_workspace_folders
+"
+function! s:workspace_workspace_folders(server, notification) abort
+  call a:server.response(a:notification.id, {
+  \   'result': lamp#feature#workspace#get_folders(a:server)
+  \ })
+endfunction
+
+"
+" workspace_configuration
+"
+function! s:workspace_configuration(server, notification) abort
+  let l:config = lamp#feature#workspace#get_config()
+  call a:server.response(a:notification.id, {
+  \   'result': map(copy(a:notification.params.items), { _, item ->
+  \     lamp#get(l:config, item.section, v:null)
+  \   })
+  \ })
 endfunction
 
 "

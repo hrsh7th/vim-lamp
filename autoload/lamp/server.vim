@@ -24,9 +24,6 @@ function! s:Server.new(name, option) abort
         \   'root_uri': get(a:option, 'root_uri', { -> '' }),
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
         \   'trace': get(a:option, 'trace', 'off'),
-        \   'workspace_path': '',
-        \   'workspace_folders': [],
-        \   'workspace_configurations': get(a:option, 'workspace_configurations', {}),
         \   'diff': s:Diff.new(),
         \   'documents': {},
         \   'capability': s:Capability.new({
@@ -98,7 +95,7 @@ endfunction
 "
 " initialize
 "
-function! s:Server.initialize() abort
+function! s:Server.initialize(bufnr) abort
   if !empty(self.state.initialized)
     return self.state.initialized
   endif
@@ -115,10 +112,15 @@ function! s:Server.initialize() abort
     return a:response
   endfunction
 
+  let l:root_uri = self.root_uri(a:bufnr)
+  if l:root_uri ==# ''
+    let l:root_uri = fnamemodify(bufname('%'), ':p:h')
+  endif
+
   let self.state.initialized = self.channel.request('initialize', {
         \   'processId': getpid(),
-        \   'rootPath': self.root_uri(),
-        \   'rootUri': lamp#protocol#document#encode_uri(self.root_uri()),
+        \   'rootPath': l:root_uri,
+        \   'rootUri': lamp#protocol#document#encode_uri(l:root_uri),
         \   'initializationOptions': self.initialization_options(),
         \   'trace': self.trace,
         \   'capabilities': lamp#server#capability#get_default_capability(),
@@ -131,7 +133,6 @@ endfunction
 "
 function! s:Server.request(method, params) abort
   let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> [self.start(), self.initialize()] })
   let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
   let l:p = l:p.then({ -> self.channel.request(a:method, a:params) })
   return l:p
@@ -151,7 +152,6 @@ endfunction
 "
 function! s:Server.notify(method, params) abort
   let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> [self.start(), self.initialize()] })
   let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
   let l:p = l:p.then({ -> self.channel.notify(a:method, a:params) })
   return l:p
@@ -178,9 +178,8 @@ endfunction
 "
 function! s:Server.ensure_document(bufnr) abort
   call self.start()
-  return self.initialize().then({ -> [
-        \   self.workspace_folder(a:bufnr),
-        \   self.workspace_configuration(a:bufnr),
+  return self.initialize(a:bufnr).then({ -> [
+        \   self.ensure_workspace(a:bufnr),
         \   self.open_document(a:bufnr),
         \   self.close_document(a:bufnr),
         \   self.change_document(a:bufnr)
@@ -188,52 +187,10 @@ function! s:Server.ensure_document(bufnr) abort
 endfunction
 
 "
-" workspace_folder.
+" ensure_workspace.
 "
-function! s:Server.workspace_folder(bufnr) abort
-  if !self.capability.is_workspace_folder_supported()
-    return
-  endif
-
-  let l:root_uri = self.root_uri()
-  for l:folder in self.workspace_folders
-    if l:folder.uri == l:root_uri
-      return
-    endif
-  endfor
-
-  let l:folder = {
-  \   'uri': l:root_uri,
-  \   'name': 'auto detected workspace'
-  \ }
-
-  call self.channel.notify('workspace/didChangeWorkspaceFolders', {
-  \   'event': {
-  \     'added': [l:folder]
-  \   }
-  \ })
-  let self.workspace_folders += [l:folder]
-endfunction
-
-"
-" workspace_configuration.
-"
-function! s:Server.workspace_configuration(bufnr) abort
-  let l:workspace_path = '*'
-
-  let l:path = fnamemodify(bufname(a:bufnr), ':p')
-  for [l:workspace_path, l:configuration] in items(self.workspace_configurations)
-    if stridx(l:workspace_path, l:path) == 0
-      break
-    endif
-  endfor
-
-  if has_key(self.workspace_configurations, l:workspace_path) && self.workspace_path != l:workspace_path
-    let self.workspace_path = l:workspace_path
-    call self.channel.notify('workspace/didChangeConfiguration', {
-          \   'settings': self.workspace_configurations[l:workspace_path]
-          \ })
-  endif
+function! s:Server.ensure_workspace(bufnr) abort
+  call lamp#feature#workspace#update(self, a:bufnr)
 endfunction
 
 "

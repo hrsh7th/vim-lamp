@@ -65,7 +65,7 @@ function! s:on_initialized()
   call lamp#register('example-server', {
         \   'command': ['example-server', '--stdio'],
         \   'filetypes': ['example'],
-        \   'root_uri': { -> lamp#findup('.git', 'example.config.json') },
+        \   'root_uri': { -> lamp#findup(['.git', 'example.config.json']) },
         \   'initialization_options': { -> {
         \   } },
         \   'capabilitis': {
@@ -149,10 +149,10 @@ endfunction
         - [ ] ~~client/unregisterCapability~~ (Maybe unneeded)
 
     - Workspace
-        - [ ] workspace/workspaceFolders
-        - [ ] workspace/didChangeWorkspaceFolders
+        - [x] workspace/workspaceFolders
+        - [x] workspace/didChangeWorkspaceFolders
         - [x] workspace/didChangeConfiguration
-        - [ ] workspace/configuration
+        - [x] workspace/configuration
         - [ ] workspace/didChangeWatchedFiles
         - [ ] workspace/symbol
         - [x] workspace/executeCommand

@@ -53,7 +53,7 @@ function! lamp#server#capability#get_default_capability() abort
         \       'dynamicRegistration': v:false,
         \     },
         \     'workspaceFolders': v:true,
-        \     'configuration': v:false,
+        \     'configuration': v:true,
         \   },
         \   'textDocument': {
         \     'synchronization': {

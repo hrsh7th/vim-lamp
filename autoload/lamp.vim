@@ -221,9 +221,9 @@ endfunction
 "
 " lamp#findup
 "
-function! lamp#findup(...) abort
-  for l:marker in a:000
-    let l:path = fnamemodify(bufname('%'), ':p')
+function! lamp#findup(markers, ...) abort
+  for l:marker in a:markers
+    let l:path = fnamemodify(get(a:000, 0, bufname('%')), ':p')
     while index(['', '/'], l:path) == -1
       let l:candidate = l:path . '/' . l:marker
       if isdirectory(l:candidate) || filereadable(l:candidate)

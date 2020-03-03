@@ -15,7 +15,7 @@ function! lamp#language#php(...) abort
   call lamp#register('intelephense', lamp#merge({
         \   'command': ['intelephense', '--stdio'],
         \   'filetypes': ['php'],
-        \   'root_uri': { -> lamp#findup('.git', 'composer.json') },
+        \   'root_uri': { bufnr -> lamp#findup(['.git', 'composer.json'], bufname(bufnr)) },
         \   'initialization_options': { -> {
         \     'storagePath': expand('~/.cache/intelephense')
         \   } }
@@ -134,7 +134,7 @@ function! lamp#language#typescript(...) abort
   call lamp#register('typescript-language-server', lamp#merge({
         \   'command': ['typescript-language-server', '--stdio'],
         \   'filetypes': ['typescript', 'typescript.tsx', 'typescriptreact', 'javascript', 'javascript.jsx', 'javascriptreact'],
-        \   'root_uri': { -> lamp#findup('tsconfig.json', '.git') },
+        \   'root_uri': { bufnr -> lamp#findup(['tsconfig.json', '.git'], bufname(bufnr)) },
         \   'capabilities': {
         \     'completionProvider': {
         \       'triggerCharacters': [',']
@@ -181,7 +181,7 @@ function! lamp#language#go() abort
   call lamp#register('gopls', {
         \   'command': ['gopls'],
         \   'filetypes': ['go', 'gomod'],
-        \   'root_uri': { -> lamp#findup('go.mod', 'main.go') },
+        \   'root_uri': { bufnr -> lamp#findup(['go.mod', 'main.go'], bufname(bufnr)) },
         \   'initialization_options': { -> {
         \     'usePlaceholders': v:true,
         \     'completeUnimported': v:true,
@@ -205,7 +205,7 @@ function! lamp#language#rust(...) abort
   call lamp#register('rls', lamp#merge({
         \   'command': ['rls'],
         \   'filetypes': ['rust'],
-        \   'root_uri': { -> lamp#findup('.git', 'Cargo.toml') }
+        \   'root_uri': { bufnr -> lamp#findup(['.git', 'Cargo.toml'], bufname(bufnr)) }
         \ }, get(a:000, 0, {})))
 endfunction
 
