@@ -13,13 +13,13 @@ function! lamp#language#php(...) abort
   endif
 
   call lamp#register('intelephense', lamp#merge({
-        \   'command': ['intelephense', '--stdio'],
-        \   'filetypes': ['php'],
-        \   'root_uri': { bufnr -> lamp#findup(['.git', 'composer.json'], bufname(bufnr)) },
-        \   'initialization_options': { -> {
-        \     'storagePath': expand('~/.cache/intelephense')
-        \   } }
-        \ }, get(a:000, 0, {})))
+  \   'command': ['intelephense', '--stdio'],
+  \   'filetypes': ['php'],
+  \   'root_uri': { bufnr -> lamp#findup(['.git', 'composer.json'], bufname(bufnr)) },
+  \   'initialization_options': { -> {
+  \     'storagePath': expand('~/.cache/intelephense')
+  \   } }
+  \ }, get(a:000, 0, {})))
   autocmd! lamp#language FileType php setlocal iskeyword+=$
 endfunction
 
@@ -34,20 +34,20 @@ function! lamp#language#html(...) abort
   endif
 
   call lamp#register('html-languageserver', lamp#merge({
-        \   'command': ['html-languageserver', '--stdio'],
-        \   'filetypes': ['html'],
-        \   'initialization_options': { -> {
-        \     'embeddedLanguages': {
-        \       'css': v:true,
-        \       'html': v:true
-        \     }
-        \   } },
-        \   'capabilities': {
-        \     'completionProvider': {
-        \       'triggerCharacters': ['>', '"']
-        \     }
-        \   }
-        \ }, get(a:000, 0, {})))
+  \   'command': ['html-languageserver', '--stdio'],
+  \   'filetypes': ['html'],
+  \   'initialization_options': { -> {
+  \     'embeddedLanguages': {
+  \       'css': v:true,
+  \       'html': v:true
+  \     }
+  \   } },
+  \   'capabilities': {
+  \     'completionProvider': {
+  \       'triggerCharacters': ['>', '"']
+  \     }
+  \   }
+  \ }, get(a:000, 0, {})))
 endfunction
 
 "
@@ -61,9 +61,9 @@ function! lamp#language#css(...) abort
   endif
 
   call lamp#register('css-languageserver', lamp#merge({
-        \   'command': ['css-languageserver', '--stdio'],
-        \   'filetypes': ['css', 'scss'],
-        \ }, get(a:000, 0, {})))
+  \   'command': ['css-languageserver', '--stdio'],
+  \   'filetypes': ['css', 'scss'],
+  \ }, get(a:000, 0, {})))
 endfunction
 
 "
@@ -76,23 +76,22 @@ function! lamp#language#yaml(...) abort
     return
   endif
 
+  call lamp#feature#workspace#configure({
+  \   'yaml': {
+  \     'completion': v:true,
+  \     'hover': v:true,
+  \     'validate': v:true,
+  \     'schemas': json_decode(join(readfile(lamp#config('global.root') . '/misc/json/catalog.json'), "\n")).schemas,
+  \     'format': {
+  \       'enable': v:true
+  \     }
+  \   }
+  \ })
+
   call lamp#register('yaml-language-server', lamp#merge({
-        \   'command': ['yaml-language-server', '--stdio'],
-        \   'filetypes': ['yaml', 'yaml.ansible'],
-        \   'workspace_configurations': {
-        \     '*': {
-        \       'json': {
-        \         'completion': v:true,
-        \         'hover': v:true,
-        \         'validate': v:true,
-        \         'schemas': json_decode(join(readfile(lamp#config('global.root') . '/misc/json/catalog.json'), "\n")).schemas,
-        \         'format': {
-        \           'enable': v:true
-        \         }
-        \       }
-        \     }
-        \   }
-        \ }, get(a:000, 0, {})))
+  \   'command': ['yaml-language-server', '--stdio'],
+  \   'filetypes': ['yaml', 'yaml.ansible'],
+  \ }, get(a:000, 0, {})))
 endfunction
 
 "
@@ -101,24 +100,23 @@ endfunction
 function! lamp#language#json(...) abort
   if !executable('json-languageserver')
     echomsg '[vim-lamp] You should install `json-languageserver`.'
-    echomsg '[vim-lamp] > npm install -g vscode-json-languageserver'
+    echomsg '[vim-lamp] > npm install -g vscode-json-languageserver-bin'
     return
   endif
 
+  call lamp#feature#workspace#configure({
+  \   'json': {
+  \     'schemas': json_decode(join(readfile(lamp#config('global.root') . '/misc/json/catalog.json'), "\n")).schemas,
+  \     'format': {
+  \       'enable': v:true
+  \     }
+  \   }
+  \ })
+
   call lamp#register('json-languageserver', lamp#merge({
-        \   'command': ['json-languageserver', '--stdio'],
-        \   'filetypes': ['json'],
-        \   'workspace_configurations': {
-        \     '*': {
-        \       'json': {
-        \         'schemas': json_decode(join(readfile(lamp#config('global.root') . '/misc/json/catalog.json'), "\n")).schemas,
-        \         'format': {
-        \           'enable': v:true
-        \         }
-        \       }
-        \     }
-        \   }
-        \ }, get(a:000, 0, {})))
+  \   'command': ['json-languageserver', '--stdio'],
+  \   'filetypes': ['json'],
+  \ }, get(a:000, 0, {})))
 endfunction
 
 "
@@ -132,15 +130,15 @@ function! lamp#language#typescript(...) abort
   endif
 
   call lamp#register('typescript-language-server', lamp#merge({
-        \   'command': ['typescript-language-server', '--stdio'],
-        \   'filetypes': ['typescript', 'typescript.tsx', 'typescriptreact', 'javascript', 'javascript.jsx', 'javascriptreact'],
-        \   'root_uri': { bufnr -> lamp#findup(['tsconfig.json', '.git'], bufname(bufnr)) },
-        \   'capabilities': {
-        \     'completionProvider': {
-        \       'triggerCharacters': [',']
-        \     }
-        \   }
-        \ }, get(a:000, 0, {})))
+  \   'command': ['typescript-language-server', '--stdio'],
+  \   'filetypes': ['typescript', 'typescript.tsx', 'typescriptreact', 'javascript', 'javascript.jsx', 'javascriptreact'],
+  \   'root_uri': { bufnr -> lamp#findup(['tsconfig.json', '.git'], bufname(bufnr)) },
+  \   'capabilities': {
+  \     'completionProvider': {
+  \       'triggerCharacters': [',']
+  \     }
+  \   }
+  \ }, get(a:000, 0, {})))
 endfunction
 
 "
@@ -154,18 +152,18 @@ function! lamp#language#vim(...) abort
   endif
 
   call lamp#register('vim-language-server', lamp#merge({
-        \   'command': ['vim-language-server', '--stdio'],
-        \   'filetypes': ['vim', 'vimspec'],
-        \   'initialization_options': { -> {
-        \     'iskeyword': &iskeyword,
-        \     'vimruntime': $VIMRUNTIME,
-        \     'runtimepath': &runtimepath,
-        \     'suggest': {
-        \       'fromVimruntime': v:true,
-        \       'fromRuntimepath': v:true
-        \     }
-        \   } }
-        \ }, get(a:000, 0, {})))
+  \   'command': ['vim-language-server', '--stdio'],
+  \   'filetypes': ['vim', 'vimspec'],
+  \   'initialization_options': { -> {
+  \     'iskeyword': &iskeyword,
+  \     'vimruntime': $VIMRUNTIME,
+  \     'runtimepath': &runtimepath,
+  \     'suggest': {
+  \       'fromVimruntime': v:true,
+  \       'fromRuntimepath': v:true
+  \     }
+  \   } }
+  \ }, get(a:000, 0, {})))
 endfunction
 
 "
@@ -179,15 +177,15 @@ function! lamp#language#go() abort
   endif
 
   call lamp#register('gopls', {
-        \   'command': ['gopls'],
-        \   'filetypes': ['go', 'gomod'],
-        \   'root_uri': { bufnr -> lamp#findup(['go.mod', 'main.go'], bufname(bufnr)) },
-        \   'initialization_options': { -> {
-        \     'usePlaceholders': v:true,
-        \     'completeUnimported': v:true,
-        \     'hoverKind': 'FullDocumentation',
-        \   } },
-        \ })
+  \   'command': ['gopls'],
+  \   'filetypes': ['go', 'gomod'],
+  \   'root_uri': { bufnr -> lamp#findup(['go.mod', 'main.go'], bufname(bufnr)) },
+  \   'initialization_options': { -> {
+  \     'usePlaceholders': v:true,
+  \     'completeUnimported': v:true,
+  \     'hoverKind': 'FullDocumentation',
+  \   } },
+  \ })
 
   autocmd! lamp#language BufWritePre *.go call execute('LampFormattingSync') | call execute('LampCodeActionSync source.organizeImports')
 endfunction
@@ -203,10 +201,10 @@ function! lamp#language#rust(...) abort
   endif
 
   call lamp#register('rls', lamp#merge({
-        \   'command': ['rls'],
-        \   'filetypes': ['rust'],
-        \   'root_uri': { bufnr -> lamp#findup(['.git', 'Cargo.toml'], bufname(bufnr)) }
-        \ }, get(a:000, 0, {})))
+  \   'command': ['rls'],
+  \   'filetypes': ['rust'],
+  \   'root_uri': { bufnr -> lamp#findup(['.git', 'Cargo.toml'], bufname(bufnr)) }
+  \ }, get(a:000, 0, {})))
 endfunction
 
 "
@@ -220,8 +218,8 @@ function! lamp#language#python(...) abort
   endif
 
   call lamp#register('pyls', lamp#merge({
-        \   'command': ['pyls'],
-        \   'filetypes': ['python'],
-        \ }, get(a:000, 0, {})))
+  \   'command': ['pyls'],
+  \   'filetypes': ['python'],
+  \ }, get(a:000, 0, {})))
 endfunction
 

@@ -21,7 +21,7 @@ function! s:Server.new(name, option) abort
         \   'name': a:name,
         \   'channel': s:Channel.new({ 'name': a:name, 'command': a:option.command }),
         \   'filetypes': a:option.filetypes,
-        \   'root_uri': get(a:option, 'root_uri', { -> '' }),
+        \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
         \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
         \   'trace': get(a:option, 'trace', 'off'),
         \   'diff': s:Diff.new(),
@@ -104,6 +104,9 @@ function! s:Server.initialize(bufnr) abort
   function! l:ctx.callback(response) abort dict
     call self.capability.merge(a:response)
     call self.channel.notify('initialized', {})
+    call self.channel.notify('workspace/didChangeConfiguration', {
+    \   'settings': lamp#feature#workspace#get_config()
+    \ })
 
     doautocmd User lamp#server#initialized
 

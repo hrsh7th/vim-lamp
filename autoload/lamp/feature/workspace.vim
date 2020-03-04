@@ -21,7 +21,7 @@ endfunction
 " lamp#feature#workspace#get_folders
 "
 function! lamp#feature#workspace#get_folders(server) abort
-  return s:workspace.folders[a:server.name]
+  return get(s:workspace.folders, a:server.name, [])
 endfunction
 
 "
@@ -67,7 +67,9 @@ endfunction
 "
 function! lamp#feature#workspace#configure(config) abort
   let s:workspace.config = lamp#merge(s:workspace.config, a:config)
-  call map(lamp#server#registry#all(), { _, server ->
+  let l:servers = lamp#server#registry#all()
+  let l:servers = filter(l:servers, { _, server -> !empty(server.state.initialized) })
+  call map(l:servers, { _, server ->
   \   server.notify('workspace/didChangeConfiguration', {
   \     'settings': s:workspace.config
   \   })
