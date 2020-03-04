@@ -1,6 +1,6 @@
 let s:workspace = {
 \   'config': {},
-\   'folders': {}
+\   'folders': []
 \ }
 
 "
@@ -20,8 +20,8 @@ endfunction
 "
 " lamp#feature#workspace#get_folders
 "
-function! lamp#feature#workspace#get_folders(server) abort
-  return get(s:workspace.folders, a:server.name, [])
+function! lamp#feature#workspace#get_folders() abort
+  return s:workspace.folders
 endfunction
 
 "
@@ -39,7 +39,7 @@ function! lamp#feature#workspace#update(server, bufnr) abort
 
   " Find workspace folder.
   let l:folder = v:null
-  for l:folder in get(s:workspace.folders, a:server.name, [])
+  for l:folder in s:workspace.folders
     if l:folder.uri ==# l:uri
       break
     endif
@@ -52,8 +52,7 @@ function! lamp#feature#workspace#update(server, bufnr) abort
     \   'name': printf('[LAMP] Automatic workspace: %s', l:uri),
     \   'uri': l:uri,
     \ }
-    let s:workspace.folders[a:server.name] = get(s:workspace.folders, a:server.name, [])
-    let s:workspace.folders[a:server.name] += [l:folder]
+    let s:workspace.folders += [l:folder]
     call a:server.channel.notify('workspace/didChangeWorkspaceFolders', {
     \   'event': {
     \     'added': [l:folder],

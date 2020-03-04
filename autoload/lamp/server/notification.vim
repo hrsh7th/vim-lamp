@@ -41,7 +41,7 @@ endfunction
 "
 function! s:workspace_workspace_folders(server, notification) abort
   call a:server.response(a:notification.id, {
-  \   'result': lamp#feature#workspace#get_folders(a:server)
+  \   'result': lamp#feature#workspace#get_folders()
   \ })
 endfunction
 
