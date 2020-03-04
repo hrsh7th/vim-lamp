@@ -43,13 +43,13 @@ function! lamp#feature#completion#convert(server_name, response) abort
   for l:completion_item in l:completion_items
     " textEdit
     if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
-      let l:word = trim(l:completion_item.label)
-      let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
+      let l:word = l:completion_item.label
+      let l:abbr = l:completion_item.label . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
 
     " snippet
     elseif has_key(l:completion_item, 'insertText') && get(l:completion_item, 'insertTextFormat', 1) == 2
       let l:word = l:completion_item.label
-      let l:abbr = l:word . (l:word !=# l:completion_item.insertText ? '~' : '')
+      let l:abbr = l:completion_item.label . (l:word !=# l:completion_item.insertText ? '~' : '')
 
     " normal
     else

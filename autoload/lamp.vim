@@ -227,12 +227,12 @@ function! lamp#findup(markers, ...) abort
     while index(['', '/'], l:path) == -1
       let l:candidate = l:path . '/' . l:marker
       if isdirectory(l:candidate) || filereadable(l:candidate)
-        return l:path
+        return substitute(l:path, '[\\/]$', '', 'g')
       endif
       let l:path = substitute(l:path, '/[^/]*$', '', 'g')
     endwhile
   endfor
-  return fnamemodify(bufname('%'), ':p:h')
+  return ''
 endfunction
 
 "
