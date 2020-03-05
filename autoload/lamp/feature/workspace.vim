@@ -49,7 +49,7 @@ function! lamp#feature#workspace#update(server, bufnr) abort
   " Add new workspace folder automatically.
   if empty(l:folder)
     let l:folder = {
-    \   'name': printf('[LAMP] Automatic workspace: %s', l:uri),
+    \   'name': printf('[LAMP] Automatic workspace folder: %s', l:uri),
     \   'uri': l:uri,
     \ }
     let s:workspace.folders += [l:folder]
