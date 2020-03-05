@@ -313,8 +313,13 @@ function! s:clear_completed_string(curpos, line, completed_item, completion_item
         \ }
 
   if has_key(a:completion_item, 'textEdit')
+    let l:offset = max([0, l:range.start.character - a:completion_item.textEdit.range.start.character])
     let l:range = lamp#protocol#range#merge_expand(l:range, a:completion_item.textEdit.range)
     let l:range.start = a:completion_item.textEdit.range.start
+
+    if l:range.end.character + l:offset <= strchars(getline(l:range.end.line + 1))
+      let l:range.end.character += l:offset
+    endif
   endif
 
   let l:line = ''
