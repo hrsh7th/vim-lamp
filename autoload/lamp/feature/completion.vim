@@ -1,4 +1,5 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
+let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
 let s:floatwin = s:Floatwin.new({
@@ -34,7 +35,7 @@ endfunction
 "
 " lamp#feature#completion#convert
 "
-function! lamp#feature#completion#convert(server_name, response) abort
+function! lamp#feature#completion#convert(server_name, complete_position, response) abort
   let l:completed_items = []
 
   let l:completion_items = []
@@ -61,7 +62,8 @@ function! lamp#feature#completion#convert(server_name, response) abort
     let l:user_data_key = '{"lamp/key":"' . s:managed_user_data_key . '"}'
     let s:managed_user_data_map[l:user_data_key] = {
           \   'server_name': a:server_name,
-          \   'completion_item': l:completion_item
+          \   'completion_item': l:completion_item,
+          \   'complete_position': a:complete_position,
           \ }
     let s:managed_user_data_key += 1
 
@@ -173,8 +175,8 @@ function! s:on_complete_done() abort
   call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 0)
   call s:floatwin.hide()
 
-  let s:context.curpos = getpos('.')
-  let s:context.line = getline('.')
+  let s:context.done_position = s:Position.cursor()
+  let s:context.done_line = getline('.')
   let s:context.completed_item = v:completed_item
   let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
@@ -189,8 +191,8 @@ endfunction
 function! s:on_complete_done_after() abort
   echo ''
 
-  let l:curpos = s:context.curpos
-  let l:line = s:context.line
+  let l:done_position = s:context.done_position
+  let l:done_line = s:context.done_line
   let l:completed_item = s:context.completed_item
   let l:user_data = s:context.user_data
 
@@ -203,7 +205,7 @@ function! s:on_complete_done_after() abort
   endif
 
   " <BS>, <C-w> etc.
-  if strlen(getline('.')) < strlen(l:line)
+  if strlen(getline('.')) < strlen(l:done_line)
     return ''
   endif
 
@@ -220,10 +222,11 @@ function! s:on_complete_done_after() abort
   let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
   if !empty(l:expandable_state)
     undojoin | call s:clear_completed_string(
-          \   l:curpos,
-          \   l:line,
           \   l:completed_item,
-          \   l:completion_item
+          \   l:completion_item,
+          \   l:done_line,
+          \   l:done_position,
+          \   l:user_data.complete_position
           \ )
   endif
 
@@ -301,31 +304,34 @@ endfunction
 "
 " clear_completed_string
 "
-function! s:clear_completed_string(curpos, line, completed_item, completion_item) abort
-  let l:position = s:Position.vim_to_lsp('%', a:curpos[1 : 3])
+function! s:clear_completed_string(completed_item, completion_item, done_line, done_position, complete_position) abort
+  " Remove commit characters.
+  call setline('.', a:done_line)
 
+  " Create remove range.
   let l:range = {
-        \   'start': {
-        \     'line': l:position.line,
-        \     'character': l:position.character - strchars(a:completed_item.word)
-        \   },
-        \   'end': l:position
-        \ }
+  \   'start': {
+  \     'line': a:done_position.line,
+  \     'character': a:done_position.character - strchars(a:completed_item.word)
+  \   },
+  \   'end': a:done_position
+  \ }
 
+  " Expand remove range to textEdit.
   if has_key(a:completion_item, 'textEdit')
-    let l:offset = max([0, l:range.start.character - a:completion_item.textEdit.range.start.character])
-    let l:range = lamp#protocol#range#merge_expand(l:range, a:completion_item.textEdit.range)
-    let l:range.start = a:completion_item.textEdit.range.start
-
-    if l:range.end.character + l:offset <= strchars(getline(l:range.end.line + 1))
-      let l:range.end.character += l:offset
-    endif
+    let l:range = {
+    \   'start': {
+    \     'line': a:completion_item.textEdit.range.start.line,
+    \     'character': a:completion_item.textEdit.range.start.character,
+    \   },
+    \   'end': {
+    \     'line': a:completion_item.textEdit.range.end.line,
+    \     'character': a:completion_item.textEdit.range.end.character + strchars(a:completed_item.word) - (a:complete_position.character - l:range.start.character)
+    \   }
+    \ }
   endif
 
-  let l:line = ''
-  let l:line .= strcharpart(a:line, 0, l:range.start.character)
-  let l:line .= strcharpart(a:line, l:range.end.character, strchars(a:line) - l:range.end.character)
-  undojoin | call setline('.', l:line)
+  undojoin | call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': '' }])
   call cursor(s:Position.lsp_to_vim('%', l:range.start))
 endfunction
 

@@ -298,12 +298,13 @@ function! lamp#complete(find_start, base) abort
   let s:context = {}
   let s:context.id = 0
   let s:context.requests = {}
+  let s:context.position = s:Position.cursor()
 
   " send request.
   for l:server in l:servers
     let s:context.requests[l:server.name] = l:server.request('textDocument/completion', {
           \   'textDocument': lamp#protocol#document#identifier(bufnr('%')),
-          \   'position': s:Position.cursor(),
+          \   'position': s:context.position,
           \   'context': {
           \     'triggerKind': 2,
           \     'triggerCharacter': lamp#view#cursor#get_before_char_skip_white()
@@ -315,7 +316,7 @@ function! lamp#complete(find_start, base) abort
   let l:returns = { 'words': [], 'refresh': 'always' }
   for [l:server_name, l:request] in items(s:context.requests)
     try
-      for l:completed_item in lamp#feature#completion#convert(l:server_name, lamp#sync(l:request))
+      for l:completed_item in lamp#feature#completion#convert(l:server_name, s:context.position, lamp#sync(l:request))
         if l:completed_item._filter_text !~ '^' . a:base && strlen(a:base) >= 1
           continue
         endif
