@@ -6,11 +6,7 @@ let s:floatwin = s:Floatwin.new({
 \   'max_height': &lines / 3
 \ })
 
-let s:context = {
-      \   'curpos': [],
-      \   'line': '',
-      \   'completed_item': v:null,
-      \ }
+let s:context = {}
 
 "
 " {
@@ -41,6 +37,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   let l:completion_items = []
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
+  let l:completion_items = sort(l:completion_items, function('s:sort'))
   for l:completion_item in l:completion_items
     " textEdit
     if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
@@ -396,6 +393,18 @@ function! s:get_floatwin_screenpos(event, contents) abort
   endif
 
   return [l:row, l:col]
+endfunction
+
+"
+" sort
+"
+function! s:sort(item1, item2) abort
+  let l:text1 = get(a:item1, 'sortText', a:item1.label)
+  let l:text2 = get(a:item2, 'sortText', a:item2.label)
+  if l:text1 ==# l:text2
+    return strlen(l:text1) - strlen(l:text2)
+  endif
+  return l:text1 < l:text2 ? 1 : -1
 endfunction
 
 "

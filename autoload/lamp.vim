@@ -1,5 +1,5 @@
-let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
+let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Server = lamp#server#import()
 
 let s:debounce_ids = {}
@@ -37,7 +37,13 @@ let s:config = {
       \   }
       \ }
 
-call s:Promise.on_unhandled_rejection({ err -> lamp#log('[ERROR]', err) })
+function! s:on_unhandled_rejection(err) abort
+  if strlen(lamp#config('global.debug')) > 0
+    echoerr string(a:err)
+    call lamp#log('[ERROR]', a:err)
+  endif
+endfunction
+call s:Promise.on_unhandled_rejection(function('s:on_unhandled_rejection'))
 
 "
 " lamp#profile
@@ -224,12 +230,19 @@ endfunction
 function! lamp#findup(markers, ...) abort
   for l:marker in a:markers
     let l:path = fnamemodify(get(a:000, 0, bufname('%')), ':p')
-    while index(['', '/'], l:path) == -1
+    if !filereadable(l:path)
+      return ''
+    endif
+    while v:true
       let l:candidate = l:path . '/' . l:marker
       if isdirectory(l:candidate) || filereadable(l:candidate)
         return substitute(l:path, '[\\/]$', '', 'g')
       endif
-      let l:path = substitute(l:path, '/[^/]*$', '', 'g')
+      let l:up = fnamemodify(l:path, ':h')
+      if l:up ==# l:path
+        break
+      endif
+      let l:path = l:up
     endwhile
   endfor
   return ''
@@ -317,7 +330,7 @@ function! lamp#complete(find_start, base) abort
   for [l:server_name, l:request] in items(s:context.requests)
     try
       for l:completed_item in lamp#feature#completion#convert(l:server_name, s:context.position, lamp#sync(l:request))
-        if l:completed_item._filter_text !~ '^' . a:base && strlen(a:base) >= 1
+        if l:completed_item._filter_text !~ '^.*' . a:base . '.*$' && strlen(a:base) >= 1
           continue
         endif
         call add(l:returns.words, l:completed_item)

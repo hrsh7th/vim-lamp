@@ -29,6 +29,7 @@ function! s:Server.new(name, option) abort
         \   'capability': s:Capability.new({
         \     'capabilities': get(a:option, 'capabilities', {})
         \   }),
+        \   'initialized': v:false,
         \   'state': {
         \     'started': v:false,
         \     'initialized': v:null,
@@ -54,7 +55,10 @@ endfunction
 function! s:Server.stop() abort
   if self.state.started
     if !empty(self.state.initialized)
-      call lamp#sync(self.channel.request('shutdown'), 200)
+      try
+        call lamp#sync(self.channel.request('shutdown'), 200)
+      catch /.*/
+      endtry
       call self.channel.notify('exit')
       doautocmd User lamp#server#exited
     endif
@@ -108,6 +112,7 @@ function! s:Server.initialize(bufnr) abort
     \   'settings': lamp#feature#workspace#get_config()
     \ })
 
+    let self.initialized = v:true
     doautocmd User lamp#server#initialized
 
     call lamp#view#notice#add({ 'lines': [printf('`%s` initialized', self.name)] })
