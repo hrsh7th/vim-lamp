@@ -31,13 +31,16 @@ endfunction
 "
 " lamp#feature#completion#convert
 "
-function! lamp#feature#completion#convert(server_name, complete_position, response) abort
+function! lamp#feature#completion#convert(server_name, complete_position, response, ...) abort
+  let l:params = get(a:000, 0, {
+  \   'menu': 0
+  \ })
+
   let l:completed_items = []
 
   let l:completion_items = []
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
-  let l:completion_items = sort(l:completion_items, function('s:sort'))
   for l:completion_item in l:completion_items
     " textEdit
     if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
@@ -68,8 +71,11 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
     call add(l:completed_items, {
           \   'word': trim(l:word),
           \   'abbr': l:abbr,
-          \   'menu': get(split(trim(get(l:completion_item, 'detail', '')), "\n"), 0, ''),
-          \   'kind': lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
+          \   'menu': l:params.menu,
+          \   'kind': join([
+          \     lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
+          \     get(split(trim(get(l:completion_item, 'detail', '')), "\n"), 0, '')
+          \   ], ' '),
           \   'user_data': l:user_data_key,
           \   '_filter_text': get(l:completion_item, 'filterText', l:word),
           \ })
@@ -393,18 +399,6 @@ function! s:get_floatwin_screenpos(event, contents) abort
   endif
 
   return [l:row, l:col]
-endfunction
-
-"
-" sort
-"
-function! s:sort(item1, item2) abort
-  let l:text1 = get(a:item1, 'sortText', a:item1.label)
-  let l:text2 = get(a:item2, 'sortText', a:item2.label)
-  if l:text1 ==# l:text2
-    return strlen(l:text1) - strlen(l:text2)
-  endif
-  return l:text1 < l:text2 ? 1 : -1
 endfunction
 
 "
