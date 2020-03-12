@@ -73,7 +73,7 @@ function! lamp#feature#completion#convert(server_name, start_position, complete_
 
     " create item
     call add(l:completed_items, {
-          \   'word': s:create_word(l:prefix, l:word),
+          \   'word': l:word,
           \   'abbr': l:abbr,
           \   'menu': l:params.menu,
           \   'kind': join([
@@ -86,18 +86,6 @@ function! lamp#feature#completion#convert(server_name, start_position, complete_
   endfor
 
   return l:completed_items
-endfunction
-
-"
-" create_word
-"
-" exprimental
-"
-function! s:create_word(prefix, word) abort
-  if stridx(a:word, a:prefix) != 0
-    return a:prefix . a:word
-  endif
-  return a:word
 endfunction
 
 "
