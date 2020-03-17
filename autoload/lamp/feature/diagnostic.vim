@@ -47,10 +47,6 @@ endfunction
 " check
 "
 function! s:check() abort
-  if len(s:context.changes) == 0
-    return
-  endif
-
   let l:ctx = {}
   function! l:ctx.callback() abort
     for [l:server_name, l:document] in items(s:context.changes)

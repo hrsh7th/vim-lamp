@@ -402,6 +402,13 @@ function! s:get_floatwin_screenpos(event, contents) abort
     let l:col = l:col_if_right
   endif
 
+  if l:col <= 0
+    return []
+  endif
+  if &columns <= l:col + l:doc_width
+    return []
+  endif
+
   return [l:row, l:col]
 endfunction
 

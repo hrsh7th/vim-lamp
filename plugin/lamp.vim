@@ -3,6 +3,14 @@ if exists('g:loaded_lamp')
 endif
 let g:loaded_lamp = v:true
 
+augroup lamp#silent
+  autocmd!
+  autocmd User lamp#text_document_did_open silent
+  autocmd User lamp#initialized silent
+  autocmd User lamp#server#exited silent
+  autocmd User lamp#server#initialized silent
+augroup END
+
 "
 " command
 "

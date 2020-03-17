@@ -59,6 +59,7 @@ function! s:Floatwin.new(option) abort
         \   'bufnr': l:bufnr,
         \   'max_width': get(a:option, 'max_width', &columns / 2),
         \   'max_height': get(a:option, 'max_height', &lines / 2),
+        \   'fix': get(a:option, 'fix', v:true),
         \   'screenpos': [0, 0],
         \   'contents': []
         \ })
@@ -149,11 +150,13 @@ endfunction
 " fix_contents
 "
 function! s:Floatwin.fix_contents(contents) abort
-  if a:contents[0].lines[0] != ''
-    call insert(a:contents[0].lines, '')
-  endif
-  if a:contents[-1].lines[-1] != ''
-    call add(a:contents[-1].lines, '')
+  if self.fix
+    if a:contents[0].lines[0] != ''
+      call insert(a:contents[0].lines, '')
+    endif
+    if a:contents[-1].lines[-1] != ''
+      call add(a:contents[-1].lines, '')
+    endif
   endif
 
   return a:contents

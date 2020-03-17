@@ -20,6 +20,14 @@ function! lamp#server#notification#on(server, notification) abort
     call s:telemetry_event(a:server, a:notification)
   else
     call lamp#log('[UNHANDLED]', a:notification.method, get(a:notification, 'params', v:null))
+    if has_key(a:notification, 'id')
+      call a:server.response(a:notification.id, {
+      \   'error': {
+      \     'code': -32601,
+      \     'message': 'MethodNotFound',
+      \   }
+      \ })
+    endif
   endif
 endfunction
 
