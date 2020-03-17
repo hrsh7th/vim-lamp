@@ -56,10 +56,7 @@ function! s:check() abort
     endfor
   endfunction
 
-  let l:timeout = mode()[0] ==# 'n'
-        \ ? lamp#config('feature.diagnostic.delay.normal')
-        \ : lamp#config('feature.diagnostic.delay.insert')
-  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, l:timeout)
+  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, lamp#config('feature.diagnostic.increase_delay'))
 endfunction
 
 "
