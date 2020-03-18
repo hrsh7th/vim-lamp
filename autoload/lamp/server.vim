@@ -44,7 +44,9 @@ endfunction
 function! s:Server.start() abort
   if !self.state.started && !self.state.exited
     let self.state.started = v:true
-    call self.channel.start(function(s:Server.on_notification, [], self))
+    call self.channel.start(function(s:Server.on_notification, [], self), {
+    \   'cwd': self.root_uri(bufnr('%'))
+    \ })
   endif
   return s:Promise.resolve()
 endfunction

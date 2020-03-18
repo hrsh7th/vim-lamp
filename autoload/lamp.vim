@@ -13,6 +13,7 @@ let s:state = {
 let s:config = {
       \   'global.root': expand('<sfile>:p:h:h'),
       \   'global.debug': v:null,
+      \   'global.debug.clear_on_start': v:false,
       \   'global.timeout': 3000,
       \   'feature.completion.snippet.expand': v:null,
       \   'feature.completion.floating_docs': v:true,
@@ -93,6 +94,15 @@ function! lamp#register(name, option) abort
   let l:server = s:Server.new(a:name, a:option)
   call lamp#server#registry#set(l:server)
   return l:server
+endfunction
+
+"
+" lamp#log_clear
+"
+function! lamp#log_clear() abort
+  if filereadable(lamp#config('global.debug')) && lamp#config('global.debug.clear_on_start')
+    call delete(lamp#config('global.debug'))
+  endif
 endfunction
 
 "

@@ -30,12 +30,12 @@ endfunction
 "
 " start
 "
-function! s:Channel.start(on_notification) abort
-  let self.job = s:Job.new(self.command, {
-        \   'on_stdout': function(s:Channel.on_stdout, [], self),
-        \   'on_stderr': function(s:Channel.on_stderr, [], self),
-        \   'on_exit': function(s:Channel.on_exit, [], self),
-        \ })
+function! s:Channel.start(on_notification, opts) abort
+  let self.job = s:Job.new(self.command, extend(a:opts, {
+  \   'on_stdout': function(s:Channel.on_stdout, [], self),
+  \   'on_stderr': function(s:Channel.on_stderr, [], self),
+  \   'on_exit': function(s:Channel.on_exit, [], self),
+  \ }))
   let self.on_notification = a:on_notification
 endfunction
 

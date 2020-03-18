@@ -78,16 +78,19 @@ function! s:neovim(command, option) abort
     return jobwait([a:job], 0)[0] == -1
   endfunction
 
+  let l:cwd = get(a:option, 'cwd', getcwd())
+  let l:cwd = l:cwd ==# '' ? getcwd() : l:cwd
   let l:job = jobstart(a:command, {
-        \   'on_stdout': function('s:on_stdout', [a:option], {}),
-        \   'on_stderr': function('s:on_stderr', [a:option], {}),
-        \   'on_exit':   function('s:on_exit', [a:option], {}),
-        \ })
+  \   'cwd': l:cwd,
+  \   'on_stdout': function('s:on_stdout', [a:option], {}),
+  \   'on_stderr': function('s:on_stderr', [a:option], {}),
+  \   'on_exit':   function('s:on_exit', [a:option], {}),
+  \ })
   return {
-        \ 'send': function('s:send', [l:job], {}),
-        \ 'stop': function('s:stop', [l:job], {}),
-        \ 'is_running': function('s:is_running', [l:job], {})
-        \ }
+  \ 'send': function('s:send', [l:job], {}),
+  \ 'stop': function('s:stop', [l:job], {}),
+  \ 'is_running': function('s:is_running', [l:job], {})
+  \ }
 endfunction
 
 "
@@ -124,22 +127,25 @@ function! s:vim(command, option) abort
     return ch_status(a:job) ==# 'open'
   endfunction
 
+  let l:cwd = get(a:option, 'cwd', getcwd())
+  let l:cwd = l:cwd ==# '' ? getcwd() : l:cwd
   let l:job = job_start(a:command, {
-        \   'noblock': v:true,
-        \   'in_io': 'pipe',
-        \   'in_mode': 'raw',
-        \   'out_io': 'pipe',
-        \   'out_mode': 'raw',
-        \   'err_io': 'pipe',
-        \   'err_mode': 'raw',
-        \   'out_cb': function('s:on_stdout', [a:option], {}),
-        \   'err_cb': function('s:on_stderr', [a:option], {}),
-        \   'exit_cb': function('s:on_exit', [a:option], {})
-        \ })
+  \   'cwd': l:cwd,
+  \   'noblock': v:true,
+  \   'in_io': 'pipe',
+  \   'in_mode': 'raw',
+  \   'out_io': 'pipe',
+  \   'out_mode': 'raw',
+  \   'err_io': 'pipe',
+  \   'err_mode': 'raw',
+  \   'out_cb': function('s:on_stdout', [a:option], {}),
+  \   'err_cb': function('s:on_stderr', [a:option], {}),
+  \   'exit_cb': function('s:on_exit', [a:option], {})
+  \ })
   return {
-        \ 'send': function('s:send', [l:job], {}),
-        \ 'stop': function('s:stop', [l:job], {}),
-        \ 'is_running': function('s:is_running', [l:job], {})
-        \ }
+  \ 'send': function('s:send', [l:job], {}),
+  \ 'stop': function('s:stop', [l:job], {}),
+  \ 'is_running': function('s:is_running', [l:job], {})
+  \ }
 endfunction
 

@@ -31,14 +31,10 @@ endfunction
 "
 " lamp#feature#completion#convert
 "
-function! lamp#feature#completion#convert(server_name, start_position, complete_position, response, ...) abort
+function! lamp#feature#completion#convert(server_name, complete_position, response, ...) abort
   let l:params = get(a:000, 0, {
   \   'menu': 0
   \ })
-
-  let l:start_pos = s:Position.lsp_to_vim('%', a:start_position)
-  let l:complete_pos = s:Position.lsp_to_vim('%', a:complete_position)
-  let l:prefix = strpart(getline('.'), l:start_pos[1] - 1, l:complete_pos[1] - l:start_pos[1])
 
   let l:completed_items = []
 
