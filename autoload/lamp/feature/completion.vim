@@ -33,7 +33,8 @@ endfunction
 "
 function! lamp#feature#completion#convert(server_name, complete_position, response, ...) abort
   let l:params = get(a:000, 0, {
-  \   'menu': 0
+  \   'menu': '',
+  \   'dup': 1,
   \ })
 
   let l:completed_items = []
@@ -72,6 +73,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
           \   'word': l:word,
           \   'abbr': l:abbr,
           \   'menu': l:params.menu,
+          \   'dup': l:params.dup,
           \   'kind': join([
           \     lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
           \     get(split(trim(get(l:completion_item, 'detail', '')), "\n"), 0, '')

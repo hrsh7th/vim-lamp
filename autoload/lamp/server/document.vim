@@ -23,6 +23,13 @@ function! s:Document.new(bufnr) abort
 endfunction
 
 "
+" get_changedtick
+"
+function! s:Document.get_changedtick() abort
+  return getbufvar(self.bufnr, 'changedtick')
+endfunction
+
+"
 " sync
 "
 function! s:Document.sync() abort
