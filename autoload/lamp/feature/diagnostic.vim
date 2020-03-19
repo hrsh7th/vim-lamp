@@ -38,11 +38,12 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, document) abort
-  if a:document.diagnostics_decreased
+  if a:document.applied_diagnostics_count > len(a:document.diagnostics)
     return s:update(a:server.name, a:document)
   endif
 
-  let s:context.changes[a:server.name] = {
+  let s:context.changes[a:server.name] = get(s:context.changes, a:server.name, {})
+  let s:context.changes[a:server.name][a:document.bufnr] = {
   \   'document': a:document,
   \   'changedtick': a:document.get_changedtick(),
   \ }
@@ -55,12 +56,15 @@ endfunction
 function! s:check() abort
   let l:ctx = {}
   function! l:ctx.callback() abort
-    for [l:server_name, l:state] in items(s:context.changes)
-      if l:state.changedtick != l:state.document.get_changedtick() || s:update(l:server_name, l:state.document)
-        call remove(s:context.changes, l:server_name)
-      endif
+    for [l:server_name, l:changes] in items(s:context.changes)
+      for [l:bufnr, l:state] in items(l:changes)
+        if l:state.changedtick != l:state.document.get_changedtick() || s:update(l:server_name, l:state.document)
+          call remove(s:context.changes[l:server_name], l:state.document.bfnr)
+        endif
+      endfor
     endfor
   endfunction
+
 
   call lamp#debounce(
   \   'lamp#feature#diagnostic:check',
@@ -73,6 +77,8 @@ endfunction
 " update
 "
 function! s:update(server_name, document) abort
+  let a:document.applied_diagnostics_count = len(a:document.diagnostics)
+
   " remove per server.
   let l:highlight_ns = printf('%s:%s', s:highlight_ns, a:server_name)
   let l:virtual_text_ns = printf('%s:%s', s:virtual_text_ns, a:server_name)
