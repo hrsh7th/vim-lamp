@@ -38,7 +38,7 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, document) abort
-  if a:document.applied_diagnostics_count > len(a:document.diagnostics)
+  if a:document.applied_diagnostics_count >= len(a:document.diagnostics)
     return s:update(a:server.name, a:document)
   endif
 
@@ -58,9 +58,10 @@ function! s:check() abort
   function! l:ctx.callback() abort
     for [l:server_name, l:changes] in items(s:context.changes)
       for [l:bufnr, l:state] in items(l:changes)
-        if l:state.changedtick != l:state.document.get_changedtick() || s:update(l:server_name, l:state.document)
-          call remove(s:context.changes[l:server_name], l:state.document.bufnr)
+        if l:state.changedtick == l:state.document.get_changedtick()
+          call s:update(l:server_name, l:state.document)
         endif
+        call remove(s:context.changes[l:server_name], l:state.document.bufnr)
       endfor
     endfor
   endfunction
