@@ -186,16 +186,15 @@ function! s:on_complete_done() abort
   let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
   if !empty(v:completed_item) && strlen(get(v:completed_item, 'word', '')) > 0
-    undojoin | call feedkeys(printf("\<C-r>=<SNR>%d_on_complete_done_after()\<CR>", s:SID()), 'n')
+    undojoin | noautocmd call feedkeys("\<Plug>(lamp-completion:on_complete_done_after)", '')
   endif
 endfunction
 
 "
 " on_complete_done_after
 "
+inoremap <silent><nowait> <Plug>(lamp-completion:on_complete_done_after) <C-r>=<SID>on_complete_done_after()<CR>
 function! s:on_complete_done_after() abort
-  echo ''
-
   let l:done_position = s:context.done_position
   let l:done_line = s:context.done_line
   let l:completed_item = s:context.completed_item
@@ -409,11 +408,4 @@ function! s:get_floatwin_screenpos(event, contents) abort
 
   return [l:row, l:col]
 endfunction
-
-"
-" SID.
-"
-function! s:SID() abort
-  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
-endfun
 
