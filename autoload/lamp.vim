@@ -17,7 +17,8 @@ let s:config = {
       \   'global.timeout': 3000,
       \   'feature.completion.snippet.expand': v:null,
       \   'feature.completion.floating_docs': v:true,
-      \   'feature.diagnostic.increase_delay': 800,
+      \   'feature.diagnostic.increase_delay.normal': 400,
+      \   'feature.diagnostic.increase_delay.insert': 800,
       \   'view.location.on_location': { locations -> [
       \     setqflist(locations, 'r'),
       \     execute('copen')

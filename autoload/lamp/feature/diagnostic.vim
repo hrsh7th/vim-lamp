@@ -59,18 +59,16 @@ function! s:check() abort
     for [l:server_name, l:changes] in items(s:context.changes)
       for [l:bufnr, l:state] in items(l:changes)
         if l:state.changedtick != l:state.document.get_changedtick() || s:update(l:server_name, l:state.document)
-          call remove(s:context.changes[l:server_name], l:state.document.bfnr)
+          call remove(s:context.changes[l:server_name], l:state.document.bufnr)
         endif
       endfor
     endfor
   endfunction
 
-
-  call lamp#debounce(
-  \   'lamp#feature#diagnostic:check',
-  \   { -> l:ctx.callback() },
-  \   lamp#config('feature.diagnostic.increase_delay')
-  \ )
+  let l:timeout = mode()[0] ==# 'i'
+  \   ? lamp#config('feature.diagnostic.increase_delay.insert')
+  \   : lamp#config('feature.diagnostic.increase_delay.normal')
+  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, l:timeout)
 endfunction
 
 "
