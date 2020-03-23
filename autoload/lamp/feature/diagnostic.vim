@@ -39,6 +39,9 @@ endfunction
 "
 function! lamp#feature#diagnostic#update(server, document) abort
   if a:document.applied_diagnostics_count >= len(a:document.diagnostics)
+    if has_key(s:context.changes, a:server.name) && has_key(s:context.changes[a:server.name], a:document.bufnr)
+      call remove(s:context.changes[a:server.name], a:document.bufnr)
+    endif
     return s:update(a:server.name, a:document)
   endif
 
