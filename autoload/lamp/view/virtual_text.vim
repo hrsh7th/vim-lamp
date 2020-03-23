@@ -11,6 +11,7 @@ function! lamp#view#virtual_text#remove(namespace, bufnr) abort
     try
       call nvim_buf_clear_namespace(a:bufnr, s:namespaces[a:namespace], 0, -1)
     catch /.*/
+      call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
     endtry
   endif
 endfunction

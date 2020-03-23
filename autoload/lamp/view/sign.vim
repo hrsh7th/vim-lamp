@@ -8,6 +8,7 @@ function! lamp#view#sign#remove(namespace, bufnr) abort
     \   'buffer': a:bufnr
     \ })
   catch /.*/
+    call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
   endtry
 endfunction
 
