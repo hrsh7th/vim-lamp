@@ -110,7 +110,7 @@ function! s:on_text_document_did_open() abort
 endfunction
 ```
 
-# [Spec compatibility](https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/)
+# [Spec compatibility](https://microsoft.github.io/language-server-protocol/specifications/specification-3-15/)
 <details>
 
     - General
