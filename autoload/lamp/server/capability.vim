@@ -126,6 +126,9 @@ function! lamp#server#capability#get_default_capability() abort
         \       'dynamicRegistration': v:false,
         \       'linkSupport': v:true,
         \     },
+        \     'onTypeFormatting': {
+        \       'dynamicRegistration': v:false,
+        \     }
         \   },
         \   'experimental': {},
         \ }
@@ -189,6 +192,18 @@ endfunction
 "
 function! s:Capability.get_completion_trigger_characters() abort
   return lamp#get(self.capability, 'capabilities.completionProvider.triggerCharacters', [])
+endfunction
+
+"
+" get_on_type_formatting_trigger_characters
+"
+function! s:Capability.get_on_type_formatting_trigger_characters() abort
+  let l:chars = []
+  let l:first = lamp#get(self.capability, 'capabilities.documentOnTypeFormattingProvider.firstTriggerCharacter', v:null)
+  if l:first isnot# v:null
+    let l:chars += [l:first]
+  endif
+  return l:chars + lamp#get(self.capability, 'capabilities.documentOnTypeFormattingProvider.moreTriggerCharacter', [])
 endfunction
 
 "

@@ -177,7 +177,7 @@ endfunction
         - [ ] textDocument/colorPresentation
         - [x] textDocument/formatting
         - [x] textDocument/rangeFormatting
-        - [ ] textDocument/onTypeFormatting
+        - [x] textDocument/onTypeFormatting
         - [x] textDocument/rename
         - [x] textDocument/prepareRename
         - [ ] textDocument/foldingRange
