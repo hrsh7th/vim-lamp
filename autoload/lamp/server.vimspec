@@ -27,7 +27,7 @@ Describe lamp#server
 
   It Should resolved
     call lamp#sync(s:server.start())
-    call s:expect(lamp#sync(s:server.initialize())).to_have_key('capabilities')
+    call s:expect(lamp#sync(s:server.initialize(bufnr('%')))).to_have_key('capabilities')
   End
 
   It Should rejected

@@ -9,7 +9,7 @@ Describe lamp#feature#hover
           \   'root_uri': { -> lamp#config('global.root') . '/misc/typescript/' }
           \ })
     call lamp#sync(s:server.start())
-    call lamp#sync(s:server.initialize())
+    call lamp#sync(s:server.initialize(bufnr('%')))
   End
 
   After each
