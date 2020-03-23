@@ -103,26 +103,10 @@ function! s:on_text_document_did_open() abort
   vnoremap <buffer> <Leader>f    :LampRangeFormatting<CR>
   nnoremap <buffer> <Leader><CR> :<C-u>LampCodeAction<CR>
   vnoremap <buffer> <Leader><CR> :LampCodeAction<CR>
-
-  " mappings
-  nmap <buffer> gf<CR>         <Plug>(lamp-definition)
-  nmap <buffer> gfs            <Plug>(lamp-definition-split)
-  nmap <buffer> gfv            <Plug>(lamp-definition-vsplit)
-  nmap <buffer> tgf<CR>        <Plug>(lamp-type-definition)
-  nmap <buffer> tgfs           <Plug>(lamp-type-definition-split)
-  nmap <buffer> tgfv           <Plug>(lamp-type-definition-vsplit)
-  nmap <buffer> dgf<CR>        <Plug>(lamp-declaration)
-  nmap <buffer> dgfs           <Plug>(lamp-declaration-split)
-  nmap <buffer> dgfv           <Plug>(lamp-declaration-vsplit)
-  nmap <buffer> <Leader>i      <Plug>(lamp-hover)
-  nmap <buffer> <Leader>r      <Plug>(lamp-rename)
-  nmap <buffer> <Leader>g      <Plug>(lamp-references)
-  nmap <buffer> <Leader>f      <Plug>(lamp-formatting)
-  vmap <buffer> <Leader>f      <Plug>(lamp-range-formatting)
-  nmap <buffer> @              <Plug>(lamp-document-highlight)
-  nmap <buffer> <Esc>          <Plug>(lamp-document-highlight-clear)
-  nmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
-  vmap <buffer> <Leader><CR>   <Plug>(lamp-code-action)
+  nnoremap <buffer> <C-n>        :<C-u>LampSelectionnRangeExpand<CR>
+  nnoremap <buffer> <C-p>        :<C-u>LampSelectionnRangeCollapse<CR>
+  vnoremap <buffer> <C-n>        :<C-u>LampSelectionnRangeExpand<CR>
+  vnoremap <buffer> <C-p>        :<C-u>LampSelectionnRangeCollapse<CR>
 endfunction
 ```
 
@@ -135,11 +119,14 @@ endfunction
         - [x] shutdown
         - [x] exit
         - [ ] $/cancelRequest
+        - [ ] $/progress
 
     - Window
         - [x] window/showMessage
         - [x] window/showMessageRequest
         - [x] window/logMessage
+        - [ ] window/workDoneProgress/create
+        - [ ] window/workDoneProgress/cancel
 
     - Telemetry
         - [x] telemetry/event
@@ -170,7 +157,7 @@ endfunction
         - [x] textDocument/publishDiagnostics
 
     - Language Features
-        - [x] textDocument/completion (Snippet/Documentation/AdditionalTextEdits are supported!)
+        - [x] textDocument/completion
         - [x] completionItem/resolve
         - [x] textDocument/hover
         - [x] textDocument/signatureHelp
@@ -190,10 +177,11 @@ endfunction
         - [ ] textDocument/colorPresentation
         - [x] textDocument/formatting
         - [x] textDocument/rangeFormatting
-        - [ ] ~~textDocument/onTypeFormatting~~ (No supported server found.)
+        - [ ] textDocument/onTypeFormatting
         - [x] textDocument/rename
         - [x] textDocument/prepareRename
         - [ ] textDocument/foldingRange
+        - [x] textDocument/selectionRange
 
 </details>
 
@@ -202,3 +190,4 @@ endfunction
 - Improve documentation
 - Design canceling outdated request
 - Trim floatwin sizes when completion
+
