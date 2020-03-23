@@ -12,6 +12,11 @@ endfunction
 " lamp#feature#declaration#do
 "
 function! lamp#feature#declaration#do(command) abort
+  if has_key(s:, 'cancellation_token')
+    call s:cancellation_token.cancel()
+  endif
+  let s:cancellation_token = lamp#cancellation_token()
+
   let l:command = strlen(a:command) > 0 ? a:command : 'edit'
   let l:bufnr = bufnr('%')
 
@@ -27,6 +32,8 @@ function! lamp#feature#declaration#do(command) abort
         \   v.request('textDocument/declaration', {
         \     'textDocument': lamp#protocol#document#identifier(bufnr('%')),
         \     'position': l:position,
+        \   }, {
+        \     'cancellation_token': s:cancellation_token,
         \   }).catch(lamp#rescue([]))
         \ })
   let l:p = s:Promise.all(l:promises)

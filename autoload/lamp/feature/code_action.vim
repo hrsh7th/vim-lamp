@@ -34,6 +34,11 @@ endfunction
 " lamp#feature#code_action#do
 "
 function! lamp#feature#code_action#do(option) abort
+  if has_key(s:, 'cancellation_token')
+    call s:cancellation_token.cancel()
+  endif
+  let s:cancellation_token = lamp#cancellation_token()
+
   let l:range = get(a:option, 'range', v:false)
   let l:query = get(a:option, 'query', '')
   let l:sync = get(a:option, 'sync', v:false)
@@ -56,6 +61,8 @@ function! lamp#feature#code_action#do(option) abort
           \     'diagnostics': !empty(l:diagnostic) ? [l:diagnostic] : [],
           \     'only': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
           \   }
+          \ }, {
+          \   'cancellation_token': s:cancellation_token
           \ }).then({ data -> { 'server': l:server, 'data': data } }).catch(lamp#rescue([])))
   endfor
 

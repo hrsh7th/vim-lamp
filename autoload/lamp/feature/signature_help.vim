@@ -28,6 +28,11 @@ function! s:trigger_signature_help() abort
       return
     endif
 
+    if has_key(s:, 'cancellation_token')
+      call s:cancellation_token.cancel()
+    endif
+    let s:cancellation_token = lamp#cancellation_token()
+
     let l:bufnr = bufnr('%')
     let l:servers = lamp#server#registry#find_by_filetype(&filetype)
     let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.signatureHelpProvider') })
@@ -52,6 +57,8 @@ function! s:trigger_signature_help() abort
     let l:promises = map(l:servers, { k, v -> v.request('textDocument/signatureHelp', {
           \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
           \   'position': s:Position.cursor()
+          \ }, {
+          \   'cancellation_token': s:cancellation_token,
           \ }).catch(lamp#rescue(v:null)) })
     let l:p = s:Promise.all(l:promises)
     let l:p = l:p.then({ responses -> s:on_responses(l:bufnr, responses) })

@@ -20,6 +20,11 @@ endfunction
 " lamp#feature#rename#init
 "
 function! lamp#feature#rename#do() abort
+  if has_key(s:, 'cancellation_token')
+    call s:cancellation_token.cancel()
+  endif
+  let s:cancellation_token = lamp#cancellation_token()
+
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.renameProvider') })
@@ -44,6 +49,8 @@ function! s:request_prepare(bufnr, server) abort
     return a:server.request('textDocument/prepareRename', {
           \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
           \   'position': s:Position.cursor()
+          \ }, {
+          \   'cancellation_token': s:cancellation_token,
           \ })
   endif
 
@@ -70,6 +77,8 @@ function! s:request_rename(bufnr, server, target) abort
         \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
         \   'position': s:Position.cursor(),
         \   'newName': l:new_name
+        \ }, {
+        \   'cancellation_token': s:cancellation_token,
         \ })
 endfunction
 

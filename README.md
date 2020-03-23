@@ -118,7 +118,7 @@ endfunction
         - [x] initialized
         - [x] shutdown
         - [x] exit
-        - [ ] $/cancelRequest
+        - [x] $/cancelRequest
         - [ ] $/progress
 
     - Window

@@ -1,6 +1,7 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Server = lamp#server#import()
+let s:CancellationToken = lamp#server#channel#cancellation_token#import()
 
 let s:debounce_ids = {}
 
@@ -208,6 +209,13 @@ function! lamp#sync(promise_or_fn, ...) abort
       sleep 1m
     endwhile
   endif
+endfunction
+
+"
+" lamp#cancellation_token
+"
+function! lamp#cancellation_token() abort
+  return s:CancellationToken.new()
 endfunction
 
 "

@@ -12,6 +12,11 @@ endfunction
 " lamp#feature#references#do
 "
 function! lamp#feature#references#do(include_declaration) abort
+  if has_key(s:, 'cancellation_token')
+    call s:cancellation_token.cancel()
+  endif
+  let s:cancellation_token = lamp#cancellation_token()
+
   let l:bufnr = bufnr('%')
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype', ''))
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.referencesProvider') })
@@ -27,6 +32,8 @@ function! lamp#feature#references#do(include_declaration) abort
         \     'context': {
         \       'includeDeclaration': a:include_declaration
         \     }
+        \   }, {
+        \     'cancellation_token': s:cancellation_token,
         \   }).catch(lamp#rescue([]))
         \ })
   let l:p = s:Promise.all(l:promises)

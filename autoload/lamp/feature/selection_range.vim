@@ -17,6 +17,11 @@ endfunction
 " lamp#feature#selection_range#do
 "
 function! lamp#feature#selection_range#do(...) abort
+  if has_key(s:, 'cancellation_token')
+    call s:cancellation_token.cancel()
+  endif
+  let s:cancellation_token = lamp#cancellation_token()
+
   let l:direction = get(a:000, 0, 1)
   if !empty(s:context.selection_range)
     return s:select(l:direction)
@@ -33,6 +38,8 @@ function! lamp#feature#selection_range#do(...) abort
   \   server.request('textDocument/selectionRange', {
   \     'textDocument': lamp#protocol#document#identifier(bufnr('%')),
   \     'positions': [l:position],
+  \   }, {
+  \     'cancellation_token': s:cancellation_token,
   \   }).catch(lamp#rescue())
   \ })
   let l:p = s:Promise.all(l:promises)

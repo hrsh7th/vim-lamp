@@ -33,9 +33,13 @@ endfunction
 " lamp#feature#document_highlight#do
 "
 function! lamp#feature#document_highlight#do() abort
-  let l:highlights_under_cursor = lamp#view#highlight#get(s:Position.cursor())
+  if has_key(s:, 'cancellation_token')
+    call s:cancellation_token.cancel()
+  endif
+  let s:cancellation_token = lamp#cancellation_token()
 
   " remove highlight under cursor if already highlighted.
+  let l:highlights_under_cursor = lamp#view#highlight#get(s:Position.cursor())
   if len(l:highlights_under_cursor) != 0
     for l:highlight in l:highlights_under_cursor
       call lamp#view#highlight#remove(l:highlight.namespace, bufnr('%'))
@@ -54,6 +58,8 @@ function! lamp#feature#document_highlight#do() abort
   let l:p = l:servers[0].request('textDocument/documentHighlight', {
         \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
         \   'position': s:Position.cursor()
+        \ }, {
+        \   'cancellation_token': s:cancellation_token,
         \ })
   let l:p = l:p.then({ response -> s:on_response(l:bufnr, response) })
   let l:p = l:p.catch(lamp#rescue())

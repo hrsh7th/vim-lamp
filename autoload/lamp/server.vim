@@ -58,7 +58,7 @@ function! s:Server.stop() abort
   if self.state.started
     if !empty(self.state.initialized)
       try
-        call lamp#sync(self.channel.request('shutdown'), 200)
+        call lamp#sync(self.channel.request('shutdown', v:null), 200)
       catch /.*/
       endtry
       call self.channel.notify('exit')
@@ -78,7 +78,7 @@ function! s:Server.exit() abort
   if self.state.started
     if !empty(self.state.initialized)
       try
-        call lamp#sync(self.channel.request('shutdown'), 200)
+        call lamp#sync(self.channel.request('shutdown', v:null), 200)
       catch /.*/
       endtry
       call self.channel.notify('exit')
@@ -141,10 +141,11 @@ endfunction
 "
 " request.
 "
-function! s:Server.request(method, params) abort
+function! s:Server.request(method, params, ...) abort
+  let l:option = get(a:000, 0, {})
   let l:p = s:Promise.resolve()
   let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> self.channel.request(a:method, a:params) })
+  let l:p = l:p.then({ -> self.channel.request(a:method, a:params, l:option) })
   return l:p
 endfunction
 

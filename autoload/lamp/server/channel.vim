@@ -61,19 +61,28 @@ endfunction
 "
 " request
 "
-function! s:Channel.request(method, ...) abort
+function! s:Channel.request(method, params, ...) abort
+  let l:option = get(a:000, 0, {})
+
   let l:message = { 'method': a:method }
-  if len(a:000) > 0
-    let l:message = extend(l:message, { 'params': a:000[0] })
+  if a:params isnot# v:null
+    let l:message = extend(l:message, { 'params': a:params })
   endif
 
-  let self.request_id = self.request_id + 1
+  let l:request_id = self.request_id + 1
+  let self.request_id = l:request_id
 
+  " attach cancellation token.
+  if has_key(l:option, 'cancellation_token')
+    call l:option.cancellation_token.attach({ -> self.cancel(l:request_id) })
+  endif
+
+  " initialize request.
   let l:ctx = {}
   function! l:ctx.executor(message, resolve, reject) abort dict
     let self.requests[self.request_id] = {
           \   'resolve': a:resolve,
-          \   'reject': a:reject
+          \   'reject': a:reject,
           \ }
     call self.job.send(self.to_message(extend({ 'id': self.request_id }, a:message)))
     call self.log('-> [REQUEST]', self.request_id, a:message)
@@ -108,6 +117,18 @@ function! s:Channel.notify(method, ...) abort
 endfunction
 
 "
+" cancel
+"
+function! s:Channel.cancel(id) abort
+  if has_key(self.requests, a:id)
+    call self.notify('$/cancelRequest', {
+    \   'id': a:id
+    \ })
+    call remove(self.requests, a:id)
+  endif
+endfunction
+
+"
 " to_message
 "
 function! s:Channel.to_message(content) abort
@@ -119,27 +140,26 @@ endfunction
 " on_message
 "
 function! s:Channel.on_message(message) abort
+  " Request or Response.
   if has_key(a:message, 'id')
-    " Response.
-    if has_key(self.requests, a:message.id)
-      call self.log('<- [RESPONSE]', a:message.id, a:message)
-      if has_key(a:message, 'error')
-        call self.requests[a:message.id].reject(a:message.error)
-      else
-        call self.requests[a:message.id].resolve(get(a:message, 'result', v:null))
-      endif
-      call remove(self.requests, a:message.id)
-
     " Request.
-    else
+    if has_key(a:message, 'method')
       call self.log('<- [REQUEST]', a:message)
       call self.on_notification(a:message)
+
+    " Response.
+    elseif has_key(a:message, 'id')
+      call self.log('<- [RESPONSE]', a:message.id, a:message)
+      let l:request = remove(self.requests, a:message.id)
+      if has_key(a:message, 'error')
+        call l:request.reject(a:message.error)
+      else
+        call l:request.resolve(get(a:message, 'result', v:null))
+      endif
     endif
-    return
-  endif
 
   " Notification.
-  if has_key(a:message, 'method')
+  elseif has_key(a:message, 'method')
     call self.log('<- [NOTIFY]', a:message)
     call self.on_notification(a:message)
   endif

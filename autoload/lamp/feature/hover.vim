@@ -29,6 +29,11 @@ function! lamp#feature#hover#do() abort
     return
   endif
 
+  if has_key(s:, 'cancellation_token')
+    call s:cancellation_token.cancel()
+  endif
+  let s:cancellation_token = lamp#cancellation_token()
+
   let l:servers = lamp#server#registry#find_by_filetype(&filetype)
   let l:servers = filter(l:servers, { k, v -> v.supports('capabilities.hoverProvider') })
   if empty(l:servers)
@@ -41,6 +46,8 @@ function! lamp#feature#hover#do() abort
         \   v.request('textDocument/hover', {
         \     'textDocument': lamp#protocol#document#identifier(l:bufnr),
         \     'position': s:Position.cursor()
+        \   }, {
+        \     'cancellation_token': s:cancellation_token,
         \   }).catch(lamp#rescue(v:null))
         \ })
   let l:p = s:Promise.all(l:promises)
