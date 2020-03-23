@@ -103,10 +103,10 @@ function! s:on_text_document_did_open() abort
   vnoremap <buffer> <Leader>f    :LampRangeFormatting<CR>
   nnoremap <buffer> <Leader><CR> :<C-u>LampCodeAction<CR>
   vnoremap <buffer> <Leader><CR> :LampCodeAction<CR>
-  nnoremap <buffer> <C-n>        :<C-u>LampSelectionnRangeExpand<CR>
-  nnoremap <buffer> <C-p>        :<C-u>LampSelectionnRangeCollapse<CR>
-  vnoremap <buffer> <C-n>        :<C-u>LampSelectionnRangeExpand<CR>
-  vnoremap <buffer> <C-p>        :<C-u>LampSelectionnRangeCollapse<CR>
+  nnoremap <buffer> <C-n>        :<C-u>LampSelectionRangeExpand<CR>
+  nnoremap <buffer> <C-p>        :<C-u>LampSelectionRangeCollapse<CR>
+  vnoremap <buffer> <C-n>        :<C-u>LampSelectionRangeExpand<CR>
+  vnoremap <buffer> <C-p>        :<C-u>LampSelectionRangeCollapse<CR>
 endfunction
 ```
 
