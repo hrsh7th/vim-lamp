@@ -18,6 +18,7 @@ function! s:Document.new(bufnr) abort
         \   'language_id': lamp#protocol#document#language_id(a:bufnr),
         \   'changedtick': getbufvar(a:bufnr, 'changedtick'),
         \   'applied_diagnostics_count': 0,
+        \   'applied_diagnostics': [],
         \   'diagnostics': [],
         \ })
 endfunction

@@ -75,8 +75,19 @@ endfunction
 "
 " update
 "
+let s:count = 0
 function! s:update(server_name, document) abort
+  let l:new_diagnostics_count = len(a:document.diagnostics)
+  if a:document.applied_diagnostics_count == l:new_diagnostics_count
+    if a:document.applied_diagnostics_count == 0
+      return
+    endif
+    if a:document.applied_diagnostics == a:document.diagnostics
+      return
+    endif
+  endif
   let a:document.applied_diagnostics_count = len(a:document.diagnostics)
+  let a:document.applied_diagnostics = copy(a:document.diagnostics)
 
   " remove per server.
   let l:highlight_ns = printf('%s:%s', s:highlight_ns, a:server_name)
