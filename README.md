@@ -188,6 +188,5 @@ endfunction
 # TODO
 - Custom highlighting in fenced language (e.g. underlined)
 - Improve documentation
-- Design canceling outdated request
 - Trim floatwin sizes when completion
 
