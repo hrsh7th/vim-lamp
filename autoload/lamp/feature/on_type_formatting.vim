@@ -64,12 +64,13 @@ function! s:on_insert_char_pre_after() abort
     \     'tabSize': lamp#view#buffer#get_indent_size(),
     \     'insertSpaces': &expandtab ? v:true : v:false
     \   }
-    \ }))
+    \ }), 200)
 
     if !empty(l:edits)
       call lamp#view#edit#apply(bufnr('%'), l:edits)
     endif
   catch /.*/
+    call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
   endtry
 
   return ''

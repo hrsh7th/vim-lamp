@@ -12,6 +12,7 @@ delfunction s:_SID
 "
 function! s:_vital_loaded(V) abort
   let s:Text = a:V.import('VS.LSP.Text')
+  let s:Position = a:V.import('VS.LSP.Position')
 endfunction
 
 "
@@ -27,29 +28,35 @@ endfunction
 function! s:apply(path, text_edits) abort
   let l:current_bufname = bufname('%')
   let l:target_bufname = a:path
-  let l:cursor_pos = getpos('.')[1 : 3]
-  let l:cursor_offset = 0
+  let l:cursor_position = s:Position.cursor()
+  let l:cursor_line_offset = 0
   let l:topline = line('w0')
 
   call s:_switch(l:target_bufname)
   for l:text_edit in s:_normalize(a:text_edits)
-    let l:cursor_offset += s:_apply(bufnr(l:target_bufname), l:text_edit, l:cursor_pos)
+    let l:cursor_line_offset += s:_apply(bufnr(l:target_bufname), l:text_edit, l:cursor_position)
   endfor
   call s:_switch(l:current_bufname)
 
   if bufnr(l:current_bufname) == bufnr(l:target_bufname)
-    let l:length = strlen(getline(l:cursor_pos[0])) + 1
-    let l:cursor_pos[2] = max([0, l:cursor_pos[1] + l:cursor_pos[2] - l:length])
-    let l:cursor_pos[1] = min([l:length, l:cursor_pos[1] + l:cursor_pos[2]])
-    call cursor(l:cursor_pos)
-    call winrestview({ 'topline': l:topline + l:cursor_offset })
+    try
+      let l:cursor_pos = s:Position.lsp_to_vim('%', l:cursor_position)
+      let l:length = strlen(getline(l:cursor_pos[0])) + 1
+      let l:col = max([0, l:cursor_pos[1] - l:length])
+      let l:col = min([l:length, l:cursor_pos[1]])
+      let l:cursor_pos[1] = l:col
+      call cursor(l:cursor_pos)
+      call winrestview({ 'topline': l:topline + l:cursor_line_offset })
+    catch /.*/
+      echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+    endtry
   endif
 endfunction
 
 "
 " _apply
 "
-function! s:_apply(bufnr, text_edit, cursor_pos) abort
+function! s:_apply(bufnr, text_edit, cursor_position) abort
   " create before/after line.
   let l:start_line = getline(a:text_edit.range.start.line + 1)
   let l:end_line = getline(a:text_edit.range.end.line + 1)
@@ -62,11 +69,24 @@ function! s:_apply(bufnr, text_edit, cursor_pos) abort
   let l:new_lines[-1] = l:new_lines[-1] . l:after_line
   let l:new_lines_len = len(l:new_lines)
 
-  " fix cursor pos
+  " fix cursor col
+  if a:text_edit.range.end.line == a:cursor_position.line
+    if a:text_edit.range.end.character <= a:cursor_position.character
+      let l:text_length = strchars(s:Text.split_by_eol(a:text_edit.newText)[-1])
+      let l:range_length = a:text_edit.range.end.character - (
+      \   a:text_edit.range.start.line == a:cursor_position.line
+      \     ? a:text_edit.range.start.character
+      \     : 0
+      \ )
+      let a:cursor_position.character += l:text_length - l:range_length
+    endif
+  endif
+
+  " fix cursor line
   let l:cursor_offset = 0
-  if a:text_edit.range.end.line + 1 < a:cursor_pos[0]
+  if a:text_edit.range.end.line <= a:cursor_position.line
     let l:cursor_offset = l:new_lines_len - (a:text_edit.range.end.line - a:text_edit.range.start.line) - 1
-    let a:cursor_pos[0] += l:cursor_offset
+    let a:cursor_position.line += l:cursor_offset
   endif
 
   " append new lines.
