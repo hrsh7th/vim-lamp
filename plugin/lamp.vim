@@ -57,8 +57,11 @@ function! s:on_text_document_did_open() abort
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
 
   if !empty(l:servers)
-    call s:initialize_buffer()
-    doautocmd User lamp#text_document_did_open
+    if !has_key(b:, 'lamp_initialized')
+      let b:lamp_initialized = v:true
+      call s:initialize_buffer()
+      doautocmd User lamp#text_document_did_open
+    endif
   endif
 
   let l:ctx = {}
