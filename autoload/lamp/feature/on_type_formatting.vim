@@ -13,11 +13,11 @@ let s:cache = {}
 " lamp#feature#on_type_formatting#init
 "
 function! lamp#feature#on_type_formatting#init() abort
-  augroup lamp#feature#on_type_formatting
+  execute printf('augroup lamp#feature#on_type_formatting_%d', bufnr('%'))
     autocmd!
     autocmd User lamp#server#initialized call s:clear_cache()
     autocmd User lamp#server#exited call s:clear_cache()
-    autocmd InsertCharPre * call s:on_insert_char_pre()
+    autocmd InsertCharPre <buffer> call s:on_insert_char_pre()
   augroup END
 endfunction
 

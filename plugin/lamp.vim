@@ -57,11 +57,7 @@ function! s:on_text_document_did_open() abort
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
 
   if !empty(l:servers)
-    if !has_key(b:, 'lamp_initialized')
-      let b:lamp_initialized = v:true
-      call s:initialize_buffer()
-      doautocmd User lamp#text_document_did_open
-    endif
+    call s:initialize_buffer()
   endif
 
   let l:ctx = {}
@@ -139,6 +135,13 @@ endfunction
 " initialize_buffer
 "
 function! s:initialize_buffer() abort
+  if has_key(b:, 'lamp_text_document_did_open')
+    return
+  endif
+  let b:lamp_text_document_did_open = v:true
+
+  call lamp#log('[LOG]', 's:initialize_buffer', bufnr('%'))
+
   for s:feature in glob(lamp#config('global.root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
     try
       call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
@@ -146,6 +149,7 @@ function! s:initialize_buffer() abort
       echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
     endtry
   endfor
+  doautocmd User lamp#text_document_did_open
 endfunction
 
 doautocmd User lamp#initialized

@@ -6,7 +6,7 @@ let s:Promise = vital#lamp#import('Async.Promise')
 "
 let s:test = {}
 function! lamp#feature#rename#test(test) abort
-  let s:test= a:test
+  let s:test = a:test
 endfunction
 
 "

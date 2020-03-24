@@ -28,9 +28,9 @@ let s:context = {
 " init
 "
 function! lamp#feature#diagnostic#init() abort
-  augroup lamp#feature#diagnostic#init
+  execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
     autocmd!
-    autocmd InsertLeave * call s:check()
+    autocmd InsertLeave <buffer> call s:check()
   augroup END
 endfunction
 
