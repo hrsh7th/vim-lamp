@@ -75,16 +75,14 @@ function! s:on_responses(bufnr, responses) abort
     return
   endif
 
-  let l:lines = []
+  let l:contents = []
   for l:response in filter(a:responses, { k, v -> !empty(v) })
-    for l:content in s:get_contents(l:response)
-      let l:lines += l:content.lines
-    endfor
+    let l:contents += s:get_contents(l:response)
   endfor
 
-  if !empty(l:lines)
+  if !empty(l:contents)
     let l:screenpos = lamp#view#floatwin#screenpos(line('.'), col('.'))
-    call s:floatwin.show_tooltip(l:screenpos, [{ 'lines': l:lines }])
+    call s:floatwin.show_tooltip(l:screenpos, l:contents)
     call lamp#view#mode#insert_leave({ -> s:close_signature_help() })
   endif
 endfunction
@@ -100,8 +98,6 @@ function! s:get_contents(response) abort
     return []
   endif
   let l:parameter = get(get(l:signature, 'parameters', []), l:active_parameter, {})
-
-  let l:contents = []
 
   " parameter_doc
   let l:parameter_doc = ''
@@ -126,15 +122,14 @@ function! s:get_contents(response) abort
 
   " signature_help
   let l:signature_help = ''
-  let l:signature_help .= lamp#protocol#markup_content#to_string(l:signature_label) . "\n"
   if strlen(l:parameter_doc) > 0
-    let l:signature_help .= "\n" . l:parameter_doc . "\n"
+    let l:signature_help .= l:parameter_doc . "\n"
   endif
   if strlen(l:signature_doc) > 0
-    let l:signature_help .= "\n" . l:signature_doc
+    let l:signature_help .= l:signature_doc
   endif
 
-  return lamp#protocol#markup_content#normalize(l:signature_help)
+  return lamp#protocol#markup_content#normalize(l:signature_label) + lamp#protocol#markup_content#normalize(l:signature_help)
 endfunction
 
 "
