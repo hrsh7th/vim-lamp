@@ -40,12 +40,7 @@ function! s:apply(path, text_edits) abort
 
   if bufnr(l:current_bufname) == bufnr(l:target_bufname)
     try
-      let l:cursor_pos = s:Position.lsp_to_vim('%', l:cursor_position)
-      let l:length = strlen(getline(l:cursor_pos[0])) + 1
-      let l:col = max([0, l:cursor_pos[1] - l:length])
-      let l:col = min([l:length, l:cursor_pos[1]])
-      let l:cursor_pos[1] = l:col
-      call cursor(l:cursor_pos)
+      call cursor(s:Position.lsp_to_vim('%', l:cursor_position))
       call winrestview({ 'topline': l:topline + l:cursor_line_offset })
     catch /.*/
       echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
@@ -72,16 +67,11 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
   " fix cursor col
   if a:text_edit.range.end.line == a:cursor_position.line
     if a:text_edit.range.end.character <= a:cursor_position.character
-      let l:text_length = strchars(s:Text.split_by_eol(a:text_edit.newText)[-1])
-      let l:range_length = a:text_edit.range.end.character - (
-      \   a:text_edit.range.start.line == a:cursor_position.line
-      \     ? a:text_edit.range.start.character
-      \     : 0
-      \ )
-      let a:cursor_position.character += l:text_length - l:range_length
+      let l:end_character = strchars(l:new_lines[-1]) - strchars(l:after_line)
+      let l:end_offset = a:cursor_position.character - a:text_edit.range.end.character
+      let a:cursor_position.character = l:end_character + l:end_offset
     endif
   endif
-
   " fix cursor line
   let l:cursor_offset = 0
   if a:text_edit.range.end.line <= a:cursor_position.line
