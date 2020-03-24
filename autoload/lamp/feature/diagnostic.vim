@@ -68,6 +68,11 @@ endfunction
 " apply
 "
 function! s:apply(server_name, diagnostics) abort
+  if len(a:diagnostics.diagnostics) == 0 && len(a:diagnostics.applied_diagnostics) == 0
+    call a:diagnostics.applied()
+    return
+  endif
+
   call a:diagnostics.applied()
 
   let l:bufnr = bufnr(a:diagnostics.bufname)
