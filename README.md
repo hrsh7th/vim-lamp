@@ -50,14 +50,14 @@ augroup END
 autocmd! vimrc User lamp#initialized call s:on_initialized()
 function! s:on_initialized()
   " built-in setting
-  call lamp#language#php()
-  call lamp#language#html()
-  call lamp#language#css()
-  call lamp#language#typescript()
-  call lamp#language#vim()
-  call lamp#language#go()
-  call lamp#language#rust()
-  call lamp#language#python()
+  call lamp#builtin#intelephense()
+  call lamp#builtin#html_languageserver()
+  call lamp#builtin#css_languagserver()
+  call lamp#builtin#typescript_language_server()
+  call lamp#builtin#vim_language_server()
+  call lamp#builtin#gopls()
+  call lamp#builtin#rls()
+  call lamp#builtin#pyls()
 
   " custom setting
   call lamp#register('example-server', {
@@ -181,10 +181,14 @@ endfunction
         - [ ] textDocument/foldingRange
         - [x] textDocument/selectionRange
 
+    - Proposed
+        - [ ] textDocument/semanticTokens
+        - [ ] textDocument/callHierarchy
+
 </details>
 
 # TODO
 - Custom highlighting in fenced language (e.g. underlined)
 - Improve documentation
-- Trim floatwin sizes when completion
+- Trim floatwin sizes for space
 

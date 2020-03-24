@@ -1,11 +1,11 @@
-augroup lamp#language
+augroup lamp#builtin
   autocmd!
 augroup END
 
 "
-" lamp#language#php
+" lamp#builtin#intelephense
 "
-function! lamp#language#php(...) abort
+function! lamp#builtin#intelephense(...) abort
   if !executable('intelephense')
     echomsg '[vim-lamp] You should install `intelephense`.'
     echomsg '[vim-lamp] > npm install -g intelephense'
@@ -20,13 +20,13 @@ function! lamp#language#php(...) abort
   \     'storagePath': expand('~/.cache/intelephense')
   \   } }
   \ }, get(a:000, 0, {})))
-  autocmd! lamp#language FileType php setlocal iskeyword+=$
+  autocmd! lamp#builtin FileType php setlocal iskeyword+=$
 endfunction
 
 "
-" lamp#language#html
+" lamp#builtin#html_languageserver
 "
-function! lamp#language#html(...) abort
+function! lamp#builtin#html_languageserver(...) abort
   if !executable('html-languageserver')
     echomsg '[vim-lamp] You should install `html-languageserver`.'
     echomsg '[vim-lamp] > npm install -g vscode-html-languageserver-bin'
@@ -39,7 +39,8 @@ function! lamp#language#html(...) abort
   \   'initialization_options': { -> {
   \     'embeddedLanguages': {
   \       'css': v:true,
-  \       'html': v:true
+  \       'html': v:true,
+  \       'javascript': v:true,
   \     }
   \   } },
   \   'capabilities': {
@@ -51,9 +52,9 @@ function! lamp#language#html(...) abort
 endfunction
 
 "
-" lamp#language#css
+" lamp#builtin#css_languageserver
 "
-function! lamp#language#css(...) abort
+function! lamp#builtin#css_languageserver(...) abort
   if !executable('css-languageserver')
     echomsg '[vim-lamp] You should install `css-languageserver`.'
     echomsg '[vim-lamp] > npm install -g vscode-css-languageserver-bin'
@@ -67,9 +68,9 @@ function! lamp#language#css(...) abort
 endfunction
 
 "
-" lamp#language#yaml
+" lamp#builtin#yaml_language_server
 "
-function! lamp#language#yaml(...) abort
+function! lamp#builtin#yaml_language_server(...) abort
   if !executable('yaml-language-server')
     echomsg '[vim-lamp] You should install `yaml-language-server`.'
     echomsg '[vim-lamp] > npm install -g yaml-language-server'
@@ -95,9 +96,9 @@ function! lamp#language#yaml(...) abort
 endfunction
 
 "
-" lamp#language#json
+" lamp#builtin#json_languageserver
 "
-function! lamp#language#json(...) abort
+function! lamp#builtin#json_languageserver(...) abort
   if !executable('json-languageserver')
     echomsg '[vim-lamp] You should install `json-languageserver`.'
     echomsg '[vim-lamp] > npm install -g vscode-json-languageserver-bin'
@@ -120,9 +121,9 @@ function! lamp#language#json(...) abort
 endfunction
 
 "
-" lamp#language#typescript
+" lamp#builtin#typescript_language_server
 "
-function! lamp#language#typescript(...) abort
+function! lamp#builtin#typescript_language_server(...) abort
   if !executable('typescript-language-server')
     echomsg '[vim-lamp] You should install `typescript-language-server`.'
     echomsg '[vim-lamp] > npm install -g typescript-language-server'
@@ -142,9 +143,9 @@ function! lamp#language#typescript(...) abort
 endfunction
 
 "
-" lamp#language#vim
+" lamp#builtin#vim_language_server
 "
-function! lamp#language#vim(...) abort
+function! lamp#builtin#vim_language_server(...) abort
   if !executable('vim-language-server')
     echomsg '[vim-lamp] You should install `vim-language-server`.'
     echomsg '[vim-lamp] > npm install -g vim-language-server'
@@ -167,10 +168,10 @@ function! lamp#language#vim(...) abort
 endfunction
 
 "
-" lamp#language#go
+" lamp#builtin#gopls
 "
-function! lamp#language#go() abort
-  if !executable('vim-language-server')
+function! lamp#builtin#gopls() abort
+  if !executable('gopls')
     echomsg '[vim-lamp] You should install `gopls`.'
     echomsg '[vim-lamp] see https://github.com/golang/tools/blob/master/gopls/doc/user.md'
     return
@@ -187,13 +188,13 @@ function! lamp#language#go() abort
   \   } },
   \ })
 
-  autocmd! lamp#language BufWritePre *.go call execute('LampFormattingSync') | call execute('LampCodeActionSync source.organizeImports')
+  autocmd! lamp#builtin BufWritePre *.go call execute('LampFormattingSync') | call execute('LampCodeActionSync source.organizeImports')
 endfunction
 
 "
-" lamp#language#rust
+" lamp#builtin#rls
 "
-function! lamp#language#rust(...) abort
+function! lamp#builtin#rls(...) abort
   if !executable('rls')
     echomsg '[vim-lamp] You should install `rls`.'
     echomsg '[vim-lamp] > rustup update && rustup component add rls rust-analysis rust-src'
@@ -208,9 +209,9 @@ function! lamp#language#rust(...) abort
 endfunction
 
 "
-" lamp#language#python
+" lamp#builtin#pyls
 "
-function! lamp#language#python(...) abort
+function! lamp#builtin#pyls(...) abort
   if !executable('pyls')
     echomsg '[vim-lamp] You should install `pyls`.'
     echomsg '[vim-lamp] see https://github.com/palantir/python-language-server'
