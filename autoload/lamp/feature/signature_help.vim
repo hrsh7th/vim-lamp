@@ -123,7 +123,7 @@ function! s:get_contents(response) abort
   " signature_help
   let l:signature_help = ''
   if strlen(l:parameter_doc) > 0
-    let l:signature_help .= l:parameter_doc . "\n"
+    let l:signature_help .= l:parameter_doc
   endif
   if strlen(l:signature_doc) > 0
     let l:signature_help .= l:signature_doc
