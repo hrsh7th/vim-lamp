@@ -1,3 +1,12 @@
+"
+" NOTE: LSP spec says diagnostics has possibility to contain unmanaged file related.
+"
+" So `bufexists(s:Diagnostics.bufname)` may returns false, we should care about it.
+"
+
+"
+" lamp#server#diagnostics#import
+"
 function! lamp#server#diagnostics#import() abort
   return s:Diagnostics
 endfunction
