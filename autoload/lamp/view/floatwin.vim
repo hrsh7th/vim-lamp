@@ -96,7 +96,7 @@ function! s:Floatwin.show(screenpos, contents) abort
   for l:content in a:contents
     let l:lines += l:content.lines
     if l:content isnot a:contents[-1]
-      let l:lines += [repeat("\u2015", self.get_width(a:contents) / 2)]
+      let l:lines += [repeat("\u2015", self.get_width(a:contents) / (&ambiwidth ==# 'double' ? 2 : 1))]
     endif
   endfor
 

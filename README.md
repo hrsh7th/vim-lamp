@@ -29,18 +29,16 @@ execute printf('source %s', expand('~/.vim/plugged/vim-plug/plug.vim'))
 
 call plug#begin('~/.vim/plugged')
 Plug 'hrsh7th/vim-lamp'
+Plug 'hrsh7th/vim-compete'
+Plug 'hrsh7th/vim-compete-lamp'
 Plug 'hrsh7th/vim-vsnip'
 Plug 'hrsh7th/vim-vsnip-integ'
-Plug 'hrsh7th/asyncomplete-lamp'
-Plug 'prabirshrestha/asyncomplete.vim'
 call plug#end()
 
 "
 " required options
 "
 set hidden
-set ambiwidth=double
-set completeopt=menu,menuone,noselect
 
 augroup vimrc
   autocmd!
