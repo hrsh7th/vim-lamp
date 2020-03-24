@@ -32,7 +32,9 @@ endfunction
 " set
 "
 function! s:Diagnostics.set(diagnostics) abort
-  let self.version += 1
+  if len(a:diagnostics) != 0 || len(self.applied_diagnostics) == 0
+    let self.version += 1
+  endif
   let self.changedtick = getbufvar(self.bufname, 'changedtick', -1)
   let self.diagnostics = a:diagnostics
 endfunction

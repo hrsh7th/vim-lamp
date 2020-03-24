@@ -21,7 +21,7 @@ let s:context = {
 " init
 "
 function! lamp#feature#diagnostic#init() abort
-  call s:check()
+  call s:update()
 endfunction
 
 "
