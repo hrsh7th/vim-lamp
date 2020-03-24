@@ -4,14 +4,8 @@ let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 
 "
 " {
-"   changes: {
-"     [server_name]: {
-"       document: Document,
-"       changedtick: number
-"     }
-"   }[]
 "   state: {
-"     [bufnr]: {
+"     [bufname]: {
 "       [lnum]: {
 "         [server_name]: Diagnostic
 "       }
@@ -20,7 +14,6 @@ let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 " }
 "
 let s:context = {
-\   'changes': {},
 \   'state': {}
 \ }
 
@@ -28,115 +21,103 @@ let s:context = {
 " init
 "
 function! lamp#feature#diagnostic#init() abort
-  execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
-    autocmd!
-    autocmd InsertLeave <buffer> call s:check()
-  augroup END
+  call s:check()
 endfunction
 
 "
 " lamp#feature#diagnostic#update
 "
-function! lamp#feature#diagnostic#update(server, document) abort
-  if a:document.applied_diagnostics_count >= len(a:document.diagnostics)
-    call s:update(a:server.name, a:document)
+function! lamp#feature#diagnostic#update(server, diagnostics) abort
+  if a:diagnostics.is_decreased() && a:diagnostics.is_shown()
+    call s:apply(a:server.name, a:diagnostics)
+  else
+    call s:check()
   endif
-
-  let s:context.changes[a:server.name] = get(s:context.changes, a:server.name, {})
-  let s:context.changes[a:server.name][a:document.bufnr] = {
-  \   'document': a:document,
-  \   'changedtick': a:document.get_changedtick(),
-  \ }
-  call s:check()
 endfunction
 
 "
 " check
 "
 function! s:check() abort
-  let l:ctx = {}
-  function! l:ctx.callback() abort
-    for [l:server_name, l:changes] in items(s:context.changes)
-      for [l:bufnr, l:state] in items(l:changes)
-        if l:state.changedtick == l:state.document.get_changedtick()
-          call s:update(l:server_name, l:state.document)
-        endif
-        call remove(s:context.changes[l:server_name], l:state.document.bufnr)
-      endfor
-    endfor
-  endfunction
-
   let l:timeout = mode()[0] ==# 'i'
   \   ? lamp#config('feature.diagnostic.increase_delay.insert')
   \   : lamp#config('feature.diagnostic.increase_delay.normal')
-  call lamp#debounce('lamp#feature#diagnostic:check', { -> l:ctx.callback() }, l:timeout)
+  call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, l:timeout)
 endfunction
 
 "
 " update
 "
-let s:count = 0
-function! s:update(server_name, document) abort
-  let l:new_diagnostics_count = len(a:document.diagnostics)
-  if a:document.applied_diagnostics_count == l:new_diagnostics_count
-    if a:document.applied_diagnostics_count == 0
-      return
-    endif
-    if a:document.applied_diagnostics == a:document.diagnostics
-      return
-    endif
-  endif
-  let a:document.applied_diagnostics_count = len(a:document.diagnostics)
-  let a:document.applied_diagnostics = copy(a:document.diagnostics)
+function! s:update() abort
+  let l:bufnames = {}
+  for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
+    let l:bufnames[fnamemodify(bufname(winbufnr(l:winnr)), ':p')] = 1
+  endfor
+
+  for l:bufname in keys(l:bufnames)
+    let l:uri = lamp#protocol#document#encode_uri(l:bufname)
+    for l:server in lamp#server#registry#find_by_filetype(getbufvar(l:bufname, '&filetype'))
+      if has_key(l:server.diagnostics, l:uri) && l:server.diagnostics[l:uri].updated()
+        call s:apply(l:server.name, l:server.diagnostics[l:uri])
+      endif
+    endfor
+  endfor
+endfunction
+
+"
+" apply
+"
+function! s:apply(server_name, diagnostics) abort
+  call a:diagnostics.applied()
+
+  let l:bufnr = bufnr(a:diagnostics.bufname)
 
   " remove per server.
   let l:highlight_ns = printf('%s:%s', s:highlight_ns, a:server_name)
   let l:virtual_text_ns = printf('%s:%s', s:virtual_text_ns, a:server_name)
   let l:sign_ns = printf('%s:%s', s:sign_ns, a:server_name)
-  call lamp#view#sign#remove(l:sign_ns, a:document.bufnr)
-  call lamp#view#highlight#remove(l:highlight_ns, a:document.bufnr)
-  call lamp#view#virtual_text#remove(l:virtual_text_ns, a:document.bufnr)
+  call lamp#view#sign#remove(l:sign_ns, l:bufnr)
+  call lamp#view#highlight#remove(l:highlight_ns, l:bufnr)
+  call lamp#view#virtual_text#remove(l:virtual_text_ns, l:bufnr)
 
   " initialize buffer state
-  let s:context.state[a:document.bufnr] = get(s:context.state, a:document.bufnr, {})
+  let s:context.state[l:bufnr] = get(s:context.state, l:bufnr, {})
 
   " update.
-  for l:diagnostic in a:document.diagnostics
+  for l:diagnostic in a:diagnostics.diagnostics
     let l:line = l:diagnostic.range.start.line
 
     " initialize line state
-    let s:context.state[a:document.bufnr][l:line] = get(s:context.state[a:document.bufnr], l:line, {})
+    let s:context.state[l:bufnr][l:line] = get(s:context.state[l:bufnr], l:line, {})
 
     " skip if already applied for l:line
-    if has_key(s:context.state[a:document.bufnr][l:line], a:server_name)
-      unlet s:context.state[a:document.bufnr][l:line][a:server_name]
+    if has_key(s:context.state[l:bufnr][l:line], a:server_name)
+      unlet s:context.state[l:bufnr][l:line][a:server_name]
     endif
-    if len(keys(s:context.state[a:document.bufnr][l:line])) != 0
+    if len(keys(s:context.state[l:bufnr][l:line])) != 0
       continue
     endif
 
     " add diagnostic
-    let s:context.state[a:document.bufnr][l:line][a:server_name] = l:diagnostic
+    let s:context.state[l:bufnr][l:line][a:server_name] = l:diagnostic
     let l:severity = get(l:diagnostic, 'severity', 1)
     if l:severity == 1
-      call lamp#view#sign#error(l:sign_ns, a:document.bufnr, l:line + 1)
-      call lamp#view#highlight#error(l:highlight_ns, a:document.bufnr, l:diagnostic.range)
-      call lamp#view#virtual_text#error(l:virtual_text_ns, a:document.bufnr, l:line, l:diagnostic.message)
+      call lamp#view#sign#error(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#highlight#error(l:highlight_ns, l:bufnr, l:diagnostic.range)
+      call lamp#view#virtual_text#error(l:virtual_text_ns, l:bufnr, l:line, l:diagnostic.message)
     elseif l:severity == 2
-      call lamp#view#sign#warning(l:sign_ns, a:document.bufnr, l:line + 1)
-      call lamp#view#highlight#warning(l:highlight_ns, a:document.bufnr, l:diagnostic.range)
-      call lamp#view#virtual_text#warning(l:virtual_text_ns, a:document.bufnr, l:line, l:diagnostic.message)
+      call lamp#view#sign#warning(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#highlight#warning(l:highlight_ns, l:bufnr, l:diagnostic.range)
+      call lamp#view#virtual_text#warning(l:virtual_text_ns, l:bufnr, l:line, l:diagnostic.message)
     elseif l:severity == 3
-      call lamp#view#sign#information(l:sign_ns, a:document.bufnr, l:line + 1)
-      call lamp#view#highlight#information(l:highlight_ns, a:document.bufnr, l:diagnostic.range)
-      call lamp#view#virtual_text#information(l:virtual_text_ns, a:document.bufnr, l:line, l:diagnostic.message)
+      call lamp#view#sign#information(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#highlight#information(l:highlight_ns, l:bufnr, l:diagnostic.range)
+      call lamp#view#virtual_text#information(l:virtual_text_ns, l:bufnr, l:line, l:diagnostic.message)
     elseif l:severity == 4
-      call lamp#view#sign#hint(l:sign_ns, a:document.bufnr, l:line + 1)
-      call lamp#view#highlight#hint(l:highlight_ns, a:document.bufnr, l:diagnostic.range)
-      call lamp#view#virtual_text#hint(l:virtual_text_ns, a:document.bufnr, l:line, l:diagnostic.message)
+      call lamp#view#sign#hint(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#highlight#hint(l:highlight_ns, l:bufnr, l:diagnostic.range)
+      call lamp#view#virtual_text#hint(l:virtual_text_ns, l:bufnr, l:line, l:diagnostic.message)
     endif
   endfor
-
-  return v:true
 endfunction
 

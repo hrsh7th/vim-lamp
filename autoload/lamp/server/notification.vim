@@ -1,3 +1,5 @@
+let s:Diagnostics = lamp#server#diagnostics#import()
+
 "
 " lamp#server#notification#on
 "
@@ -35,13 +37,15 @@ endfunction
 " text_document_publish_diagnostics
 "
 function! s:text_document_publish_diagnostics(server, notification) abort
-  if !has_key(a:server.documents, a:notification.params.uri)
-    return
+  if !has_key(a:server.diagnostics, a:notification.params.uri)
+    let a:server.diagnostics[a:notification.params.uri] = s:Diagnostics.new({
+    \   'uri': a:notification.params.uri,
+    \   'diagnostics': a:notification.params.diagnostics,
+    \ })
   endif
+  call a:server.diagnostics[a:notification.params.uri].set(a:notification.params.diagnostics)
 
-  let l:document = a:server.documents[a:notification.params.uri]
-  call l:document.set_diagnostics(a:notification.params.diagnostics)
-  call lamp#feature#diagnostic#update(a:server, l:document)
+  call lamp#feature#diagnostic#update(a:server, a:server.diagnostics[a:notification.params.uri])
 endfunction
 
 "

@@ -26,6 +26,7 @@ function! s:Server.new(name, option) abort
         \   'trace': get(a:option, 'trace', 'off'),
         \   'diff': s:Diff.new(),
         \   'documents': {},
+        \   'diagnostics': {},
         \   'capability': s:Capability.new({
         \     'capabilities': get(a:option, 'capabilities', {})
         \   }),
