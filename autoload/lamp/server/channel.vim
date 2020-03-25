@@ -83,6 +83,7 @@ function! s:Channel.request(method, params, ...) abort
     let self.requests[self.request_id] = {
           \   'resolve': a:resolve,
           \   'reject': a:reject,
+          \   'canceled': v:false,
           \ }
     call self.job.send(self.to_message(extend({ 'id': self.request_id }, a:message)))
     call self.log('-> [REQUEST]', self.request_id, a:message)
@@ -124,7 +125,7 @@ function! s:Channel.cancel(id) abort
     call self.notify('$/cancelRequest', {
     \   'id': a:id
     \ })
-    call remove(self.requests, a:id)
+    let self.requests[a:id].canceled = v:true
   endif
 endfunction
 
@@ -149,8 +150,12 @@ function! s:Channel.on_message(message) abort
 
     " Response.
     elseif has_key(a:message, 'id')
-      call self.log('<- [RESPONSE]', a:message.id, a:message)
       let l:request = remove(self.requests, a:message.id)
+      if l:request.canceled
+        return self.log('<- [CANCELED]', a:message.id, a:message)
+      endif
+
+      call self.log('<- [RESPONSE]', a:message.id, a:message)
       if has_key(a:message, 'error')
         call l:request.reject(a:message.error)
       else
@@ -178,32 +183,36 @@ function! s:Channel.on_stdout(data) abort
   endif
 
   " content length check.
-  let l:content_length = get(matchlist(self.buffer[0 : l:header_length - 1], 'Content-Length: \(\d\+\)'), 1, v:null)
+  let l:content_length = get(matchlist(strpart(self.buffer, 0, l:header_length), 'Content-Length: \(\d\+\)'), 1, v:null)
   if l:content_length is v:null
     return
   endif
-  let l:end_of_content = l:header_length + l:content_length
+  let l:message_length = l:header_length + l:content_length
 
   " content check.
   let l:buffer_len = strlen(self.buffer)
-  if l:buffer_len < l:end_of_content
+  if l:buffer_len < l:message_length
     return
   endif
 
   " try content.
   try
-    let l:content = self.buffer[l:header_length : l:end_of_content - 1]
+    let l:content = strpart(self.buffer, l:header_length, l:message_length - l:header_length)
     let l:message = json_decode(l:content)
-    let self.buffer = self.buffer[l:end_of_content : ]
-
-    call self.on_message(l:message)
-
-    if l:buffer_len > l:end_of_content
-      call self.on_stdout('')
-    endif
+    let self.buffer = strpart(self.buffer, l:message_length, strlen(l:buffer_len) - l:message_length)
+    try
+      call self.on_message(l:message)
+    catch /.*/
+      call self.log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
+    endtry
   catch /.*/
-    call self.log('[ERROR]', a:data)
+    call self.log('[JSON-PARSE-ERROR]', a:data)
+    let self.buffer = strpart(self.buffer, l:header_length, strlen(l:buffer_len) - l:header_length)
   endtry
+
+  if l:buffer_len > l:message_length
+    call self.on_stdout('')
+  endif
 endfunction
 
 "
