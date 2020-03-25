@@ -182,7 +182,7 @@ function! s:Channel.on_stdout(data) abort
   endif
 
   " content length check.
-  let l:content_length = get(matchlist(strpart(self.buffer, 0, l:header_length), 'Content-Length: \(\d\+\)'), 1, v:null)
+  let l:content_length = get(matchlist(strpart(self.buffer, 0, l:header_length), 'Content-Length:\s*\(\d\+\)'), 1, v:null)
   if l:content_length is v:null
     return
   endif
