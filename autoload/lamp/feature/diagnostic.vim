@@ -29,8 +29,10 @@ endfunction
 "
 function! lamp#feature#diagnostic#update(server, diagnostics) abort
   if a:diagnostics.is_decreased() && a:diagnostics.is_shown()
+    call lamp#log('[LOG]', 'diagnostics update immediately', a:server.name)
     call s:apply(a:server.name, a:diagnostics)
   else
+    call lamp#log('[LOG]', 'diagnostics update debounced', a:server.name)
     call s:check()
   endif
 endfunction
@@ -59,6 +61,8 @@ function! s:update() abort
     for l:server in lamp#server#registry#find_by_filetype(getbufvar(l:bufname, '&filetype'))
       if has_key(l:server.diagnostics, l:uri) && l:server.diagnostics[l:uri].updated()
         call s:apply(l:server.name, l:server.diagnostics[l:uri])
+      else
+        call lamp#log('[LOG]', 'diagnostics skipped', l:server.name)
       endif
     endfor
   endfor
@@ -69,10 +73,10 @@ endfunction
 "
 function! s:apply(server_name, diagnostics) abort
   if len(a:diagnostics.diagnostics) == 0 && len(a:diagnostics.applied_diagnostics) == 0
-    call a:diagnostics.applied()
+    call lamp#log('[LOG]', 'diagnostics skipped 0 to 0', a:server_name)
     return
   endif
-
+  call lamp#log('[LOG]', 'diagnostics apply', len(a:diagnostics.applied_diagnostics), 'to', len(a:diagnostics.diagnostics))
   call a:diagnostics.applied()
 
   let l:bufnr = bufnr(a:diagnostics.bufname)
