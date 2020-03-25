@@ -64,7 +64,7 @@ function! s:trigger_signature_help() abort
     let l:p = l:p.then({ responses -> s:on_responses(l:bufnr, responses) })
     let l:p = l:p.catch(lamp#rescue())
   endfunction
-  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> l:ctx.callback() }, 500)
+  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> l:ctx.callback() }, 300)
 endfunction
 
 "

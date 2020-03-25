@@ -83,7 +83,6 @@ function! s:Channel.request(method, params, ...) abort
     let self.requests[self.request_id] = {
           \   'resolve': a:resolve,
           \   'reject': a:reject,
-          \   'canceled': v:false,
           \ }
     call self.job.send(self.to_message(extend({ 'id': self.request_id }, a:message)))
     call self.log('-> [REQUEST]', self.request_id, a:message)
@@ -125,7 +124,7 @@ function! s:Channel.cancel(id) abort
     call self.notify('$/cancelRequest', {
     \   'id': a:id
     \ })
-    let self.requests[a:id].canceled = v:true
+    call remove(self.requests, a:id)
   endif
 endfunction
 
@@ -150,16 +149,16 @@ function! s:Channel.on_message(message) abort
 
     " Response.
     elseif has_key(a:message, 'id')
-      let l:request = remove(self.requests, a:message.id)
-      if l:request.canceled
-        return self.log('<- [CANCELED]', a:message.id, a:message)
-      endif
-
-      call self.log('<- [RESPONSE]', a:message.id, a:message)
-      if has_key(a:message, 'error')
-        call l:request.reject(a:message.error)
+      if has_key(self.requests, a:message.id)
+        call self.log('<- [RESPONSE]', a:message.id, a:message)
+        let l:request = remove(self.requests, a:message.id)
+        if has_key(a:message, 'error')
+          call l:request.reject(a:message.error)
+        else
+          call l:request.resolve(get(a:message, 'result', v:null))
+        endif
       else
-        call l:request.resolve(get(a:message, 'result', v:null))
+        call self.log('<- [RESPONSE IGNORE]', a:message.id, 'canceled or unknown response.')
       endif
     endif
 

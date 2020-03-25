@@ -53,8 +53,8 @@ if exists('*nvim_buf_set_virtual_text')
       let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
     endif
     call nvim_buf_set_virtual_text(a:bufnr, s:namespaces[a:namespace], a:line, [
-          \   [join(['■', a:text], ' '), a:highlight]
-          \ ], {})
+    \   [join(['■', a:text], ' '), a:highlight]
+    \ ], {})
   endfunction
 else
   function! s:add_virtual_text(namespace, bufnr, line, text, highlight) abort
