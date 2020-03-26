@@ -16,6 +16,7 @@ function! s:Document.new(bufnr) abort
         \   'bufnr': a:bufnr,
         \   'filetype': getbufvar(a:bufnr, '&filetype'),
         \   'language_id': lamp#protocol#document#language_id(a:bufnr),
+        \   'version': 0,
         \   'changedtick': getbufvar(a:bufnr, 'changedtick'),
         \   'applied_diagnostics_count': 0,
         \   'applied_diagnostics': [],
@@ -27,6 +28,7 @@ endfunction
 " sync
 "
 function! s:Document.sync() abort
+  let self.version += 1
   let self.changedtick = getbufvar(self.bufnr, 'changedtick')
 endfunction
 

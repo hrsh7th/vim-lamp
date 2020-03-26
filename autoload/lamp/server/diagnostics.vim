@@ -21,7 +21,7 @@ function! s:Diagnostics.new(args) abort
   \   'uri': a:args.uri,
   \   'bufname': lamp#protocol#document#decode_uri(a:args.uri),
   \   'version': 0,
-  \   'changedtick': -1,
+  \   'document_version': a:args.document_version,
   \   'applied_version': 0,
   \   'diagnostics': a:args.diagnostics,
   \   'applied_diagnostics': [],
@@ -31,12 +31,12 @@ endfunction
 "
 " set
 "
-function! s:Diagnostics.set(diagnostics) abort
+function! s:Diagnostics.set(diagnostics, document_version) abort
   let l:old_len = len(self.applied_diagnostics)
   let l:new_len = len(a:diagnostics)
 
   let self.version += 1
-  let self.changedtick = getbufvar(self.bufname, 'changedtick', -1)
+  let self.document_version = a:document_version
   let self.diagnostics = a:diagnostics
 endfunction
 
@@ -50,11 +50,11 @@ endfunction
 "
 " updated
 "
-function! s:Diagnostics.updated() abort
+function! s:Diagnostics.updated(document_version) abort
   if !bufexists(self.bufname)
     return v:false
   endif
-  return self.applied_version != self.version && (self.changedtick == -1 || self.changedtick == getbufvar(self.bufname, 'changedtick', -1))
+  return self.applied_version != self.version && (self.document_version == -1 || self.document_version == a:document_version)
 endfunction
 
 "

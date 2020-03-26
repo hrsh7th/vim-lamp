@@ -73,7 +73,9 @@ function! s:update(...) abort
   for l:bufname in keys(l:bufnames)
     let l:uri = lamp#protocol#document#encode_uri(l:bufname)
     for l:server in lamp#server#registry#find_by_filetype(getbufvar(l:bufname, '&filetype'))
-      if has_key(l:server.diagnostics, l:uri) && (l:server.diagnostics[l:uri].updated() || l:force)
+      let l:diagnostics = get(l:server.diagnostics, l:uri)
+      let l:document = get(l:server.documents, l:uri)
+      if !empty(l:diagnostics) && !empty(l:document) && (l:diagnostics.updated(l:document.version) || l:force)
         call s:apply(l:server.name, l:server.diagnostics[l:uri])
       else
         call lamp#log('[LOG]', 'diagnostics skipped', l:server.name)

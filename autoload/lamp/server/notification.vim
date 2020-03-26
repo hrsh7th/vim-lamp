@@ -37,13 +37,15 @@ endfunction
 " text_document_publish_diagnostics
 "
 function! s:text_document_publish_diagnostics(server, notification) abort
+  let l:document = get(a:server.documents, a:notification.params.uri, {})
   if !has_key(a:server.diagnostics, a:notification.params.uri)
     let a:server.diagnostics[a:notification.params.uri] = s:Diagnostics.new({
     \   'uri': a:notification.params.uri,
     \   'diagnostics': a:notification.params.diagnostics,
+    \   'document_version': get(l:document, 'version', -1),
     \ })
   endif
-  call a:server.diagnostics[a:notification.params.uri].set(a:notification.params.diagnostics)
+  call a:server.diagnostics[a:notification.params.uri].set(a:notification.params.diagnostics, get(l:document, 'version', -1))
 
   call lamp#feature#diagnostic#update(a:server, a:server.diagnostics[a:notification.params.uri])
 endfunction

@@ -121,10 +121,10 @@ endfunction
 "
 function! s:Channel.cancel(id) abort
   if has_key(self.requests, a:id)
+    call remove(self.requests, a:id)
     call self.notify('$/cancelRequest', {
     \   'id': a:id
     \ })
-    call remove(self.requests, a:id)
   endif
 endfunction
 
