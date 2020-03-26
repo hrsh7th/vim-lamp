@@ -40,7 +40,7 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, diagnostics) abort
-  if a:diagnostics.is_decreased() && a:diagnostics.is_shown() && a:diagnostics.not_modified()
+  if a:diagnostics.is_decreased() || a:diagnostics.not_modified()
     call lamp#log('[LOG]', 'diagnostics update immediately', a:server.name)
     call s:apply(a:server.name, a:diagnostics)
   else
@@ -78,7 +78,7 @@ function! s:update(...) abort
       if !empty(l:diagnostics) && !empty(l:document) && (l:diagnostics.updated(l:document.version) || l:force)
         call s:apply(l:server.name, l:server.diagnostics[l:uri])
       else
-        call lamp#log('[LOG]', 'diagnostics skipped', l:server.name)
+        call lamp#log('[LOG]', 'diagnostics skipped: it does not updated', l:server.name)
       endif
     endfor
   endfor
@@ -88,8 +88,13 @@ endfunction
 " apply
 "
 function! s:apply(server_name, diagnostics) abort
+  if !a:diagnostics.is_shown()
+    call lamp#log('[LOG]', 'diagnostics skipped: it does not shown', a:server_name)
+    return
+  endif
+
   if len(a:diagnostics.applied_diagnostics) == 0 && len(a:diagnostics.diagnostics) == 0
-    call lamp#log('[LOG]', 'diagnostics skipped 0 to 0', a:server_name)
+    call lamp#log('[LOG]', 'diagnostics skipped: 0 to 0', a:server_name)
     return
   endif
   call lamp#log('[LOG]', 'diagnostics apply', a:server_name, len(a:diagnostics.applied_diagnostics), 'to', len(a:diagnostics.diagnostics))
