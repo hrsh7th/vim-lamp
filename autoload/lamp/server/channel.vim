@@ -17,14 +17,14 @@ let s:Channel = {}
 "
 function! s:Channel.new(option) abort
   return extend(deepcopy(s:Channel), {
-        \   'name': a:option.name,
-        \   'command': a:option.command,
-        \   'on_notification': { -> {} },
-        \   'job': v:null,
-        \   'buffer': '',
-        \   'request_id': 0,
-        \   'requests': {},
-        \ })
+  \   'name': a:option.name,
+  \   'command': a:option.command,
+  \   'on_notification': { -> {} },
+  \   'job': v:null,
+  \   'buffer': '',
+  \   'request_id': 0,
+  \   'requests': {},
+  \ })
 endfunction
 
 "
@@ -175,45 +175,39 @@ endfunction
 function! s:Channel.on_stdout(data) abort
   let self.buffer .= a:data
 
-  " header check.
-  let l:header_length = stridx(self.buffer, "\r\n\r\n") + 4
-  if l:header_length < 4
-    return
-  endif
+  while 1
+    " header check.
+    let l:header_length = stridx(self.buffer, "\r\n\r\n") + 4
+    if l:header_length < 4
+      return
+    endif
 
-  " content length check.
-  let l:content_length = get(matchlist(strpart(self.buffer, 0, l:header_length), 'Content-Length:\s*\(\d\+\)'), 1, v:null)
-  if l:content_length is v:null
-    return
-  endif
-  let l:message_length = l:header_length + l:content_length
+    " content length check.
+    let l:content_length = get(matchlist(self.buffer, 'Content-Length:\s*\(\d\+\)', 0, 1), 1, v:null)
+    if l:content_length is v:null
+      return
+    endif
+    let l:message_length = l:header_length + l:content_length
 
-  " content check.
-  let l:buffer_len = strlen(self.buffer)
-  if l:buffer_len < l:message_length
-    return
-  endif
+    " content check.
+    let l:buffer_len = strlen(self.buffer)
+    if l:buffer_len < l:message_length
+      return
+    endif
 
-  " try content.
-  try
-    let l:content = strpart(self.buffer, l:header_length, l:message_length - l:header_length)
-    let l:message = json_decode(l:content)
-    let self.buffer = strpart(self.buffer, l:message_length, strlen(l:buffer_len) - l:message_length)
+    " try content.
     try
+      let l:content = strpart(self.buffer, l:header_length, l:message_length - l:header_length)
+      let l:message = json_decode(l:content)
+      let self.buffer = strpart(self.buffer, l:message_length, strlen(self.buffer) - l:message_length)
       call self.on_message(l:message)
     catch /.*/
-      call self.log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
+      call self.log('[JSON-PARSE-ERROR]', a:data)
     endtry
-  catch /.*/
-    call self.log('[JSON-PARSE-ERROR]', a:data)
-    let self.buffer = strpart(self.buffer, l:header_length, strlen(l:buffer_len) - l:header_length)
-  endtry
-
-  if l:buffer_len > l:message_length
-  call timer_start(0, { -> self.on_stdout('') })
-  endif
+  endwhile
 endfunction
 
+"
 "
 " on_stderr
 "

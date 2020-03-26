@@ -13,6 +13,7 @@ let s:Job = {}
 function! s:Job.new(command, option) abort
   let l:job = has('nvim') ? s:neovim(a:command, a:option) : s:vim(a:command, a:option)
   return extend(deepcopy(s:Job), {
+  \   'timer_id': -1,
   \   'buffer': '',
   \   'job': l:job,
   \ })
@@ -24,7 +25,10 @@ endfunction
 function! s:Job.send(data) abort
   let self.buffer .= a:data
   if self.is_running()
-    call timer_start(10, function(self.flush, [], self))
+    if self.timer_id != -1
+      return
+    endif
+    let self.timer_id = timer_start(0, function(self.flush, [], self))
   else
     call lamp#log('[LOG]', 's:Job.send', 'channel is not running.')
   endif
@@ -34,17 +38,18 @@ endfunction
 " flush
 "
 function! s:Job.flush(...) abort
+  let self.timer_id = -1
   if strlen(self.buffer) == 0 || !self.is_running()
     return
   endif
 
   if strlen(self.buffer) < 1024
-    call self.job.send(self.buffer)
-    let self.buffer = ''
+  call self.job.send(self.buffer)
+  let self.buffer = ''
   else
     call self.job.send(strpart(self.buffer, 0, 1024))
     let self.buffer = strpart(self.buffer, 1024, strlen(self.buffer) - 1024)
-    call timer_start(10, function(self.flush, [], self))
+    call timer_start(0, function(self.flush, [], self))
   endif
 endfunction
 

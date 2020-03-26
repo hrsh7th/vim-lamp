@@ -21,7 +21,19 @@ let s:context = {
 " init
 "
 function! lamp#feature#diagnostic#init() abort
+  execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
+    autocmd!
+    autocmd BufWritePre <buffer> call s:on_buf_write_pre()
+  augroup END
+
   call s:update()
+endfunction
+
+"
+" on_buf_write_pre
+"
+function! s:on_buf_write_pre() abort
+  call s:update(v:true)
 endfunction
 
 "
@@ -50,7 +62,9 @@ endfunction
 "
 " update
 "
-function! s:update() abort
+function! s:update(...) abort
+  let l:force = get(a:000, 0, v:false)
+
   let l:bufnames = {}
   for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
     let l:bufnames[fnamemodify(bufname(winbufnr(l:winnr)), ':p')] = 1
@@ -59,7 +73,7 @@ function! s:update() abort
   for l:bufname in keys(l:bufnames)
     let l:uri = lamp#protocol#document#encode_uri(l:bufname)
     for l:server in lamp#server#registry#find_by_filetype(getbufvar(l:bufname, '&filetype'))
-      if has_key(l:server.diagnostics, l:uri) && l:server.diagnostics[l:uri].updated()
+      if has_key(l:server.diagnostics, l:uri) && (l:server.diagnostics[l:uri].updated() || l:force)
         call s:apply(l:server.name, l:server.diagnostics[l:uri])
       else
         call lamp#log('[LOG]', 'diagnostics skipped', l:server.name)
