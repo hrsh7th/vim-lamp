@@ -210,7 +210,7 @@ function! s:Channel.on_stdout(data) abort
   endtry
 
   if l:buffer_len > l:message_length
-  call self.on_stdout('')
+  call timer_start(0, { -> self.on_stdout('') })
   endif
 endfunction
 

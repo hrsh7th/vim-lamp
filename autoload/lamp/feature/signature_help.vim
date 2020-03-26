@@ -16,6 +16,7 @@ endfunction
 "
 function! s:close_signature_help() abort
   call s:floatwin.hide()
+  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
 endfunction
 
 "

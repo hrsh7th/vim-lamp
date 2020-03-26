@@ -44,7 +44,7 @@ function! s:Job.flush(...) abort
   else
     call self.job.send(strpart(self.buffer, 0, 1024))
     let self.buffer = strpart(self.buffer, 1024, strlen(self.buffer) - 1024)
-    call timer_start(0, function(self.flush, [], self))
+    call timer_start(10, function(self.flush, [], self))
   endif
 endfunction
 

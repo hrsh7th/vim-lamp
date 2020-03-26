@@ -72,11 +72,11 @@ endfunction
 " apply
 "
 function! s:apply(server_name, diagnostics) abort
-  if len(a:diagnostics.diagnostics) == 0 && len(a:diagnostics.applied_diagnostics) == 0
+  if len(a:diagnostics.applied_diagnostics) == 0 && len(a:diagnostics.diagnostics) == 0
     call lamp#log('[LOG]', 'diagnostics skipped 0 to 0', a:server_name)
     return
   endif
-  call lamp#log('[LOG]', 'diagnostics apply', len(a:diagnostics.applied_diagnostics), 'to', len(a:diagnostics.diagnostics))
+  call lamp#log('[LOG]', 'diagnostics apply', a:server_name, len(a:diagnostics.applied_diagnostics), 'to', len(a:diagnostics.diagnostics))
   call a:diagnostics.applied()
 
   let l:bufnr = bufnr(a:diagnostics.bufname)
