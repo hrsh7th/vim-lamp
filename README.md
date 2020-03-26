@@ -8,7 +8,7 @@ Language Server Protocol client for Vim.
 - Well visualize diagnostics
 
 # Status
-Well works but not docummented and APIs aren't stable.
+Under in refactoring.
 
 # Setting
 
