@@ -23,7 +23,7 @@ let s:context = {
 function! lamp#feature#diagnostic#init() abort
   execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
     autocmd!
-    autocmd BufWritePre <buffer> call s:on_buf_write_pre()
+    autocmd BufWritePost <buffer> call s:on_buf_write_pre()
   augroup END
 
   call s:update()
@@ -40,7 +40,7 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, diagnostics) abort
-  if a:diagnostics.is_decreased() && a:diagnostics.is_shown()
+  if a:diagnostics.is_decreased() && a:diagnostics.is_shown() && a:diagnostics.not_modified()
     call lamp#log('[LOG]', 'diagnostics update immediately', a:server.name)
     call s:apply(a:server.name, a:diagnostics)
   else

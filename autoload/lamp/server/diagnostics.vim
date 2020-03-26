@@ -48,6 +48,13 @@ function! s:Diagnostics.is_shown() abort
 endfunction
 
 "
+" not_modified
+"
+function! s:Diagnostics.not_modified() abort
+  return !getbufvar(self.bufname, 'modified', v:true)
+endfunction
+
+"
 " updated
 "
 function! s:Diagnostics.updated(document_version) abort
