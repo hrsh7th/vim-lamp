@@ -24,7 +24,7 @@ endfunction
 function! s:Job.send(data) abort
   let self.buffer .= a:data
   if self.is_running()
-    call timer_start(0, function(self.flush, [], self))
+    call timer_start(10, function(self.flush, [], self))
   else
     call lamp#log('[LOG]', 's:Job.send', 'channel is not running.')
   endif
@@ -34,7 +34,7 @@ endfunction
 " flush
 "
 function! s:Job.flush(...) abort
-  if strlen(self.buffer) == 0
+  if strlen(self.buffer) == 0 || !self.is_running()
     return
   endif
 
