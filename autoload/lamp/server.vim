@@ -61,10 +61,12 @@ function! s:Server.stop() abort
       try
         call lamp#sync(self.channel.request('shutdown', v:null), 200)
       catch /.*/
+        call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
       endtry
       call self.channel.notify('exit')
       doautocmd User lamp#server#exited
     endif
+    call lamp#sync({ -> !self.channel.is_running() }, 200)
     call self.channel.stop()
     let self.state.started = v:false
     let self.state.initialized = v:null
@@ -81,11 +83,12 @@ function! s:Server.exit() abort
       try
         call lamp#sync(self.channel.request('shutdown', v:null), 200)
       catch /.*/
+        call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
       endtry
       call self.channel.notify('exit')
       doautocmd User lamp#server#exited
     endif
-    call self.channel.stop()
+    call lamp#sync({ -> !self.channel.is_running() }, 200)
     let self.state.initialized = v:null
     let self.state.exited = v:true
   endif
@@ -103,17 +106,16 @@ endfunction
 " initialize
 "
 function! s:Server.initialize(bufnr) abort
+  call self.start()
   if !empty(self.state.initialized)
     return self.state.initialized
   endif
 
   let l:ctx = {}
-  function! l:ctx.callback(response) abort dict
+  function! l:ctx.callback(bufnr, response) abort dict
     call self.capability.merge(a:response)
     call self.channel.notify('initialized', {})
-    call self.channel.notify('workspace/didChangeConfiguration', {
-    \   'settings': lamp#feature#workspace#get_config()
-    \ })
+    call self.channel.notify('workspace/didChangeConfiguration', { 'settings': lamp#feature#workspace#get_config() })
 
     let self.initialized = v:true
     doautocmd User lamp#server#initialized
@@ -128,14 +130,16 @@ function! s:Server.initialize(bufnr) abort
     let l:root_uri = fnamemodify(bufname('%'), ':p:h')
   endif
 
+  call lamp#feature#workspace#update(self, a:bufnr)
   let self.state.initialized = self.channel.request('initialize', {
-        \   'processId': getpid(),
-        \   'rootPath': l:root_uri,
-        \   'rootUri': lamp#protocol#document#encode_uri(l:root_uri),
-        \   'initializationOptions': self.initialization_options(),
-        \   'trace': self.trace,
-        \   'capabilities': lamp#server#capability#get_default_capability(),
-        \ }).then(function(l:ctx.callback, [], self))
+  \   'processId': getpid(),
+  \   'rootPath': l:root_uri,
+  \   'rootUri': lamp#protocol#document#encode_uri(l:root_uri),
+  \   'initializationOptions': self.initialization_options(),
+  \   'trace': self.trace,
+  \   'capabilities': lamp#server#capability#get_default_capability(),
+  \   'workspaceFolders': lamp#feature#workspace#get_folders(),
+  \ }).then(function(l:ctx.callback, [a:bufnr], self))
   return self.state.initialized
 endfunction
 
@@ -154,9 +158,7 @@ endfunction
 " response.
 "
 function! s:Server.response(id, data) abort
-  let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> self.channel.response(a:id, a:data) })
-  return l:p
+  return self.channel.response(a:id, a:data)
 endfunction
 
 "
@@ -189,7 +191,6 @@ endfunction
 " ensure_document.
 "
 function! s:Server.ensure_document(bufnr) abort
-  call self.start()
   return self.initialize(a:bufnr).then({ -> [
         \   self.ensure_workspace(a:bufnr),
         \   self.open_document(a:bufnr),

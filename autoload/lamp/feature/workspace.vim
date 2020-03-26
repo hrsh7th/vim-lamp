@@ -28,10 +28,6 @@ endfunction
 " lamp#feature#workspace#update
 "
 function! lamp#feature#workspace#update(server, bufnr) abort
-  if !a:server.capability.is_workspace_folder_supported()
-    return
-  endif
-
   let l:uri = lamp#protocol#document#encode_uri(a:server.root_uri(a:bufnr))
   if l:uri ==# ''
     return
@@ -53,11 +49,14 @@ function! lamp#feature#workspace#update(server, bufnr) abort
     \   'uri': l:uri,
     \ }
     let s:workspace.folders += [l:folder]
-    call a:server.channel.notify('workspace/didChangeWorkspaceFolders', {
-    \   'event': {
-    \     'added': [l:folder],
-    \   }
-    \ })
+    if a:server.capability.is_workspace_folder_supported()
+      call a:server.channel.notify('workspace/didChangeWorkspaceFolders', {
+      \   'event': {
+      \     'added': [l:folder],
+      \     'removed': [],
+      \   }
+      \ })
+    endif
   endif
 endfunction
 

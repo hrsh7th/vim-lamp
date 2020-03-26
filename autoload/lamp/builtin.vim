@@ -12,12 +12,18 @@ function! lamp#builtin#intelephense(...) abort
     return
   endif
 
+  let l:storagePath = expand('~/.cache/aiueo')
+  if !isdirectory(l:storagePath)
+    call mkdir(l:storagePath, 'p', '0755')
+  endif
+
   call lamp#register('intelephense', lamp#merge({
   \   'command': ['intelephense', '--stdio'],
   \   'filetypes': ['php'],
   \   'root_uri': { bufnr -> lamp#findup(['.git', 'composer.json'], bufname(bufnr)) },
   \   'initialization_options': { -> {
-  \     'storagePath': expand('~/.cache/intelephense')
+  \     'storagePath': l:storagePath,
+  \     'globalStoragePath': l:storagePath,
   \   } }
   \ }, get(a:000, 0, {})))
   autocmd! lamp#builtin FileType php setlocal iskeyword+=$

@@ -3,6 +3,8 @@ if exists('g:loaded_lamp')
 endif
 let g:loaded_lamp = v:true
 
+let s:Promise = vital#lamp#import('Async.Promise')
+
 augroup lamp#silent
   autocmd!
   autocmd User lamp#text_document_did_open silent
@@ -46,7 +48,7 @@ augroup lamp
     autocmd BufWritePost,TextChanged,TextChangedI,TextChangedP * call <SID>on_text_document_did_change()
   endif
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
-  autocmd VimLeavePre * call <SID>on_vim_leave_pre()
+  autocmd VimLeave * call <SID>on_vim_leave_pre()
 augroup END
 
 "
@@ -63,7 +65,7 @@ function! s:on_text_document_did_open() abort
   let l:ctx = {}
   function! l:ctx.callback(bufnr, servers) abort
     for l:server in a:servers
-      call l:server.ensure_document(a:bufnr)
+      call l:server.initialize(a:bufnr).then({ -> l:server.ensure_document(a:bufnr) })
     endfor
   endfunction
   call lamp#debounce(
@@ -129,6 +131,7 @@ function! s:on_vim_leave_pre() abort
       call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
     endtry
   endfor
+  call lamp#log('[FINISHED]')
 endfunction
 
 "
