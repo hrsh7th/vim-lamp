@@ -66,7 +66,7 @@ function! s:Server.stop() abort
       call self.channel.notify('exit')
       doautocmd User lamp#server#exited
     endif
-    call lamp#sync({ -> !self.channel.is_running() }, 200)
+    " call lamp#sync({ -> !self.channel.is_running() }, 100) NOTE: This line is needed maybe but it makes bad experience.
     call self.channel.stop()
     let self.state.started = v:false
     let self.state.initialized = v:null
@@ -88,7 +88,8 @@ function! s:Server.exit() abort
       call self.channel.notify('exit')
       doautocmd User lamp#server#exited
     endif
-    call lamp#sync({ -> !self.channel.is_running() }, 200)
+    " call lamp#sync({ -> !self.channel.is_running() }, 100) NOTE: This line is needed maybe but it makes bad experience.
+    call self.channel.stop()
     let self.state.initialized = v:null
     let self.state.exited = v:true
   endif
