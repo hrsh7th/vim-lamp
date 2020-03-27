@@ -68,7 +68,7 @@ endfunction
 " is_decreased
 "
 function! s:Diagnostics.is_decreased() abort
-  return len(self.applied_diagnostics) >= len(self.diagnostics)
+  return len(self.applied_diagnostics) > len(self.diagnostics)
 endfunction
 
 "

@@ -70,8 +70,8 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
 
     " create item
     call add(l:completed_items, {
-          \   'word': l:word,
-          \   'abbr': l:abbr,
+          \   'word': trim(l:word),
+          \   'abbr': trim(l:abbr),
           \   'menu': l:params.menu,
           \   'dup': l:params.dup,
           \   'kind': join([
