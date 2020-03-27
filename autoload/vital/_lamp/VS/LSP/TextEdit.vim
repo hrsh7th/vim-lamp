@@ -64,19 +64,17 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
   let l:new_lines[-1] = l:new_lines[-1] . l:after_line
   let l:new_lines_len = len(l:new_lines)
 
-  " fix cursor col
+  " fix cursor
+  let l:cursor_offset = 0
   if a:text_edit.range.end.line == a:cursor_position.line
     if a:text_edit.range.end.character <= a:cursor_position.character
       let l:end_character = strchars(l:new_lines[-1]) - strchars(l:after_line)
       let l:end_offset = a:cursor_position.character - a:text_edit.range.end.character
       let a:cursor_position.character = l:end_character + l:end_offset
+
+      let l:cursor_offset = l:new_lines_len - (a:text_edit.range.end.line - a:text_edit.range.start.line) - 1
+      let a:cursor_position.line += l:cursor_offset
     endif
-  endif
-  " fix cursor line
-  let l:cursor_offset = 0
-  if a:text_edit.range.end.line <= a:cursor_position.line
-    let l:cursor_offset = l:new_lines_len - (a:text_edit.range.end.line - a:text_edit.range.start.line) - 1
-    let a:cursor_position.line += l:cursor_offset
   endif
 
   " append new lines.

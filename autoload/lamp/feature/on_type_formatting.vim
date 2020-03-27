@@ -18,6 +18,9 @@ function! lamp#feature#on_type_formatting#init() abort
     autocmd User lamp#server#initialized call s:clear_cache()
     autocmd User lamp#server#exited call s:clear_cache()
     autocmd InsertCharPre <buffer> call s:on_insert_char_pre()
+
+    " TODO: support "\r\n" or "\r"?
+    imap <expr><CR> <SID>on_char("\n")
   augroup END
 endfunction
 
@@ -26,6 +29,15 @@ endfunction
 "
 function! s:clear_cache() abort
   let s:cache = {}
+endfunction
+
+"
+" on_char
+"
+function! s:on_char(char) abort
+  let v:char = a:char
+  call s:on_insert_char_pre()
+  return v:char
 endfunction
 
 "
@@ -42,6 +54,10 @@ function! s:on_insert_char_pre() abort
   endif
 
   let s:char = v:char
+  let v:char = ''
+
+  " Ignore other plugin's feature.
+  call feedkeys(s:char, 'n')
   call feedkeys("\<Plug>(lamp-on-type-formatting:insert_char_pre_after)", '')
 endfunction
 
