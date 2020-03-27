@@ -1,6 +1,7 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
 
 let s:char = v:null
+let s:block = v:false
 
 "
 " [bufnr]: {
@@ -37,6 +38,9 @@ endfunction
 function! s:on_char(char) abort
   let v:char = a:char
   call s:on_insert_char_pre()
+  if mapcheck(v:char, 'i')
+    return maparg(v:char, 'i')
+  endif
   return v:char
 endfunction
 
@@ -44,7 +48,7 @@ endfunction
 " on_insert_char_pre
 "
 function! s:on_insert_char_pre() abort
-  if empty(v:char)
+  if empty(v:char) || s:block
     return
   endif
 
@@ -57,15 +61,17 @@ function! s:on_insert_char_pre() abort
   let v:char = ''
 
   " Ignore other plugin's feature.
+  let s:block = v:true
   call feedkeys(s:char, 'n')
-  call feedkeys("\<Plug>(lamp-on-type-formatting:insert_char_pre_after)", '')
+  call feedkeys("\<Plug>(lamp-on-type-formatting:formatting)", '')
+  call feedkeys("\<Plug>(lamp-on-type-formatting:finish)", '')
 endfunction
 
 "
 " on_insert_char_pre_after
 "
-inoremap <silent><nowait> <Plug>(lamp-on-type-formatting:insert_char_pre_after) <C-r>=<SID>on_insert_char_pre_after()<CR>
-function! s:on_insert_char_pre_after() abort
+inoremap <silent><nowait> <Plug>(lamp-on-type-formatting:formatting) <C-r>=<SID>formatting()<CR>
+function! s:formatting() abort
   let l:server = s:get_server(bufnr('%'), s:char)
   if empty(l:server)
     return ''
@@ -89,6 +95,15 @@ function! s:on_insert_char_pre_after() abort
     call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
   endtry
 
+  return ''
+endfunction
+
+"
+" finish
+"
+inoremap <silent><nowait> <Plug>(lamp-on-type-formatting:finish) <C-r>=<SID>finish()<CR>
+function! s:finish() abort
+  let s:block = v:false
   return ''
 endfunction
 
