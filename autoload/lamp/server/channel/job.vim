@@ -44,12 +44,12 @@ function! s:Job.flush(...) abort
   endif
 
   if strlen(self.buffer) < 1024
-  call self.job.send(self.buffer)
-  let self.buffer = ''
+    call self.job.send(self.buffer)
+    let self.buffer = ''
   else
     call self.job.send(strpart(self.buffer, 0, 1024))
     let self.buffer = strpart(self.buffer, 1024, strlen(self.buffer) - 1024)
-    call timer_start(0, function(self.flush, [], self))
+    let self.timer_id = timer_start(0, function(self.flush, [], self))
   endif
 endfunction
 
@@ -67,8 +67,6 @@ function! s:Job.is_running() abort
   return self.job.is_running()
 endfunction
 
-"---------
-
 "
 " neovim's jobstart api.
 "
@@ -85,10 +83,11 @@ function! s:neovim(command, option) abort
     endif
   endfunction
 
-  function! s:on_exit(option, id, code, event_type) abort
+  function! s:on_exit(option, id, code, event_type) dict abort
     if has_key(a:option, 'on_exit')
       call a:option.on_exit(a:code)
     endif
+    let self.running = v:false
   endfunction
 
   function! s:send(job, data) abort
@@ -99,22 +98,25 @@ function! s:neovim(command, option) abort
     call jobstop(a:job)
   endfunction
 
-  function! s:is_running(job) abort
-    return jobwait([a:job], 0)[0] == -1
+  function! s:is_running(job) dict abort
+    return self.running
   endfunction
 
   let l:cwd = get(a:option, 'cwd', getcwd())
   let l:cwd = l:cwd ==# '' ? getcwd() : l:cwd
+  let l:state = {
+  \   'running': v:true,
+  \ }
   let l:job = jobstart(a:command, {
   \   'cwd': l:cwd,
-  \   'on_stdout': function('s:on_stdout', [a:option], {}),
-  \   'on_stderr': function('s:on_stderr', [a:option], {}),
-  \   'on_exit':   function('s:on_exit', [a:option], {}),
+  \   'on_stdout': function('s:on_stdout', [a:option], l:state),
+  \   'on_stderr': function('s:on_stderr', [a:option], l:state),
+  \   'on_exit':   function('s:on_exit', [a:option], l:state),
   \ })
   return {
-  \ 'send': function('s:send', [l:job], {}),
-  \ 'stop': function('s:stop', [l:job], {}),
-  \ 'is_running': function('s:is_running', [l:job], {})
+  \ 'send': function('s:send', [l:job], l:state),
+  \ 'stop': function('s:stop', [l:job], l:state),
+  \ 'is_running': function('s:is_running', [l:job], l:state)
   \ }
 endfunction
 

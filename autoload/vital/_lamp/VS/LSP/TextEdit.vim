@@ -29,19 +29,16 @@ function! s:apply(path, text_edits) abort
   let l:current_bufname = bufname('%')
   let l:target_bufname = a:path
   let l:cursor_position = s:Position.cursor()
-  let l:cursor_line_offset = 0
-  let l:topline = line('w0')
 
   call s:_switch(l:target_bufname)
   for l:text_edit in s:_normalize(a:text_edits)
-    let l:cursor_line_offset += s:_apply(bufnr(l:target_bufname), l:text_edit, l:cursor_position)
+    call s:_apply(bufnr(l:target_bufname), l:text_edit, l:cursor_position)
   endfor
   call s:_switch(l:current_bufname)
 
   if bufnr(l:current_bufname) == bufnr(l:target_bufname)
     try
       call cursor(s:Position.lsp_to_vim('%', l:cursor_position))
-      call winrestview({ 'topline': l:topline + l:cursor_line_offset })
     catch /.*/
       echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
     endtry
@@ -65,16 +62,16 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
   let l:new_lines_len = len(l:new_lines)
 
   " fix cursor
-  let l:cursor_offset = 0
-  if a:text_edit.range.end.line == a:cursor_position.line
-    if a:text_edit.range.end.character <= a:cursor_position.character
+  if a:text_edit.range.end.line <= a:cursor_position.line && a:text_edit.range.end.character <= a:cursor_position.character
+    " fix cursor col
+    if a:text_edit.range.end.line == a:cursor_position.line
       let l:end_character = strchars(l:new_lines[-1]) - strchars(l:after_line)
       let l:end_offset = a:cursor_position.character - a:text_edit.range.end.character
       let a:cursor_position.character = l:end_character + l:end_offset
-
-      let l:cursor_offset = l:new_lines_len - (a:text_edit.range.end.line - a:text_edit.range.start.line) - 1
-      let a:cursor_position.line += l:cursor_offset
     endif
+
+    " fix cursor line
+    let a:cursor_position.line += (l:new_lines_len - 1) - (a:text_edit.range.end.line - a:text_edit.range.start.line)
   endif
 
   " append new lines.
@@ -85,8 +82,6 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
   \   l:new_lines_len + a:text_edit.range.start.line + 1,
   \   min([l:new_lines_len + a:text_edit.range.end.line + 1, line('$')])
   \ )
-
-  return l:cursor_offset
 endfunction
 
 "

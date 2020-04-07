@@ -54,7 +54,7 @@ Describe lamp#view#floatwin
     call s:expect(lamp#view#buffer#get_lines(s:floatwin.bufnr)).to_equal([
           \   '',
           \   'Error from typescript',
-          \   '――――――――――',
+          \   '―――――――――――――――――――――',
           \   'Error from prettier',
           \   ''
           \ ])

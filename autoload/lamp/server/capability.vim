@@ -40,24 +40,24 @@ function! lamp#server#capability#get_default_capability() abort
         \       'failureHandling': 'abort',
         \     },
         \     'didChangeConfiguration': {
-        \       'dynamicRegistration': v:false
+        \       'dynamicRegistration': v:true
         \     },
         \     'didChangeWatchedFiles': {
-        \       'dynamicRegistration': v:false
+        \       'dynamicRegistration': v:true
         \     },
         \     'symbol': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'valueSet': values(g:lamp#server#capability#symbol_kinds)
         \     },
         \     'executeCommand': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \     },
         \     'workspaceFolders': v:true,
         \     'configuration': v:true,
         \   },
         \   'textDocument': {
         \     'synchronization': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'willSave': v:false,
         \       'willSaveDidUntil': v:false,
         \       'didSave': v:false
@@ -66,7 +66,7 @@ function! lamp#server#capability#get_default_capability() abort
         \       'prepareSupport': v:true
         \     },
         \     'completion': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'completionItem': {
         \         'snippetSupport': !empty(lamp#config('feature.completion.snippet.expand')) ? v:true : v:false,
         \         'commitCharactersSupport': v:true,
@@ -80,7 +80,7 @@ function! lamp#server#capability#get_default_capability() abort
         \       'contextSupport': v:true
         \     },
         \     'codeAction': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'codeActionLiteralSupport': {
         \         'codeActionKind': {
         \           'valueSet': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
@@ -88,7 +88,7 @@ function! lamp#server#capability#get_default_capability() abort
         \       }
         \     },
         \     'signatureHelp': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'signatureInformation': {
         \         'documentationFormat': ['plaintext', 'markdown'],
         \         'parameterInformation': {
@@ -97,37 +97,37 @@ function! lamp#server#capability#get_default_capability() abort
         \       },
         \     },
         \     'hoverSupport': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'contentFormat': ['plaintext', 'markdown'],
         \     },
         \     'documentSymbol': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'symbolKind': {
         \         'valueSet': values(g:lamp#server#capability#symbol_kinds)
         \       },
         \       'hierarchicalDocumentSymbolSupport': v:true
         \     },
         \     'documentHighlight': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \     },
         \     'declaration': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'linkSupport': v:true,
         \     },
         \     'definition': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'linkSupport': v:true,
         \     },
         \     'typeDefinition': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'linkSupport': v:true,
         \     },
         \     'implementation': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \       'linkSupport': v:true,
         \     },
         \     'onTypeFormatting': {
-        \       'dynamicRegistration': v:false,
+        \       'dynamicRegistration': v:true,
         \     }
         \   },
         \   'experimental': {},

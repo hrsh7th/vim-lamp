@@ -11,6 +11,7 @@ Describe lamp#feature#code_action
           \ })
     call lamp#sync(s:server.start())
     call lamp#sync(s:server.initialize(bufnr('%')))
+    call lamp#view#buffer#reset()
   End
 
   After each
@@ -31,7 +32,7 @@ Describe lamp#feature#code_action
 
     " wait for diagnostic.
     call s:server.ensure_document(l:bufnr)
-    call lamp#sync({ -> len(get(get(s:server.documents, l:uri, {}), 'diagnostics', [])) > 0 })
+    call lamp#sync({ -> len(values(s:server.diagnostics)) > 0 })
 
     let l:buflines = getbufline(l:bufnr, 3)
     call lamp#feature#code_action#test({ 'action_index': 0 })

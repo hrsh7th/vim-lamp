@@ -20,6 +20,14 @@ function! lamp#server#notification#on(server, notification) abort
     call s:window_log_message(a:server, a:notification)
   elseif a:notification.method ==# 'telemetry/event'
     call s:telemetry_event(a:server, a:notification)
+  elseif a:notification.method ==# 'client/registerCapability'
+    call a:server.response(a:notification.id, {
+    \   'result': v:null
+    \ })
+  elseif a:notification.method ==# 'client/unregisterCapability'
+    call a:server.response(a:notification.id, {
+    \   'result': v:null
+    \ })
   else
     call lamp#log('[UNHANDLED]', a:notification.method, get(a:notification, 'params', v:null))
     if has_key(a:notification, 'id')

@@ -1,7 +1,7 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
 
-let s:char = v:null
-let s:block = v:false
+let s:context = v:null
+let s:processing = v:false
 
 "
 " [bufnr]: {
@@ -19,9 +19,6 @@ function! lamp#feature#on_type_formatting#init() abort
     autocmd User lamp#server#initialized call s:clear_cache()
     autocmd User lamp#server#exited call s:clear_cache()
     autocmd InsertCharPre <buffer> call s:on_insert_char_pre()
-
-    " TODO: support "\r\n" or "\r"?
-    imap <expr><CR> <SID>on_char("\n")
   augroup END
 endfunction
 
@@ -33,36 +30,35 @@ function! s:clear_cache() abort
 endfunction
 
 "
-" on_char
+" on_type
 "
-function! s:on_char(char) abort
+function! s:on_type(char, default) abort
   let v:char = a:char
   call s:on_insert_char_pre()
-  if mapcheck(v:char, 'i')
-    return maparg(v:char, 'i')
+  if empty(s:context)
+    return a:default
   endif
-  return v:char
+  return ''
 endfunction
 
 "
 " on_insert_char_pre
 "
 function! s:on_insert_char_pre() abort
-  if empty(v:char) || s:block
+  if empty(v:char) || s:processing
     return
   endif
 
-  let l:server = s:get_server(bufnr('%'), v:char)
-  if empty(l:server)
+  let s:context = s:get_on_type_formatting_context(bufnr('%'), v:char)
+  if empty(s:context)
     return
   endif
-
-  let s:char = v:char
-  let v:char = ''
+  let s:context.original_char = v:char
 
   " Ignore other plugin's feature.
-  let s:block = v:true
-  call feedkeys(s:char, 'n')
+  let s:processing = v:true
+  let v:char = ''
+  call feedkeys(s:context.original_char, 'n')
   call feedkeys("\<Plug>(lamp-on-type-formatting:formatting)", '')
   call feedkeys("\<Plug>(lamp-on-type-formatting:finish)", '')
 endfunction
@@ -72,16 +68,11 @@ endfunction
 "
 inoremap <silent><nowait> <Plug>(lamp-on-type-formatting:formatting) <C-r>=<SID>formatting()<CR>
 function! s:formatting() abort
-  let l:server = s:get_server(bufnr('%'), s:char)
-  if empty(l:server)
-    return ''
-  endif
-
   try
-    let l:edits = lamp#sync(l:server.request('textDocument/onTypeFormatting', {
+    let l:edits = lamp#sync(s:context.server.request('textDocument/onTypeFormatting', {
     \   'textDocument': lamp#protocol#document#identifier(bufnr('%')),
     \   'position': s:Position.cursor(),
-    \   'ch': s:char,
+    \   'ch': s:context.char,
     \   'options': {
     \     'tabSize': lamp#view#buffer#get_indent_size(),
     \     'insertSpaces': &expandtab ? v:true : v:false
@@ -97,20 +88,19 @@ function! s:formatting() abort
 
   return ''
 endfunction
-
 "
 " finish
 "
 inoremap <silent><nowait> <Plug>(lamp-on-type-formatting:finish) <C-r>=<SID>finish()<CR>
 function! s:finish() abort
-  let s:block = v:false
+  let s:processing = v:false
   return ''
 endfunction
 
 "
-" get_server
+" get_on_type_formatting_context
 "
-function! s:get_server(bufnr, char) abort
+function! s:get_on_type_formatting_context(bufnr, char) abort
   if has_key(s:cache, a:bufnr) && has_key(s:cache[a:bufnr], a:char)
     return s:cache[a:bufnr][a:char]
   endif
@@ -120,13 +110,22 @@ function! s:get_server(bufnr, char) abort
 
   for l:server in lamp#server#registry#find_by_filetype(&filetype)
     let l:chars = l:server.capability.get_on_type_formatting_trigger_characters()
+
     if index(l:chars, a:char) != -1
-      let s:cache[a:bufnr] = get(s:cache, a:bufnr, {})
-      let s:cache[a:bufnr][a:char] = l:server
+      let s:cache[a:bufnr][a:char] = { 'server': l:server, 'char': a:char }
+      break
+    elseif a:char ==# "\<CR>"
+      if index(l:chars, "\n") != -1
+        let s:cache[a:bufnr][a:char] = { 'server': l:server, 'char': "\n" }
+      elseif index(l:chars, "\r") != -1
+        let s:cache[a:bufnr][a:char] = { 'server': l:server, 'char': "\r" }
+      elseif index(l:chars, "\r\n") != -1
+        let s:cache[a:bufnr][a:char] = { 'server': l:server, 'char': "\r\n" }
+      endif
       break
     endif
   endfor
 
-  return s:cache[a:bufnr][v:char]
+  return s:cache[a:bufnr][a:char]
 endfunction
 

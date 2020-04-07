@@ -168,7 +168,7 @@ function! s:get_nearest_diagnostic(range, bufnr, server) abort
     return []
   endif
 
-  let l:diagnostics = copy(a:server.documents[l:uri].diagnostics)
+  let l:diagnostics = copy(a:server.diagnostics[l:uri].diagnostics)
   let l:diagnostics = filter(l:diagnostics, { k, v -> lamp#protocol#range#in_line(v.range) })
   let l:diagnostics = sort(l:diagnostics, { v1, v2 ->
         \   lamp#protocol#range#compare_nearest(v1.range, v2.range, s:Position.cursor())
