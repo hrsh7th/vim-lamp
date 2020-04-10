@@ -61,6 +61,8 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
   let l:new_lines[-1] = l:new_lines[-1] . l:after_line
   let l:new_lines_len = len(l:new_lines)
 
+  let l:range_len = (a:text_edit.range.end.line - a:text_edit.range.start.line) + 1
+
   " fix cursor
   if a:text_edit.range.end.line <= a:cursor_position.line && a:text_edit.range.end.character <= a:cursor_position.character
     " fix cursor col
@@ -71,17 +73,19 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
     endif
 
     " fix cursor line
-    let a:cursor_position.line += (l:new_lines_len - 1) - (a:text_edit.range.end.line - a:text_edit.range.start.line)
+    let a:cursor_position.line += l:new_lines_len - l:range_len
   endif
 
-  " append new lines.
-  call append(a:text_edit.range.start.line, l:new_lines)
+  " append or delete lines.
+  if l:new_lines_len > l:range_len
+    call append(a:text_edit.range.start.line, repeat([''], l:new_lines_len - l:range_len))
+  elseif l:new_lines_len < l:range_len
+    let l:offset = l:range_len - l:new_lines_len
+    execute printf('%s,%sdelete _', a:text_edit.range.start.line + 1, a:text_edit.range.start.line + l:offset)
+  endif
 
-  " remove old lines
-  execute printf('%s,%sdelete _',
-  \   l:new_lines_len + a:text_edit.range.start.line + 1,
-  \   min([l:new_lines_len + a:text_edit.range.end.line + 1, line('$')])
-  \ )
+  " set lines.
+  call setline(a:text_edit.range.start.line + 1, l:new_lines)
 endfunction
 
 "

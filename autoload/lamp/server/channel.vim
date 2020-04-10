@@ -158,7 +158,7 @@ function! s:Channel.on_message(message) abort
           call l:request.resolve(get(a:message, 'result', v:null))
         endif
       else
-        call self.log('<- [RESPONSE IGNORE]', a:message.id, 'canceled or unknown response.')
+        call self.log('<- [RESPONSE IGNORE]', a:message.id, a:message, 'canceled or unknown response.')
       endif
     endif
 
