@@ -49,6 +49,8 @@ function! lamp#feature#workspace#update(server, bufnr) abort
     \   'uri': l:uri,
     \ }
     let s:workspace.folders += [l:folder]
+
+    " Send folder changes if server supported.
     if a:server.capability.is_workspace_folder_supported()
       call a:server.channel.notify('workspace/didChangeWorkspaceFolders', {
       \   'event': {

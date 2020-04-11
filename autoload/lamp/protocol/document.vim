@@ -12,6 +12,7 @@ function! lamp#protocol#document#encode_uri(bufnr_or_path) abort
     let l:path = getcwd()
   endif
   let l:path = fnamemodify(l:path, ':p')
+  let l:path = l:path[-1 : -1] ==# '/' ? l:path[0 : -2] : l:path
   let l:path = 'file://' . substitute(l:path, '\([^a-zA-Z0-9-_.~/]\)', '\=printf("%%%02x", char2nr(submatch(1)))', 'g')
   return l:path
 endfunction
