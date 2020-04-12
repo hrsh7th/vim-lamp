@@ -67,7 +67,7 @@ function! s:update(...) abort
 
   let l:bufnames = {}
   for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
-    let l:bufnames[fnamemodify(bufname(winbufnr(l:winnr)), ':p')] = 1
+    let l:bufnames[lamp#fnamemodify(bufname(winbufnr(l:winnr)), ':p')] = 1
   endfor
 
   for l:bufname in keys(l:bufnames)

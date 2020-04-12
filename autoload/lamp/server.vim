@@ -128,7 +128,7 @@ function! s:Server.initialize(bufnr) abort
 
   let l:root_uri = self.root_uri(a:bufnr)
   if l:root_uri ==# ''
-    let l:root_uri = fnamemodify(bufname('%'), ':p:h')
+    let l:root_uri = lamp#fnamemodify(bufname('%'), ':p:h')
   endif
 
   call lamp#feature#workspace#update(self, a:bufnr)

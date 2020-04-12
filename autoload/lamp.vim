@@ -247,7 +247,7 @@ endfunction
 "
 function! lamp#findup(markers, ...) abort
   for l:marker in a:markers
-    let l:path = fnamemodify(get(a:000, 0, bufname('%')), ':p')
+    let l:path = lamp#fnamemodify(get(a:000, 0, bufname('%')), ':p')
     if !filereadable(l:path)
       return ''
     endif
@@ -256,7 +256,7 @@ function! lamp#findup(markers, ...) abort
       if isdirectory(l:candidate) || filereadable(l:candidate)
         return substitute(l:path, '[\\/]$', '', 'g')
       endif
-      let l:up = fnamemodify(l:path, ':h')
+      let l:up = lamp#fnamemodify(l:path, ':h')
       if l:up ==# l:path
         break
       endif
@@ -308,6 +308,15 @@ function! lamp#merge(dict1, dict2) abort
   endtry
 
   return l:returns
+endfunction
+
+"
+" lamp#fnamemodify
+"
+function! lamp#fnamemodify(path, modifier) abort
+  let l:path = fnamemodify(a:path, a:modifier)
+  let l:path = l:path[-1 : -1] ==# '/' ? l:path[0 : -2] : l:path
+  return l:path
 endfunction
 
 "
