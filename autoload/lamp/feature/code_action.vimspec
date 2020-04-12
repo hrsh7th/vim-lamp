@@ -32,7 +32,7 @@ Describe lamp#feature#code_action
 
     " wait for diagnostic.
     call s:server.ensure_document(l:bufnr)
-    call lamp#sync({ -> len(values(s:server.diagnostics)) > 0 })
+    call lamp#sync({ -> len(get(s:server.diagnostics, l:uri, { 'applied_diagnostics': [] }).applied_diagnostics) > 0 })
 
     let l:buflines = getbufline(l:bufnr, 3)
     call lamp#feature#code_action#test({ 'action_index': 0 })
