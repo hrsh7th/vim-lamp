@@ -81,7 +81,7 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
     call append(a:text_edit.range.start.line, repeat([''], l:new_lines_len - l:range_len))
   elseif l:new_lines_len < l:range_len
     let l:offset = l:range_len - l:new_lines_len
-    execute printf('%s,%sdelete _', a:text_edit.range.start.line + 1, a:text_edit.range.start.line + l:offset)
+    call s:_delete(a:bufnr, a:text_edit.range.start.line + 1, a:text_edit.range.start.line + l:offset)
   endif
 
   " set lines.
@@ -152,6 +152,20 @@ function! s:_switch(path) abort
     execute printf('keepalt keepjumps %sbuffer!', bufnr(a:path))
   else
     execute printf('keepalt keepjumps edit! %s', fnameescape(a:path))
+  endif
+endfunction
+
+"
+" _delete
+"
+function! s:_delete(bufnr, start, end) abort
+  if exists('*deletebufline')
+    call deletebufline(a:bufnr, a:start, a:end)
+  else
+    let l:foldenable = &foldenable
+    setlocal nofoldenable
+    execute printf('%s,%sdelete _', a:start, a:end)
+    let &foldenable = l:foldenable
   endif
 endfunction
 
