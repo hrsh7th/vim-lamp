@@ -164,7 +164,7 @@ function! s:get_nearest_diagnostic(range, bufnr, server) abort
   endif
 
   let l:uri = lamp#protocol#document#encode_uri(a:bufnr)
-  if !has_key(a:server.documents, l:uri)
+  if !has_key(a:server.diagnostics, l:uri)
     return []
   endif
 
