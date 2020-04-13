@@ -192,7 +192,15 @@ endfunction
 </details>
 
 # TODO
+- Support `textDocument/willSave`
+- Support `textDocument/willSaveWaitUntil`
+- Support `textDocument/didSave`
+- Support `textDocument/semanticTokens`
+- Investigate the wrong diff problem.
+    - I worry to `autoread` caused the problem.
+- Support `$/progress`
+- Support `textDocument/onTypeFormatting` with `<CR>`
+- Support `textDocument/foldingRange`
+- Support `textDocument/codeLens`
 - Custom highlighting in fenced language (e.g. underlined)
 - Improve documentation
-- Trim floatwin sizes for space
-
