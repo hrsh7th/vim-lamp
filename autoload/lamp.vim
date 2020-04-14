@@ -19,7 +19,7 @@ let s:config = {
       \   'feature.completion.snippet.expand': v:null,
       \   'feature.completion.floating_docs': v:true,
       \   'feature.diagnostic.increase_delay.normal': 400,
-      \   'feature.diagnostic.increase_delay.insert': 800,
+      \   'feature.diagnostic.increase_delay.insert': 1200,
       \   'view.location.on_location': { locations -> [
       \     setqflist(locations, 'r'),
       \     execute('copen')

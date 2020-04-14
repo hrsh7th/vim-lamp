@@ -42,11 +42,7 @@ command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
 augroup lamp
   autocmd!
   autocmd BufEnter,BufWinEnter,FileType * call <SID>on_text_document_did_open()
-  if lamp#view#diff#import().type ==# 'compat'
-    autocmd TextChanged,InsertLeave * call <SID>on_text_document_did_change()
-  else
-    autocmd TextChanged,TextChangedI,TextChangedP * call <SID>on_text_document_did_change()
-  endif
+  autocmd TextChanged,TextChangedI,TextChangedP * call <SID>on_text_document_did_change()
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
   autocmd VimLeave * call <SID>on_vim_leave_pre()
 augroup END
