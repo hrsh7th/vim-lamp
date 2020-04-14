@@ -37,7 +37,6 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   \   'dup': 1,
   \ })
 
-  let l:current_line = getline('.')
   let l:current_position = s:Position.cursor()
 
   let l:completed_items = []
