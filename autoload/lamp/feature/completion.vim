@@ -37,6 +37,9 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   \   'dup': 1,
   \ })
 
+  let l:current_line = getline('.')
+  let l:current_position = s:Position.cursor()
+
   let l:completed_items = []
 
   let l:completion_items = []
@@ -46,7 +49,11 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
     " textEdit
     if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
       let l:word = l:completion_item.label
-      let l:abbr = l:completion_item.label . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
+      let l:offset = l:completion_item.textEdit.range.end.character > l:current_position.character
+      if l:offset > 0
+        let l:word = strpart(l:word, 0, strlen(l:word) - l:offset)
+      endif
+      let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
 
     " snippet
     elseif has_key(l:completion_item, 'insertText') && get(l:completion_item, 'insertTextFormat', 1) == 2
@@ -68,10 +75,13 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
           \ }
     let s:managed_user_data_key += 1
 
+    let l:word = trim(l:word)
+    let l:abbr = trim(l:abbr)
+
     " create item
     call add(l:completed_items, {
-          \   'word': trim(l:word),
-          \   'abbr': trim(l:abbr),
+          \   'word': l:word,
+          \   'abbr': l:abbr,
           \   'menu': l:params.menu,
           \   'dup': l:params.dup,
           \   'kind': join([
@@ -80,6 +90,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
           \   ], ' '),
           \   'user_data': l:user_data_key,
           \   '_filter_text': get(l:completion_item, 'filterText', l:word),
+          \   '_sort_text': get(l:completion_item, 'sortText', l:word)
           \ })
   endfor
 
