@@ -37,6 +37,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   \   'dup': 1,
   \ })
 
+  let l:current_line = getline('.')
   let l:current_position = s:Position.cursor()
 
   let l:completed_items = []
@@ -50,7 +51,10 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
       let l:word = l:completion_item.label
       let l:offset = l:completion_item.textEdit.range.end.character > l:current_position.character
       if l:offset > 0
-        let l:word = strpart(l:word, 0, strlen(l:word) - l:offset)
+        let l:postfix = strcharpart(l:current_line, l:current_position.character, l:completion_item.textEdit.range.end.character - l:current_position.character)
+        if l:word =~# ('\V' . l:postfix . '\m$')
+          let l:word = l:word[0 : -strlen(l:postfix) - 1]
+        endif
       endif
       let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
 
