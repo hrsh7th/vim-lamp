@@ -43,6 +43,8 @@ augroup lamp
   autocmd!
   autocmd BufEnter,BufWinEnter,FileType * call <SID>on_text_document_did_open()
   autocmd TextChanged,TextChangedI,TextChangedP * call <SID>on_text_document_did_change()
+  autocmd BufWritePre * call <SID>on_text_document_will_save()
+  autocmd BufWritePost * call <SID>on_text_document_did_save()
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
   autocmd VimLeave * call <SID>on_vim_leave_pre()
 augroup END
@@ -88,6 +90,51 @@ function! s:on_text_document_did_change() abort
         \   { -> l:ctx.callback(l:bufnr) },
         \   200
         \ )
+endfunction
+
+"
+" on_text_document_will_save
+"
+function! s:on_text_document_will_save() abort
+  let l:bufnr = bufnr('%')
+  for l:server in lamp#server#registry#find_by_filetype(&filetype)
+    if l:server.capability.get_text_document_sync_will_save()
+      call l:server.notify('textDocument/willSave', {
+      \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
+      \   'reason': 1,
+      \ })
+    endif
+
+    if l:server.capability.get_text_document_sync_will_save_wait_until()
+      try
+        let l:edits = lamp#sync(
+        \   l:server.notify('textDocument/willSaveWaitUntil', {
+        \     'textDocument': lamp#protocol#document#identifier(l:bufnr),
+        \   }),
+        \   200
+        \ )
+        call lamp#view#edit#apply(l:bufnr, l:edits)
+      catch /.*/
+        call lamp#log('[ERROR]', 's:on_text_document_will_save', 'timeout')
+      endtry
+    endif
+  endfor
+endfunction
+
+"
+" on_text_document_did_save
+"
+function! s:on_text_document_did_save() abort
+  let l:bufnr = bufnr('%')
+  for l:server in lamp#server#registry#find_by_filetype(&filetype)
+    if l:server.capability.get_text_document_sync_save()
+      let l:message = { 'textDocument': lamp#protocol#document#identifier(l:bufnr) }
+      if l:server.capability.get_text_document_sync_save_include_text() 
+        let l:message.text = join(lamp#view#buffer#get_lines(l:bufnr), "\n")
+      endif
+      call l:server.notify('textDocument/didSave', l:message)
+    endif
+  endfor
 endfunction
 
 "

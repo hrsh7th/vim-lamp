@@ -58,9 +58,9 @@ function! lamp#server#capability#get_default_capability() abort
         \   'textDocument': {
         \     'synchronization': {
         \       'dynamicRegistration': v:true,
-        \       'willSave': v:false,
-        \       'willSaveDidUntil': v:false,
-        \       'didSave': v:false
+        \       'willSave': v:true,
+        \       'willSaveWaitUntil': v:true,
+        \       'didSave': v:true
         \     },
         \     'rename': {
         \       'prepareSupport': v:true
@@ -229,6 +229,34 @@ function! s:Capability.get_text_document_sync_kind() abort
     return l:kind_or_option
   endif
   return lamp#get(l:kind_or_option, 'change', 0)
+endfunction
+
+"
+" get_text_document_sync_will_save
+"
+function! s:Capability.get_text_document_sync_will_save() abort
+  return lamp#get(self.capability, 'capabilities.textDocumentSync.willSave', v:false)
+endfunction
+
+"
+" get_text_document_sync_will_save_wait_until
+"
+function! s:Capability.get_text_document_sync_will_save_wait_until() abort
+  return lamp#get(self.capability, 'capabilities.textDocumentSync.willSaveWaitUntil', v:false)
+endfunction
+
+"
+" get_text_document_sync_save
+"
+function! s:Capability.get_text_document_sync_save() abort
+  return lamp#get(self.capability, 'capabilities.textDocumentSync.save', v:null) isnot# v:null
+endfunction
+
+"
+" get_text_document_sync_save_include_text
+"
+function! s:Capability.get_text_document_sync_save_include_text() abort
+  return lamp#get(self.capability, 'capabilities.textDocumentSync.save.includeText', v:false)
 endfunction
 
 "

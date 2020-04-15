@@ -150,9 +150,9 @@ endfunction
     - Synchronization
         - [x] textDocument/didOpen
         - [x] textDocument/didChange
-        - [ ] textDocument/willSave
-        - [ ] textDocument/willSaveWaitUntil
-        - [ ] textDocument/didSave
+        - [x] textDocument/willSave
+        - [x] textDocument/willSaveWaitUntil
+        - [x] textDocument/didSave
         - [x] textDocument/didClose
 
     - Diagnostics
@@ -192,9 +192,6 @@ endfunction
 </details>
 
 # TODO
-- Support `textDocument/willSave`
-- Support `textDocument/willSaveWaitUntil`
-- Support `textDocument/didSave`
 - Support `textDocument/semanticTokens`
 - Investigate the wrong diff problem.
     - I worry to `autoread` caused the problem.
