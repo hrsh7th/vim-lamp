@@ -192,6 +192,7 @@ endfunction
 </details>
 
 # TODO
+- Use VS.System.Job and VS.RPC.JSON
 - Support `textDocument/semanticTokens`
 - Investigate the wrong diff problem.
     - I worry to `autoread` caused the problem.
