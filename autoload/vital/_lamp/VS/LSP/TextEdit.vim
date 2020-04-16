@@ -4,7 +4,7 @@
 function! s:_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze__SID$')
 endfunction
-execute join(['function! vital#_lamp#VS#LSP#TextEdit#import() abort', printf("return map({'_vital_depends': '', 'apply': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
+execute join(['function! vital#_lamp#VS#LSP#TextEdit#import() abort', printf("return map({'_vital_depends': '', 'fixeol': '', 'apply': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
 delfunction s:_SID
 " ___vital___
 "
@@ -20,6 +20,14 @@ endfunction
 "
 function! s:_vital_depends() abort
   return ['VS.LSP.Text']
+endfunction
+
+"
+" fixeol
+"
+let s:_fixeol = v:false
+function! s:fixeol(bool) abort
+  let s:_fixeol = a:bool
 endfunction
 
 "
@@ -55,37 +63,48 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
   let l:before_line = strcharpart(l:start_line, 0, a:text_edit.range.start.character)
   let l:after_line = strcharpart(l:end_line, a:text_edit.range.end.character, strchars(l:end_line) - a:text_edit.range.end.character)
 
-  " create new lines.
-  let l:new_lines = s:Text.split_by_eol(a:text_edit.newText)
-  let l:new_lines[0] = l:before_line . l:new_lines[0]
-  let l:new_lines[-1] = l:new_lines[-1] . l:after_line
-  let l:new_lines_len = len(l:new_lines)
+  " create lines.
+  let l:lines = s:Text.split_by_eol(a:text_edit.newText)
+  let l:lines[0] = l:before_line . l:lines[0]
+  let l:lines[-1] = l:lines[-1] . l:after_line
 
+  " fix eol.
+  let l:buf_len = len(getbufline(a:bufnr, '^', '$'))
+  let l:fixeol = s:_fixeol
+  let l:fixeol = l:fixeol && &fixendofline
+  let l:fixeol = l:fixeol && l:lines[-1] ==# ''
+  let l:fixeol = l:fixeol && l:buf_len <= a:text_edit.range.end.line
+  let l:fixeol = l:fixeol && a:text_edit.range.end.character == 0
+  if l:fixeol
+    call remove(l:lines, -1)
+  endif
+
+  let l:lines_len = len(l:lines)
   let l:range_len = (a:text_edit.range.end.line - a:text_edit.range.start.line) + 1
 
   " fix cursor
   if a:text_edit.range.end.line <= a:cursor_position.line && a:text_edit.range.end.character <= a:cursor_position.character
     " fix cursor col
     if a:text_edit.range.end.line == a:cursor_position.line
-      let l:end_character = strchars(l:new_lines[-1]) - strchars(l:after_line)
+      let l:end_character = strchars(l:lines[-1]) - strchars(l:after_line)
       let l:end_offset = a:cursor_position.character - a:text_edit.range.end.character
       let a:cursor_position.character = l:end_character + l:end_offset
     endif
 
     " fix cursor line
-    let a:cursor_position.line += l:new_lines_len - l:range_len
+    let a:cursor_position.line += l:lines_len - l:range_len
   endif
 
   " append or delete lines.
-  if l:new_lines_len > l:range_len
-    call append(a:text_edit.range.start.line, repeat([''], l:new_lines_len - l:range_len))
-  elseif l:new_lines_len < l:range_len
-    let l:offset = l:range_len - l:new_lines_len
+  if l:lines_len > l:range_len
+    call append(a:text_edit.range.start.line, repeat([''], l:lines_len - l:range_len))
+  elseif l:lines_len < l:range_len
+    let l:offset = l:range_len - l:lines_len
     call s:_delete(a:bufnr, a:text_edit.range.start.line + 1, a:text_edit.range.start.line + l:offset)
   endif
 
   " set lines.
-  call setline(a:text_edit.range.start.line + 1, l:new_lines)
+  call setline(a:text_edit.range.start.line + 1, l:lines)
 endfunction
 
 "

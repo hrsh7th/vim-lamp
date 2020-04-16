@@ -53,16 +53,20 @@ endfunction
 " start
 "
 function! s:Nvim.start(...) abort
-  let l:option = get(a:000, 0, { 'cwd': '' })
-  let l:option.cwd = l:option.cwd !=# '' ? l:option.cwd : getcwd()
+  let l:option = get(a:000, 0, {})
 
-  let self.running = v:true
-  let self.job = jobstart(self.command, {
-  \   'cwd': l:option.cwd,
+  let l:params = {
   \   'on_stdout': function(self.on_stdout, [], self),
   \   'on_stderr': function(self.on_stderr, [], self),
   \   'on_exit': function(self.on_exit, [], self),
-  \ })
+  \ }
+
+  if has_key(l:option, 'cwd') && isdirectory(l:option.cwd)
+    let l:params.cwd = l:option.cwd
+  endif
+
+  let self.job = jobstart(self.command, l:params)
+  let self.running = v:true
 endfunction
 
 "
@@ -130,12 +134,9 @@ endfunction
 " start
 "
 function! s:Vim.start(...) abort
-  let l:option = get(a:000, 0, { 'cwd': '' })
-  let l:option.cwd = l:option.cwd !=# '' ? l:option.cwd : getcwd()
+  let l:option = get(a:000, 0, {})
 
-  let self.running = v:true
-  let self.job = job_start(self.command, {
-  \   'cwd': l:option.cwd,
+  let l:params = {
   \   'in_io': 'pipe',
   \   'in_mode': 'raw',
   \   'out_io': 'pipe',
@@ -145,7 +146,14 @@ function! s:Vim.start(...) abort
   \   'out_cb': function(self.on_stdout, [], self),
   \   'err_cb': function(self.on_stderr, [], self),
   \   'exit_cb': function(self.on_exit, [], self)
-  \ })
+  \ }
+
+  if has_key(l:option, 'cwd') && isdirectory(l:option.cwd)
+    let l:params.cwd = l:option.cwd
+  endif
+
+  let self.job = job_start(self.command, l:params)
+  let self.running = v:true
 endfunction
 
 "

@@ -1,7 +1,10 @@
 let s:Promise = vital#lamp#import('Async.Promise')
+let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Server = lamp#server#import()
 let s:CancellationToken = lamp#server#channel#cancellation_token#import()
+
+let s:TextEdit.fixeol(v:true)
 
 let s:debounce_ids = {}
 
