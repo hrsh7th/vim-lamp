@@ -28,12 +28,12 @@ function! lamp#view#buffer#open(command, location) abort
   call setbufvar(l:bufnr, '&buflisted', v:true)
 
   if l:bufnr != bufnr('%') || a:command !=# 'edit'
-    execute printf('%s %s', a:command, a:location.filename)
+    keepalt keepjumps execute printf('%s %s', a:command, a:location.filename)
   endif
 
-  if has_key(a:location, 'lnum')
-    call cursor([a:location.lnum, get(a:location, 'col', 1)])
-  endif
+  let l:lnum = get(a:location, 'lnum', 1)
+  let l:col = get(a:location, 'col', 1)
+  execute printf('normal! %sG%s|', l:lnum, l:col)
 endfunction
 
 "
