@@ -51,6 +51,7 @@ function! lamp#feature#code_action#do(option) abort
     return
   endif
 
+  " TODO: l:server is invalid (when using multiple servers.)
   let l:promises = []
   for l:server in l:servers
     let l:diagnostic = s:get_nearest_diagnostic(l:range, l:bufnr, l:server)

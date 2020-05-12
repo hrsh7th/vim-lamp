@@ -24,6 +24,7 @@ function! lamp#feature#diagnostic#init() abort
   execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
     autocmd!
     autocmd BufWritePost <buffer> call s:on_buf_write_pre()
+    autocmd BufWinEnter <buffer> call s:on_buf_win_enter()
   augroup END
 
   call s:update()
@@ -34,6 +35,13 @@ endfunction
 "
 function! s:on_buf_write_pre() abort
   call s:update(v:true)
+endfunction
+
+"
+" on_buf_win_enter
+"
+function! s:on_buf_win_enter() abort
+  call s:update(v:false)
 endfunction
 
 "

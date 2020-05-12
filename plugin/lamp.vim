@@ -62,9 +62,9 @@ function! s:on_text_document_did_open() abort
 
   let l:ctx = {}
   function! l:ctx.callback(bufnr, servers) abort
-    for l:server in a:servers
-      call l:server.initialize(a:bufnr).then({ -> l:server.ensure_document(a:bufnr) })
-    endfor
+    call map(copy(a:servers), { _, server ->
+    \   server.initialize(a:bufnr).then({ -> server.ensure_document(a:bufnr) })
+    \ })
   endfunction
   call lamp#debounce(
         \   's:on_text_document_did_open:' . l:bufnr,
