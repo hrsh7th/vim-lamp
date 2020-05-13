@@ -366,6 +366,8 @@ function! s:show_documentation(event, completed_item, completion_item) abort
   endif
 
   let l:contents = []
+
+  " detail
   if has_key(a:completion_item, 'detail')
     let l:contents += lamp#protocol#markup_content#normalize({
           \   'language': &filetype,
@@ -373,6 +375,7 @@ function! s:show_documentation(event, completed_item, completion_item) abort
           \ })
   endif
 
+  " documentation
   if has_key(a:completion_item, 'documentation')
     let l:contents += lamp#protocol#markup_content#normalize(a:completion_item.documentation)
   endif

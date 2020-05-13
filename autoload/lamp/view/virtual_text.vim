@@ -53,8 +53,9 @@ if exists('*nvim_buf_set_virtual_text')
       let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
     endif
 
-    let l:maxline = len(getbufline(a:bufnr, '^', '$'))
-    call nvim_buf_set_virtual_text(a:bufnr, s:namespaces[a:namespace], min([a:line, l:maxline]), [
+    let l:line = min([a:line, len(getbufline(a:bufnr, '^', '$'))])
+    let l:line = max([0, l:line])
+    call nvim_buf_set_virtual_text(a:bufnr, s:namespaces[a:namespace], l:line, [
     \   [join(['■', a:text], ' '), a:highlight]
     \ ], {})
   endfunction
