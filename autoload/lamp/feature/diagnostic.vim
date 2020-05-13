@@ -25,6 +25,10 @@ function! lamp#feature#diagnostic#init() abort
     autocmd!
     autocmd BufWritePost <buffer> call s:on_buf_write_pre()
     autocmd BufWinEnter <buffer> call s:on_buf_win_enter()
+    autocmd InsertEnter <buffer> call s:on_action()
+    autocmd InsertLeave <buffer> call s:on_action()
+    autocmd CursorMoved <buffer> call s:on_action()
+    autocmd CursorMovedI <buffer> call s:on_action()
   augroup END
 
   call s:update()
@@ -45,10 +49,17 @@ function! s:on_buf_win_enter() abort
 endfunction
 
 "
+" on_action
+"
+function! s:on_action() abort
+  call s:check()
+endfunction
+
+"
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, diagnostics) abort
-  if a:diagnostics.is_decreased() || a:diagnostics.not_modified()
+  if a:diagnostics.is_decreased() || a:diagnostics.not_modified() || mode()[0] ==# 'n'
     call lamp#log('[LOG]', 'diagnostics update immediately', a:server.name)
     call s:apply(a:server.name, a:diagnostics)
   else
