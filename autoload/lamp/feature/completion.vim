@@ -46,6 +46,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
   for l:completion_item in l:completion_items
+    let l:has_insert_text = type(get(l:completion_item, 'insertText', v:null)) == type('')
     " textEdit
     if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
       let l:word = l:completion_item.label
@@ -59,13 +60,17 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
       let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
 
     " snippet
-    elseif has_key(l:completion_item, 'insertText') && get(l:completion_item, 'insertTextFormat', 1) == 2
+    elseif l:has_insert_text && get(l:completion_item, 'insertTextFormat', 1) == 2
       let l:word = l:completion_item.label
       let l:abbr = l:completion_item.label . (l:word !=# l:completion_item.insertText ? '~' : '')
 
     " normal
     else
-      let l:word = get(l:completion_item, 'insertText', l:completion_item.label)
+      if l:has_insert_text
+        let l:word = l:completion_item.insertText
+      else
+        let l:word = l:completion_item.label
+      endif
       let l:abbr = l:completion_item.label
     endif
 
@@ -249,12 +254,12 @@ function! s:on_complete_done_after() abort
   endif
 
   " additionalTextEdits.
-  if has_key(l:completion_item, 'additionalTextEdits')
+  if type(get(l:completion_item, 'additionalTextEdits', v:null)) == type({})
     undojoin | call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
   endif
 
   " executeCommand.
-  if has_key(l:completion_item, 'command')
+  if type(get(l:completion_item, 'command', v:null)) == type({})
     let l:server = lamp#server#registry#get_by_name(l:user_data.server_name)
     if !empty(l:server)
       let l:p = l:server.request('workspace/executeCommand', {
@@ -302,16 +307,13 @@ endfunction
 " get_expandable_state
 "
 function! s:get_expandable_state(completed_item, completion_item) abort
-  if has_key(a:completion_item, 'textEdit') &&
-        \ a:completed_item.word !=# a:completion_item.textEdit.newText
+  if type(get(a:completion_item, 'textEdit', v:null)) == type({}) && a:completed_item.word !=# a:completion_item.textEdit.newText
     return {
           \   'text': a:completion_item.textEdit.newText
           \ }
   endif
 
-  if get(a:completion_item, 'insertTextFormat', 1) == 2 &&
-        \ has_key(a:completion_item, 'insertText') &&
-        \ a:completed_item.word !=# a:completion_item.insertText
+  if get(a:completion_item, 'insertTextFormat', 1) == 2 && type(get(a:completion_item, 'insertText', v:null)) == type('') && a:completed_item.word !=# a:completion_item.insertText
     return {
           \   'text': a:completion_item.insertText
           \ }
@@ -336,7 +338,7 @@ function! s:clear_completed_string(completed_item, completion_item, done_line, d
   \ }
 
   " Expand remove range to textEdit.
-  if has_key(a:completion_item, 'textEdit')
+  if type(get(a:completion_item, 'textEdit', v:null)) == type({})
     let l:range = {
     \   'start': {
     \     'line': a:completion_item.textEdit.range.start.line,
@@ -368,7 +370,7 @@ function! s:show_documentation(event, completed_item, completion_item) abort
   let l:contents = []
 
   " detail
-  if has_key(a:completion_item, 'detail')
+  if type(get(a:completion_item, 'detail', v:null)) == type('')
     let l:contents += lamp#protocol#markup_content#normalize({
           \   'language': &filetype,
           \   'value': a:completion_item.detail
@@ -376,7 +378,7 @@ function! s:show_documentation(event, completed_item, completion_item) abort
   endif
 
   " documentation
-  if has_key(a:completion_item, 'documentation')
+  if type(get(a:completion_item, 'documentation', v:null)) == type('')
     let l:contents += lamp#protocol#markup_content#normalize(a:completion_item.documentation)
   endif
 
