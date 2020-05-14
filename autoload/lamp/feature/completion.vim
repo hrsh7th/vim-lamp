@@ -48,7 +48,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   for l:completion_item in l:completion_items
     let l:has_insert_text = type(get(l:completion_item, 'insertText', v:null)) == type('')
     " textEdit
-    if has_key(l:completion_item, 'textEdit') && type(l:completion_item.textEdit) == type({})
+    if type(get(l:completion_item, 'textEdit', v:null)) == type({})
       let l:word = l:completion_item.label
       let l:offset = l:completion_item.textEdit.range.end.character > l:current_position.character
       if l:offset > 0
@@ -254,7 +254,7 @@ function! s:on_complete_done_after() abort
   endif
 
   " additionalTextEdits.
-  if type(get(l:completion_item, 'additionalTextEdits', v:null)) == type({})
+  if type(get(l:completion_item, 'additionalTextEdits', v:null)) == type([])
     undojoin | call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
   endif
 
