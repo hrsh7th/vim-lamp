@@ -404,7 +404,7 @@ function! s:get_floatwin_screenpos(event, contents) abort
   " create y.
   let l:pum_scrolloff = min([4, float2nr(a:event.height / 2)]) " TODO: calculate `4` from Vim script.
   let l:pum_scrolloff -= max([0, l:current_item_index - (a:event.size - l:pum_scrolloff)])
-  let l:row = a:event.row + min([l:current_item_index, a:event.height - l:pum_scrolloff])
+  let l:row = a:event.row + min([l:current_item_index, float2nr(a:event.height) - l:pum_scrolloff])
 
   " create x.
   let l:doc_width = s:floatwin.get_width(a:contents)
