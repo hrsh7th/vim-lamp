@@ -44,7 +44,7 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, diagnostics) abort
-  if a:diagnostics.is_decreased() || a:diagnostics.not_modified() || mode()[0] ==# 'n'
+  if exists('g:lamp_experimental_passthrough_diagnostics') || a:diagnostics.is_decreased() || a:diagnostics.not_modified() || mode()[0] ==# 'n'
     call lamp#log('[LOG]', 'diagnostics update immediately', a:server.name)
     call s:apply(a:server.name, a:diagnostics)
   else
