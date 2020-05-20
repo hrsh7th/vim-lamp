@@ -62,7 +62,7 @@ function! s:Emitter.off(event_name, ...) abort
 
   let l:i = len(self.events[a:event_name]) - 1
   while l:i >= 0
-    if self.events[a:event_name][l:i] is# l:Listener || l:Listener is# v:null
+    if self.events[a:event_name][l:i] ==# l:Listener || l:Listener is# v:null
       call remove(self.events[a:event_name], l:i)
     endif
     let l:i -= 1

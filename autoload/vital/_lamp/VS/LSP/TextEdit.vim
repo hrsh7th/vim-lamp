@@ -97,14 +97,21 @@ function! s:_apply(bufnr, text_edit, cursor_position) abort
 
   " append or delete lines.
   if l:lines_len > l:range_len
-    call append(a:text_edit.range.start.line, repeat([''], l:lines_len - l:range_len))
+    call append(a:text_edit.range.end.line, repeat([''], l:lines_len - l:range_len))
   elseif l:lines_len < l:range_len
     let l:offset = l:range_len - l:lines_len
-    call s:_delete(a:bufnr, a:text_edit.range.start.line + 1, a:text_edit.range.start.line + l:offset)
+    call s:_delete(a:bufnr, a:text_edit.range.end.line - l:offset + 1, a:text_edit.range.end.line)
   endif
 
   " set lines.
-  call setline(a:text_edit.range.start.line + 1, l:lines)
+  let l:i = 0
+  while l:i < len(l:lines)
+    let l:lnum = a:text_edit.range.start.line + l:i + 1
+    if get(getbufline(a:bufnr, l:lnum), 0, v:null) !=# l:lines[l:i]
+      call setline(l:lnum, l:lines[l:i])
+    endif
+    let l:i += 1
+  endwhile
 endfunction
 
 "

@@ -75,6 +75,9 @@ endfunction
 " s:close
 "
 function! s:close() abort
+  if has_key(s:, 'cancellation_token')
+    call s:cancellation_token.cancel()
+  endif
   if s:floatwin.is_showing()
     if win_getid() != s:floatwin.winid()
       call s:floatwin.hide()

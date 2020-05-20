@@ -79,7 +79,7 @@ function! s:update(...) abort
     for l:server in lamp#server#registry#find_by_filetype(getbufvar(l:bufname, '&filetype'))
       let l:diagnostics = get(l:server.diagnostics, l:uri)
       let l:document = get(l:server.documents, l:uri)
-      if !empty(l:diagnostics) && !empty(l:document) && (l:diagnostics.updated(l:document.version) || l:force)
+      if !empty(l:diagnostics) && !empty(l:document)
         call s:apply(l:server.name, l:server.diagnostics[l:uri])
       else
         call lamp#log('[LOG]', 'diagnostics skipped: it does not updated', l:server.name)
