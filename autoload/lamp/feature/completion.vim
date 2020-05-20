@@ -49,7 +49,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
     let l:has_insert_text = type(get(l:completion_item, 'insertText', v:null)) == type('')
     " textEdit
     if type(get(l:completion_item, 'textEdit', v:null)) == type({})
-      let l:word = l:completion_item.label
+      let l:word = trim(l:completion_item.label)
       let l:offset = l:completion_item.textEdit.range.end.character > l:current_position.character
       if l:offset > 0
         let l:postfix = strcharpart(l:current_line, l:current_position.character, l:completion_item.textEdit.range.end.character - l:current_position.character)
@@ -61,8 +61,8 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
 
     " snippet
     elseif l:has_insert_text && get(l:completion_item, 'insertTextFormat', 1) == 2
-      let l:word = l:completion_item.label
-      let l:abbr = l:completion_item.label . (l:word !=# l:completion_item.insertText ? '~' : '')
+      let l:word = trim(l:completion_item.label)
+      let l:abbr = l:word . (l:word !=# l:completion_item.insertText ? '~' : '')
 
     " normal
     else
@@ -71,6 +71,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
       else
         let l:word = l:completion_item.label
       endif
+      let l:word = trim(l:word)
       let l:abbr = l:completion_item.label
     endif
 
@@ -82,9 +83,6 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
           \   'complete_position': a:complete_position,
           \ }
     let s:managed_user_data_key += 1
-
-    let l:word = trim(l:word)
-    let l:abbr = trim(l:abbr)
 
     " create item
     call add(l:completed_items, {
