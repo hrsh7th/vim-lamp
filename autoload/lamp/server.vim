@@ -296,6 +296,62 @@ function! s:Server.close_document(bufnr) abort
 endfunction
 
 "
+" will_save_document
+"
+function! s:Server.will_save_document(bufnr) abort
+  if self.capability.get_text_document_sync_will_save()
+    call self.notify('textDocument/willSave', {
+    \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
+    \   'reason': 1,
+    \ })
+  endif
+
+  if self.capability.get_text_document_sync_will_save_wait_until()
+    try
+      let l:edits = lamp#sync(
+      \   self.notify('textDocument/willSaveWaitUntil', {
+      \     'textDocument': lamp#protocol#document#identifier(a:bufnr),
+      \   }),
+      \   200
+      \ )
+      call lamp#view#edit#apply(a:bufnr, l:edits)
+    catch /.*/
+      call lamp#log('[ERROR]', 's:on_text_document_will_save', 'timeout')
+    endtry
+  endif
+endfunction
+
+"
+" did_save_document
+"
+function! s:Server.did_save_document(bufnr) abort
+  if self.capability.get_text_document_sync_save()
+    let l:message = { 'textDocument': lamp#protocol#document#identifier(a:bufnr) }
+    if self.capability.get_text_document_sync_save_include_text() 
+      let l:message.text = join(lamp#view#buffer#get_lines(a:bufnr), "\n")
+    endif
+    call self.notify('textDocument/didSave', l:message)
+  else
+    call self.force_sync_document(a:bufnr)
+  endif
+endfunction
+
+"
+" force_sync_document
+"
+function! s:Server.force_sync_document(bufnr) abort
+  let l:uri = lamp#protocol#document#encode_uri(bufname(a:bufnr))
+  if !has_key(self.documents, l:uri)
+    return
+  endif
+
+  call self.notify('textDocument/didChange', {
+  \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
+  \   'contentChanges': []
+  \ })
+endfunction
+
+"
 " on_notification.
 "
 function! s:Server.on_notification(notification) abort
