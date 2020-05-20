@@ -21,10 +21,12 @@ function! lamp#server#notification#on(server, notification) abort
   elseif a:notification.method ==# 'telemetry/event'
     call s:telemetry_event(a:server, a:notification)
   elseif a:notification.method ==# 'client/registerCapability'
+    call lamp#log('[UNHANDLED]', a:notification.method, get(a:notification, 'params', v:null))
     call a:server.response(a:notification.id, {
     \   'result': v:null
     \ })
   elseif a:notification.method ==# 'client/unregisterCapability'
+    call lamp#log('[UNHANDLED]', a:notification.method, get(a:notification, 'params', v:null))
     call a:server.response(a:notification.id, {
     \   'result': v:null
     \ })
