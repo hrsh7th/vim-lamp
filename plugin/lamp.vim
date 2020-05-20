@@ -133,6 +133,11 @@ function! s:on_text_document_did_save() abort
         let l:message.text = join(lamp#view#buffer#get_lines(l:bufnr), "\n")
       endif
       call l:server.notify('textDocument/didSave', l:message)
+    else
+      call l:server.notify('textDocument/didChange', {
+      \   'textDocument': lamp#protocol#document#versioned_identifier(l:bufnr),
+      \   'contentChanges': []
+      \ })
     endif
   endfor
 endfunction
