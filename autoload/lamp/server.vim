@@ -18,25 +18,25 @@ let s:Server = {}
 "
 function! s:Server.new(name, option) abort
   return extend(deepcopy(s:Server), {
-        \   'name': a:name,
-        \   'channel': s:Channel.new({ 'name': a:name, 'command': a:option.command }),
-        \   'filetypes': a:option.filetypes,
-        \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
-        \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
-        \   'trace': get(a:option, 'trace', 'off'),
-        \   'diff': s:Diff.new(),
-        \   'documents': {},
-        \   'diagnostics': {},
-        \   'capability': s:Capability.new({
-        \     'capabilities': get(a:option, 'capabilities', {})
-        \   }),
-        \   'initialized': v:false,
-        \   'state': {
-        \     'started': v:false,
-        \     'initialized': v:null,
-        \     'exited': v:false,
-        \   },
-        \ })
+  \   'name': a:name,
+  \   'channel': s:Channel.new({ 'name': a:name, 'command': a:option.command }),
+  \   'filetypes': a:option.filetypes,
+  \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
+  \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
+  \   'trace': get(a:option, 'trace', 'off'),
+  \   'diff': s:Diff.new(),
+  \   'documents': {},
+  \   'diagnostics': {},
+  \   'capability': s:Capability.new({
+  \     'capabilities': get(a:option, 'capabilities', {})
+  \   }),
+  \   'initialized': v:false,
+  \   'state': {
+  \     'started': v:false,
+  \     'initialized': v:null,
+  \     'exited': v:false,
+  \   },
+  \ })
 endfunction
 
 "
@@ -193,11 +193,11 @@ endfunction
 "
 function! s:Server.ensure_document(bufnr) abort
   return self.initialize(a:bufnr).then({ -> [
-        \   self.ensure_workspace(a:bufnr),
-        \   self.open_document(a:bufnr),
-        \   self.close_document(a:bufnr),
-        \   self.change_document(a:bufnr)
-        \ ] })
+  \   self.ensure_workspace(a:bufnr),
+  \   self.open_document(a:bufnr),
+  \   self.close_document(a:bufnr),
+  \   self.change_document(a:bufnr)
+  \ ] })
 endfunction
 
 "
@@ -220,8 +220,8 @@ function! s:Server.open_document(bufnr) abort
   call self.diff.attach(a:bufnr)
   let self.documents[l:uri] = s:Document.new(a:bufnr)
   call self.channel.notify('textDocument/didOpen', {
-        \   'textDocument': lamp#protocol#document#item(a:bufnr),
-        \ })
+  \   'textDocument': lamp#protocol#document#item(a:bufnr),
+  \ })
 endfunction
 
 "
@@ -245,19 +245,19 @@ function! s:Server.change_document(bufnr) abort
     call l:doc.sync()
     call self.diff.sync(a:bufnr)
     call self.channel.notify('textDocument/didChange', {
-          \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-          \   'contentChanges': [{ 'text': join(self.diff.get_lines(a:bufnr), "\n") }]
-          \ })
+    \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
+    \   'contentChanges': [{ 'text': join(self.diff.get_lines(a:bufnr), "\n") }]
+    \ })
 
-  " incremental sync.
+    " incremental sync.
   elseif l:sync_kind == 2
     let l:diff = self.diff.compute(a:bufnr)
     if l:diff.rangeLength != 0 || l:diff.text !=# ''
       call l:doc.sync()
       call self.channel.notify('textDocument/didChange', {
-            \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-            \   'contentChanges': [l:diff]
-            \ })
+      \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
+      \   'contentChanges': [l:diff]
+      \ })
     endif
   endif
 endfunction
@@ -289,10 +289,10 @@ function! s:Server.close_document(bufnr) abort
   call self.diff.detach(a:bufnr)
 
   call self.channel.notify('textDocument/didClose', {
-        \   'textDocument': {
-        \     'uri': l:document.uri
-        \   }
-        \ })
+  \   'textDocument': {
+  \     'uri': l:document.uri
+  \   }
+  \ })
 endfunction
 
 "
