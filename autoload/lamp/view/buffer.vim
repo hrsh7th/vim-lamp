@@ -14,7 +14,7 @@ endfunction
 "
 function! lamp#view#buffer#get_lines(bufnr) abort
   let l:lines = getbufline(a:bufnr, '^', '$')
-  if &fixendofline && !&binary && get(l:lines, -1, '') !=# ''
+  if &fixendofline && !&binary
     call add(l:lines, '')
   endif
   return l:lines

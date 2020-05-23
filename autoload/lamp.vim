@@ -19,7 +19,6 @@ let s:config = {
       \   'global.debug': v:null,
       \   'global.debug.clear_on_start': v:false,
       \   'global.timeout': 3000,
-      \   'experimental.did_change_on_focus': v:false,
       \   'feature.completion.snippet.expand': v:null,
       \   'feature.completion.floating_docs': v:true,
       \   'feature.diagnostic.increase_delay.normal': 400,

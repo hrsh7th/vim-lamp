@@ -28,6 +28,10 @@ endfunction
 " lamp#feature#workspace#update
 "
 function! lamp#feature#workspace#update(server, bufnr) abort
+  if index(a:server.filetypes, getbufvar(a:bufnr, '&filetype', '')) == -1
+    return
+  endif
+
   let l:uri = lamp#protocol#document#encode_uri(a:server.root_uri(a:bufnr))
   if l:uri ==# ''
     return

@@ -41,14 +41,11 @@ command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
 "
 augroup lamp
   autocmd!
-  autocmd BufEnter,BufWinEnter,FileType * call <SID>on_text_document_did_open()
+  autocmd BufWinEnter,FileType * call <SID>on_text_document_did_open()
   autocmd TextChanged,TextChangedI,TextChangedP * call <SID>on_text_document_did_change()
   autocmd BufWritePre * call <SID>on_text_document_will_save()
   autocmd BufWritePost * call <SID>on_text_document_did_save()
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
-
-  autocmd BufEnter * call <SID>on_focus()
-
   autocmd VimLeave * call <SID>on_vim_leave_pre()
 augroup END
 
@@ -135,20 +132,8 @@ function! s:on_text_document_did_close() abort
   call lamp#debounce(
         \   's:on_text_document_did_close:' . l:bufnr,
         \   { -> l:ctx.callback(l:bufnr) },
-        \   200
+        \   500
         \ )
-endfunction
-
-"
-" on_focus
-"
-function! s:on_focus() abort
-  if lamp#config('experimental.did_change_on_focus')
-    let l:bufnr = bufnr('%')
-    for l:server in lamp#server#registry#find_by_filetype(&filetype)
-      call l:server.force_sync_document(l:bufnr)
-    endfor
-  endif
 endfunction
 
 "
