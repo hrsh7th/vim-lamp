@@ -8,8 +8,6 @@ Language Server Protocol client for Vim.
 - Well visualize diagnostics
 
 # Status
-- Mostly well works.
-    - Rarely, send the wrong diff to server maybe.
 - APIs aren't stable yet.
     - Apply breaking change with no announcement.
 
