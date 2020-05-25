@@ -24,29 +24,32 @@ endfunction
 "
 if exists('*nvim_buf_add_highlight')
   function! lamp#view#highlight#nvim#add(namespace, bufnr, range, highlight) abort
-    if !has_key(s:namespaces, a:namespace)
-      let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
-    endif
+    try
+      if !has_key(s:namespaces, a:namespace)
+        let s:namespaces[a:namespace] = nvim_create_namespace(a:namespace)
+      endif
 
-    for l:range in s:ranges(a:bufnr, a:range)
-      call add(s:highlights, {
-            \   'namespace': a:namespace,
-            \   'bufnr': a:bufnr,
-            \   'range': l:range,
-            \   'highlight': a:highlight
-            \ })
+      for l:range in s:ranges(a:bufnr, a:range)
+        call add(s:highlights, {
+              \   'namespace': a:namespace,
+              \   'bufnr': a:bufnr,
+              \   'range': l:range,
+              \   'highlight': a:highlight
+              \ })
 
-      let l:start = s:Position.lsp_to_vim(a:bufnr, l:range.start)
-      let l:end = s:Position.lsp_to_vim(a:bufnr, l:range.end)
-      call nvim_buf_add_highlight(
-            \   a:bufnr,
-            \   s:namespaces[a:namespace],
-            \   a:highlight,
-            \   l:start[0] - 1,
-            \   l:start[1] - 1,
-            \   l:end[1] - 1
-            \ )
-    endfor
+        let l:start = s:Position.lsp_to_vim(a:bufnr, l:range.start)
+        let l:end = s:Position.lsp_to_vim(a:bufnr, l:range.end)
+        call nvim_buf_add_highlight(
+              \   a:bufnr,
+              \   s:namespaces[a:namespace],
+              \   a:highlight,
+              \   l:start[0] - 1,
+              \   l:start[1] - 1,
+              \   l:end[1] - 1
+              \ )
+      endfor
+    catch /.*/
+    endtry
   endfunction
 else
   function! lamp#view#highlight#nvim#add(namespace, bufnr, range, highlight) abort
