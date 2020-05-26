@@ -1,19 +1,14 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
-let s:Floatwin = lamp#view#floatwin#import()
-let s:floatwin = s:Floatwin.new({})
-
-"
-" for test.
-"
-function! lamp#feature#hover#test(test) abort
-  let a:test.floatwin = s:floatwin
-endfunction
 
 "
 " lamp#feature#hover#init
 "
 function! lamp#feature#hover#init() abort
+  call lamp#view#floatwin#configure('hover', {
+  \   'keep': v:false,
+  \   'priority': 100
+  \ })
   execute printf('augroup lamp#feature#hover_%d', bufnr('%'))
     autocmd!
     autocmd InsertEnter,CursorMoved <buffer> call s:close()
@@ -24,8 +19,8 @@ endfunction
 " lamp#feature#hover#do
 "
 function! lamp#feature#hover#do() abort
-  if s:floatwin.is_showing()
-    call s:floatwin.enter()
+  if lamp#view#floatwin#is_showing('hover')
+    call lamp#view#floatwin#enter('hover')
     return
   endif
 
@@ -68,7 +63,9 @@ function! s:on_response(bufnr, responses) abort
     return
   endif
 
-  call s:floatwin.show_tooltip(lamp#view#floatwin#screenpos(line('.'), col('.')), l:contents)
+  call lamp#view#floatwin#show('hover', lamp#view#floatwin#screenpos(line('.'), col('.')), l:contents, {
+  \   'tooltip': v:true,
+  \ })
 endfunction
 
 "
@@ -78,10 +75,6 @@ function! s:close() abort
   if has_key(s:, 'cancellation_token')
     call s:cancellation_token.cancel()
   endif
-  if s:floatwin.is_showing()
-    if win_getid() != s:floatwin.winid()
-      call s:floatwin.hide()
-    endif
-  endif
+ call lamp#view#floatwin#hide('hover')
 endfunction
 

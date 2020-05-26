@@ -2,9 +2,6 @@ let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
-let s:floatwin = s:Floatwin.new({
-\   'max_height': &lines / 3
-\ })
 
 let s:context = {}
 
@@ -20,6 +17,9 @@ let s:managed_user_data_key = 0
 " lamp#feature#completion#init
 "
 function! lamp#feature#completion#init() abort
+  call lamp#view#floatwin#configure('completion', {
+  \   'max_height': &lines / 3,
+  \ })
   execute printf('augroup lamp#feature#completion_%d', bufnr('%'))
     autocmd!
     autocmd InsertLeave <buffer> call s:on_insert_leave()
@@ -145,7 +145,7 @@ endfunction
 function! s:on_insert_leave() abort
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
   call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 0)
-  call s:floatwin.hide()
+  call lamp#view#floatwin#hide('completion')
   call s:clear_managed_user_data()
 endfunction
 
@@ -159,7 +159,7 @@ function! s:on_complete_changed() abort
 
   let l:user_data = s:get_managed_user_data(v:completed_item)
   if empty(l:user_data)
-    call s:floatwin.hide()
+    call lamp#view#floatwin#hide('completion')
     return
   endif
 
@@ -195,7 +195,7 @@ function! s:on_complete_done() abort
   " clear.
   call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
   call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 0)
-  call s:floatwin.hide()
+  call lamp#view#floatwin#hide('completion')
 
   let s:context.done_position = s:Position.cursor()
   let s:context.done_line = getline('.')
@@ -383,7 +383,7 @@ function! s:show_documentation(event, completed_item, completion_item) abort
   if !empty(l:contents)
     let l:screenpos = s:get_floatwin_screenpos(a:event, l:contents)
     if !empty(l:screenpos)
-      call s:floatwin.show(l:screenpos, l:contents)
+      call lamp#view#floatwin#show('completion', l:screenpos, l:contents)
     endif
   endif
 endfunction
@@ -405,7 +405,7 @@ function! s:get_floatwin_screenpos(event, contents) abort
   let l:row = a:event.row + min([l:current_item_index, float2nr(a:event.height) - l:pum_scrolloff])
 
   " create x.
-  let l:doc_width = s:floatwin.get_width(a:contents)
+  let l:doc_width = lamp#view#floatwin#get('completion').get_width(a:contents)
   let l:col_if_right = a:event.col + a:event.width + 1 + (a:event.scrollbar ? 1 : 0)
   let l:col_if_left = a:event.col - l:doc_width - 2
 

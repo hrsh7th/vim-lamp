@@ -25,10 +25,8 @@ Describe lamp#feature#hover
           \ })
     set filetype=typescript
 
-    let s:test = {}
-    call lamp#feature#hover#test(s:test)
     call lamp#feature#hover#do()
-    call lamp#sync({ -> s:test.floatwin.is_showing() })
+    call lamp#sync({ -> lamp#view#floatwin#is_showing('hover') })
   End
 
 End

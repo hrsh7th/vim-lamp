@@ -12,7 +12,7 @@ function! lamp#builtin#intelephense(...) abort
     return
   endif
 
-  let l:storagePath = expand('~/.cache/aiueo')
+  let l:storagePath = expand('~/.cache/intelephense')
   if !isdirectory(l:storagePath)
     call mkdir(l:storagePath, 'p', '0755')
   endif

@@ -1,3 +1,5 @@
+let s:Position = vital#lamp#import('VS.LSP.Position')
+
 let s:sign_ns = 'lamp#feature#diagnostic:sign'
 let s:highlight_ns = 'lamp#feature#diagnostic:highlight'
 let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
@@ -27,8 +29,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd BufWinEnter <buffer> call s:on_buf_win_enter()
     autocmd InsertEnter <buffer> call s:on_action()
     autocmd InsertLeave <buffer> call s:on_action()
-    autocmd CursorMoved <buffer> call s:on_action()
-    autocmd CursorMovedI <buffer> call s:on_action()
+    autocmd CursorMoved <buffer> call s:on_cursor_moved()
   augroup END
 
   call s:update()
@@ -52,7 +53,92 @@ endfunction
 " on_action
 "
 function! s:on_action() abort
+  call lamp#view#floatwin#hide('diagnostic')
+  call lamp#debounce('lamp#feature#diagnostic:on_cursor_moved', { -> {} }, 0)
   call s:check()
+endfunction
+
+"
+" on_cursor_moved
+"
+function! s:on_cursor_moved() abort
+  if mode()[0] !=# 'n'
+    call lamp#view#floatwin#hide('diagnostic')
+    return
+  endif
+
+  let l:signs = get(sign_getplaced(bufnr('%'), { 'group': '*', 'lnum': line('.') }), 0, { 'signs': [] }).signs
+  let l:signs = filter(copy(l:signs), { i, sign -> stridx(sign.group, s:sign_ns) == 0 })
+  if len(l:signs) == 0
+    call lamp#view#floatwin#hide('diagnostic')
+    return
+  endif
+
+  let l:ctx = {}
+  function! l:ctx.callback() abort
+    if mode()[0] !=# 'n'
+      call lamp#view#floatwin#hide('diagnostic')
+      return
+    endif
+
+    let l:signs = get(sign_getplaced(bufnr('%'), { 'group': '*', 'lnum': line('.') }), 0, { 'signs': [] }).signs
+    let l:signs = filter(copy(l:signs), { i, sign -> stridx(sign.group, s:sign_ns) == 0 })
+    if len(l:signs) == 0
+      call lamp#view#floatwin#hide('diagnostic')
+      return
+    endif
+
+    let l:position = s:Position.cursor()
+
+    " Gaather diagnotics in range.
+    let l:diagnostics = []
+    for l:server in lamp#server#registry#find_by_filetype(&filetype)
+      let l:ds = get(l:server.diagnostics, lamp#protocol#document#encode_uri(bufname('%')), {})
+      let l:ds = get(l:ds, 'applied_diagnostics', [])
+      let l:ds = filter(copy(l:ds), { _, diagnostic ->
+      \   lamp#protocol#position#in_range(l:position, diagnostic.range) || (
+      \     lamp#protocol#range#in_line(diagnostic.range) && !lamp#protocol#range#has_length(diagnostic.range)
+      \   )
+      \ })
+      let l:diagnostics += l:ds
+    endfor
+
+    if empty(l:diagnostics)
+      call lamp#view#floatwin#hide('diagnostic')
+      return
+    endif
+
+    try
+      let l:position = l:diagnostics[0].range.start
+      for l:diagnostic in l:diagnostics[1 : -1]
+        if lamp#protocol#position#after(l:diagnostic.range.start, l:position)
+          let l:position = l:diagnostic.range.start
+        endif
+      endfor
+
+      let l:contents = []
+      for l:diagnostic in l:diagnostics
+        let l:content = ''
+        if has_key(l:diagnostic, 'source')
+          let l:content .= printf('`[%s]` ', l:diagnostic.source)
+        endif
+        let l:content .= l:diagnostic.message
+        call add(l:contents, l:content)
+      endfor
+
+      if !empty(l:contents)
+        let l:screenpos = lamp#view#floatwin#screenpos(l:position.line + 1, l:position.character + 1)
+        call lamp#view#floatwin#show('diagnostic', l:screenpos, lamp#protocol#markup_content#normalize(l:contents), {
+        \   'tooltip': v:true
+        \ })
+      else
+        call lamp#view#floatwin#hide('diagnostic')
+      endif
+    catch /.*/
+      echomsg string([v:exception, v:throwpoint])
+    endtry
+  endfunction
+  call lamp#debounce('lamp#feature#diagnostic:on_cursor_moved', { -> l:ctx.callback() }, 500)
 endfunction
 
 "
@@ -153,19 +239,15 @@ function! s:apply(server_name, diagnostics) abort
     if l:severity == 1
       call lamp#view#sign#error(l:sign_ns, l:bufnr, l:line + 1)
       call lamp#view#highlight#error(l:highlight_ns, l:bufnr, l:diagnostic.range)
-      call lamp#view#virtual_text#error(l:virtual_text_ns, l:bufnr, l:line, l:diagnostic.message)
     elseif l:severity == 2
       call lamp#view#sign#warning(l:sign_ns, l:bufnr, l:line + 1)
       call lamp#view#highlight#warning(l:highlight_ns, l:bufnr, l:diagnostic.range)
-      call lamp#view#virtual_text#warning(l:virtual_text_ns, l:bufnr, l:line, l:diagnostic.message)
     elseif l:severity == 3
       call lamp#view#sign#information(l:sign_ns, l:bufnr, l:line + 1)
       call lamp#view#highlight#information(l:highlight_ns, l:bufnr, l:diagnostic.range)
-      call lamp#view#virtual_text#information(l:virtual_text_ns, l:bufnr, l:line, l:diagnostic.message)
     elseif l:severity == 4
       call lamp#view#sign#hint(l:sign_ns, l:bufnr, l:line + 1)
       call lamp#view#highlight#hint(l:highlight_ns, l:bufnr, l:diagnostic.range)
-      call lamp#view#virtual_text#hint(l:virtual_text_ns, l:bufnr, l:line, l:diagnostic.message)
     endif
   endfor
 endfunction

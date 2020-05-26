@@ -1,9 +1,10 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
-let s:Floatwin  = lamp#view#floatwin#import()
-let s:floatwin = s:Floatwin.new({ 'max_height': 12 })
 
 function! lamp#feature#signature_help#init() abort
+  call lamp#view#floatwin#configure('signature_help', {
+  \   'max_height': 12,
+  \ })
   execute printf('augroup lamp#feature#signature_help_%d', bufnr('%'))
     autocmd!
     autocmd InsertLeave,CursorMoved <buffer> call s:close_signature_help()
@@ -15,8 +16,8 @@ endfunction
 " s:close_signature_help
 "
 function! s:close_signature_help() abort
-  call s:floatwin.hide()
-  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 0)
+  call lamp#view#floatwin#hide('signature_help')
+  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> {} }, 200)
 endfunction
 
 "
@@ -65,7 +66,7 @@ function! s:trigger_signature_help() abort
     let l:p = l:p.then({ responses -> s:on_responses(l:bufnr, responses) })
     let l:p = l:p.catch(lamp#rescue())
   endfunction
-  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> l:ctx.callback() }, 500)
+  call lamp#debounce('lamp#feature#signature_help:trigger_signature_help', { -> l:ctx.callback() }, 100)
 endfunction
 
 "
@@ -83,7 +84,9 @@ function! s:on_responses(bufnr, responses) abort
 
   if !empty(l:contents)
     let l:screenpos = lamp#view#floatwin#screenpos(line('.'), col('.'))
-    call s:floatwin.show_tooltip(l:screenpos, l:contents)
+    call lamp#view#floatwin#show('signature_help', l:screenpos, l:contents, {
+    \   'tooltip': v:true
+    \ })
     call lamp#view#mode#insert_leave({ -> s:close_signature_help() })
   endif
 endfunction

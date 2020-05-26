@@ -1,4 +1,5 @@
 let s:floatwin_id = 0
+let s:floatwins = {}
 
 let s:namespace = has('nvim') ? 'nvim' : 'vim'
 
@@ -37,6 +38,93 @@ function! lamp#view#floatwin#screenpos(line, col) abort
 endfunction
 
 "
+" lamp#view#floatwin#show
+"
+function! lamp#view#floatwin#configure(name, config) abort
+  if !has_key(s:floatwins, a:name)
+    let s:floatwins[a:name] = s:Floatwin.new(a:config)
+  else
+    for [l:key, l:value] in items(a:config)
+      let s:floatwins[a:name][l:key] = l:value
+    endfor
+  endif
+endfunction
+
+"
+" lamp#view#floatwin#get
+"
+function! lamp#view#floatwin#get(name) abort
+  if !has_key(s:floatwins, a:name)
+    let s:floatwins[a:name] = s:Floatwin.new({})
+  endif
+  return s:floatwins[a:name]
+endfunction
+
+"
+" lamp#view#floatwin#show
+"
+function! lamp#view#floatwin#show(name, pos, contents, ...) abort
+  let l:option = extend(get(a:000, 0, {}), {
+  \   'tooltip': v:false,
+  \ }, 'keep')
+
+  if !has_key(s:floatwins, a:name)
+    let s:floatwins[a:name] = s:Floatwin.new({})
+  endif
+
+  let l:target = s:floatwins[a:name]
+  for [l:name, l:win] in items(s:floatwins)
+    if !l:win.is_keep() && l:win.is_showing() && l:target.get_priority() < l:win.get_priority()
+      return
+    endif
+  endfor
+
+  if !l:target.is_keep()
+    for [l:name, l:win] in items(s:floatwins)
+      if l:target isnot# l:win
+        call l:win.hide()
+      endif
+    endfor
+  endif
+
+  if l:option.tooltip
+    call l:target.show_tooltip(a:pos, a:contents)
+  else
+    call l:target.show(a:pos, a:contents)
+  endif
+endfunction
+
+"
+" lamp#view#floatwin#hide
+"
+function! lamp#view#floatwin#hide(name) abort
+  if !has_key(s:floatwins, a:name)
+    let s:floatwins[a:name] = s:Floatwin.new({})
+  endif
+  call s:floatwins[a:name].hide()
+endfunction
+
+"
+" lamp#view#floatwin#is_showing
+"
+function! lamp#view#floatwin#is_showing(name) abort
+  if !has_key(s:floatwins, a:name)
+    let s:floatwins[a:name] = s:Floatwin.new({})
+  endif
+  return s:floatwins[a:name].is_showing()
+endfunction
+
+"
+" lamp#view#floatwin#enter
+"
+function! lamp#view#floatwin#enter(name) abort
+  if !has_key(s:floatwins, a:name)
+    let s:floatwins[a:name] = s:Floatwin.new({})
+  endif
+  return s:floatwins[a:name].enter()
+endfunction
+
+"
 " lamp#view#floatwin#import
 "
 function! lamp#view#floatwin#import() abort
@@ -56,13 +144,15 @@ function! s:Floatwin.new(option) abort
   call setbufvar(l:bufnr, '&filetype', 'lamp_floatwin')
   call setbufvar(l:bufnr, '&buftype', 'nofile')
   return extend(deepcopy(s:Floatwin), {
-        \   'bufnr': l:bufnr,
-        \   'max_width': get(a:option, 'max_width', &columns / 2),
-        \   'max_height': get(a:option, 'max_height', &lines / 2),
-        \   'fix': get(a:option, 'fix', v:true),
-        \   'screenpos': [0, 0],
-        \   'contents': []
-        \ })
+  \   'bufnr': l:bufnr,
+  \   'max_width': get(a:option, 'max_width', &columns / 2),
+  \   'max_height': get(a:option, 'max_height', &lines / 2),
+  \   'priority': get(a:option, 'priority', 0),
+  \   'keep': get(a:option, 'keep', v:true),
+  \   'fix': get(a:option, 'fix', v:true),
+  \   'screenpos': [0, 0],
+  \   'contents': []
+  \ })
 endfunction
 
 "
@@ -71,13 +161,13 @@ endfunction
 function! s:Floatwin.show_tooltip(screenpos, contents) abort
   let l:contents = self.fix_contents(a:contents)
   call self.show(
-        \   lamp#view#floatwin#fix_position_as_tooltip(
-        \     a:screenpos,
-        \     self.get_width(l:contents),
-        \     self.get_height(l:contents)
-        \   ),
-        \   l:contents
-        \ )
+  \   lamp#view#floatwin#fix_position_as_tooltip(
+  \     a:screenpos,
+  \     self.get_width(l:contents),
+  \     self.get_height(l:contents)
+  \   ),
+  \   l:contents
+  \ )
 endfunction
 
 "
@@ -122,6 +212,9 @@ endfunction
 " hide
 "
 function! s:Floatwin.hide() abort
+  if win_getid() == self.winid()
+    return
+  endif
   call lamp#view#floatwin#{s:namespace}#hide(self)
 endfunction
 
@@ -144,6 +237,20 @@ endfunction
 "
 function! s:Floatwin.winid() abort
   return lamp#view#floatwin#{s:namespace}#winid(self)
+endfunction
+
+"
+" get_priority
+"
+function! s:Floatwin.get_priority() abort
+  return self.priority
+endfunction
+
+"
+" is_keep
+"
+function! s:Floatwin.is_keep() abort
+  return self.keep
 endfunction
 
 "
