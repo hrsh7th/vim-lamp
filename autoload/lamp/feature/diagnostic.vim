@@ -62,29 +62,27 @@ endfunction
 " on_cursor_moved
 "
 function! s:on_cursor_moved() abort
+  call lamp#view#floatwin#hide('diagnostic')
+
   if mode()[0] !=# 'n'
-    call lamp#view#floatwin#hide('diagnostic')
     return
   endif
 
   let l:signs = get(sign_getplaced(bufnr('%'), { 'group': '*', 'lnum': line('.') }), 0, { 'signs': [] }).signs
   let l:signs = filter(copy(l:signs), { i, sign -> stridx(sign.group, s:sign_ns) == 0 })
   if len(l:signs) == 0
-    call lamp#view#floatwin#hide('diagnostic')
     return
   endif
 
   let l:ctx = {}
   function! l:ctx.callback() abort
     if mode()[0] !=# 'n'
-      call lamp#view#floatwin#hide('diagnostic')
       return
     endif
 
     let l:signs = get(sign_getplaced(bufnr('%'), { 'group': '*', 'lnum': line('.') }), 0, { 'signs': [] }).signs
     let l:signs = filter(copy(l:signs), { i, sign -> stridx(sign.group, s:sign_ns) == 0 })
     if len(l:signs) == 0
-      call lamp#view#floatwin#hide('diagnostic')
       return
     endif
 

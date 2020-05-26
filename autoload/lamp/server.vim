@@ -331,8 +331,6 @@ function! s:Server.did_save_document(bufnr) abort
       let l:message.text = join(lamp#view#buffer#get_lines(a:bufnr), "\n")
     endif
     call self.notify('textDocument/didSave', l:message)
-  else
-    call self.force_sync_document(a:bufnr)
   endif
 endfunction
 

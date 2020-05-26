@@ -376,7 +376,7 @@ function! s:show_documentation(event, completed_item, completion_item) abort
   endif
 
   " documentation
-  if type(get(a:completion_item, 'documentation', v:null)) == type('')
+  if get(a:completion_item, 'documentation', v:null) isnot# v:null
     let l:contents += lamp#protocol#markup_content#normalize(a:completion_item.documentation)
   endif
 
