@@ -123,6 +123,11 @@ function! lamp#builtin#json_languageserver(...) abort
   call lamp#register('json-languageserver', lamp#merge({
   \   'command': ['json-languageserver', '--stdio'],
   \   'filetypes': ['json'],
+  \   'capabilities': {
+  \     'completionProvider': {
+  \       'triggerCharacters': ['[', '{', ','],
+  \     }
+  \   }
   \ }, get(a:000, 0, {})))
 endfunction
 
