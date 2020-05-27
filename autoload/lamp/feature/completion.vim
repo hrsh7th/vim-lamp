@@ -40,84 +40,146 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   let l:current_line = getline('.')
   let l:current_position = s:Position.cursor()
 
-  let l:completed_items = []
-
   let l:completion_items = []
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
-  for l:completion_item in l:completion_items
-    let l:has_insert_text = type(get(l:completion_item, 'insertText', v:null)) == type('')
-    " textEdit
-    if type(get(l:completion_item, 'textEdit', v:null)) == type({})
-      let l:word = trim(l:completion_item.label)
-      let l:offset = l:completion_item.textEdit.range.end.character > l:current_position.character
-      if l:offset > 0
-        let l:postfix = strcharpart(l:current_line, l:current_position.character, l:completion_item.textEdit.range.end.character - l:current_position.character)
-        if l:word =~# ('\V' . l:postfix . '\m$')
-          let l:word = l:word[0 : -strlen(l:postfix) - 1]
-        endif
-      endif
-      let l:abbr = l:word . (l:word !=# l:completion_item.textEdit.newText ? '~' : '')
 
-    " snippet
-    elseif l:has_insert_text && get(l:completion_item, 'insertTextFormat', 1) == 2
-      let l:word = trim(l:completion_item.label)
-      let l:abbr = l:word . (l:word !=# l:completion_item.insertText ? '~' : '')
+  if has('nvim')
+    return luaeval('lamp_feature_completion_convert(_A[1], _A[2], _A[3], _A[4], _A[5], _A[6])', [
+    \   l:params,
+    \   l:current_line,
+    \   l:current_position,
+    \   a:server_name,
+    \   a:complete_position,
+    \   l:completion_items
+    \ ])
+  else
+    return s:convert(
+    \   l:params,
+    \   l:current_line,
+    \   l:current_position,
+    \   a:server_name,
+    \   a:complete_position,
+    \   l:completion_items
+    \ )
+  endif
+endfunction
 
-    " normal
-    else
-      if l:has_insert_text
-        let l:word = l:completion_item.insertText
-      else
-        let l:word = l:completion_item.label
-      endif
-      let l:word = trim(l:word)
-      let l:abbr = l:completion_item.label
-    endif
+"
+" convert
+"
+function! s:convert(params, current_line, current_position, server_name, complete_position, completion_items) abort
+  let l:kind_map = lamp#protocol#completion#get_kind_map()
+
+  let l:completed_items = []
+  for l:completion_item in a:completion_items
+    let l:word = trim(l:completion_item.label)
+    let l:abbr = l:word
+
+    if type(get(l:completion_item, 'textEdit', v:null)) == type({}) && l:word !=# l:completion_item.textEdit.newText
+      let l:abbr = l:word . '~'
+    elseif type(get(completion_item, 'insertText', v:null)) == type('') && l:word !=# l:completion_item.insertText
+      let l:abbr = l:word . '~'
+    end
 
     " create user_data
     let l:user_data_key = '{"lamp/key":"' . s:managed_user_data_key . '"}'
     let s:managed_user_data_map[l:user_data_key] = {
-          \   'server_name': a:server_name,
-          \   'completion_item': l:completion_item,
-          \   'complete_position': a:complete_position,
-          \ }
+    \   'server_name': a:server_name,
+    \   'completion_item': l:completion_item,
+    \   'complete_position': a:complete_position,
+    \ }
     let s:managed_user_data_key += 1
 
     " create item
+    let l:kind = get(l:kind_map, get(l:completion_item, 'kind', -1), '')
+    if type(get(l:completion_item, 'detail', v:null)) == type('')
+      let l:kind = matchstr(trim(l:completion_item.detail), "^[^\n]\\+")
+    endif
     call add(l:completed_items, {
-          \   'word': l:word,
-          \   'abbr': l:abbr,
-          \   'menu': l:params.menu,
-          \   'dup': l:params.dup,
-          \   'kind': join([
-          \     lamp#protocol#completion#get_kind_name(get(l:completion_item, 'kind', 0)),
-          \     get(split(trim(get(l:completion_item, 'detail', '')), "\n"), 0, '')
-          \   ], ' '),
-          \   'user_data': l:user_data_key,
-          \   '_filter_text': get(l:completion_item, 'filterText', l:word),
-          \   '_sort_text': get(l:completion_item, 'sortText', l:word)
-          \ })
+    \   'word': l:word,
+    \   'abbr': l:abbr,
+    \   'menu': a:params.menu,
+    \   'dup': a:params.dup,
+    \   'kind': l:kind,
+    \   'user_data': l:user_data_key,
+    \   '_filter_text': get(l:completion_item, 'filterText', l:word),
+    \   '_sort_text': get(l:completion_item, 'sortText', l:word)
+    \ })
   endfor
-
   return l:completed_items
 endfunction
+
+"
+" lamp_feature_completion_convert
+"
+if has('nvim')
+lua << EOF
+  function lamp_feature_completion_convert(params, current_line, current_position, server_name, complete_position, completion_items)
+    local kind_map = vim.call('lamp#protocol#completion#get_kind_map')
+
+    local complete_items = {}
+    for _, completion_item in pairs(completion_items) do
+      local word = string.gsub(completion_item.label, "^%s*(.-)%s*$", "%1")
+      local abbr = word
+
+      if completion_item.textEdit ~= nil and word ~= completion_item.textEdit.newText then
+        abbr = word .. '~'
+      elseif completion_item.insertText ~= nil and word ~= completion_item.insertText then
+        abbr = word .. '~'
+      end
+
+      local kind = kind_map[completion_item.kind] or ''
+      if type(completion_item.detail) == 'string' then
+        local match = string.match(string.gsub(completion_item.detail, "^%s*(.-)%s*$", "%1"), '^[^\n]+')
+        if match ~= nil then
+          kind = match
+        end
+      end
+
+      table.insert(complete_items, {
+        word = word;
+        abbr = abbr;
+        menu = params.menu;
+        dup = params.dup;
+        kind = kind;
+        user_data = {
+          lamp = {
+            server_name = server_name;
+            completion_item = completion_item;
+            complete_position = complete_position;
+          };
+        };
+      })
+    end
+    return complete_items
+  end
+EOF
+endif
 
 "
 " get_managed_user_data
 "
 function! s:get_managed_user_data(completed_item) abort
-  let l:user_data_string = get(a:completed_item, 'user_data')
+  let l:user_data = get(a:completed_item, 'user_data', v:null)
+  if type(l:user_data) is# v:null
+    return {}
+  endif
+
+  " dict.
+  if type(l:user_data) == type({}) && has_key(l:user_data, 'lamp')
+    return l:user_data.lamp
+  endif
 
   " just key.
-  if has_key(s:managed_user_data_map, l:user_data_string)
-    return s:managed_user_data_map[l:user_data_string]
+  if has_key(s:managed_user_data_map, l:user_data)
+    return s:managed_user_data_map[l:user_data]
   endif
 
   " modified json string.
-  if stridx(l:user_data_string, '"lamp/key"') != -1
+  if stridx(l:user_data, '"lamp/key"') != -1
     try
-      let l:user_data = json_decode(l:user_data_string)
+      let l:user_data = json_decode(l:user_data)
       if has_key(l:user_data, 'lamp/key')
         let l:key = '{"lamp/key":"' . l:user_data['lamp/key'] . '"}'
         if has_key(s:managed_user_data_map, l:key)
@@ -305,16 +367,19 @@ endfunction
 " get_expandable_state
 "
 function! s:get_expandable_state(completed_item, completion_item) abort
-  if type(get(a:completion_item, 'textEdit', v:null)) == type({}) && a:completed_item.word !=# a:completion_item.textEdit.newText
+  if type(get(a:completion_item, 'textEdit', v:null)) == type({})
+    let l:expandable = v:false
+    let l:expandable = l:expandable || a:completed_item.word !=# a:completion_item.textEdit.newText
+    let l:expandable = l:expandable || lamp#protocol#range#has_length(a:completion_item.textEdit.range)
     return {
-          \   'text': a:completion_item.textEdit.newText
-          \ }
+    \   'text': a:completion_item.textEdit.newText
+    \ }
   endif
 
   if get(a:completion_item, 'insertTextFormat', 1) == 2 && type(get(a:completion_item, 'insertText', v:null)) == type('') && a:completed_item.word !=# a:completion_item.insertText
     return {
-          \   'text': a:completion_item.insertText
-          \ }
+    \   'text': a:completion_item.insertText
+    \ }
   endif
   return {}
 endfunction
