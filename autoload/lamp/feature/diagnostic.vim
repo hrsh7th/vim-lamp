@@ -95,7 +95,7 @@ function! s:on_cursor_moved() abort
       let l:ds = get(l:ds, 'applied_diagnostics', [])
       let l:ds = filter(copy(l:ds), { _, diagnostic ->
       \   lamp#protocol#position#in_range(l:position, diagnostic.range) || (
-      \     lamp#protocol#range#in_line(diagnostic.range) && !lamp#protocol#range#has_length(diagnostic.range)
+      \     lamp#protocol#range#in_line(diagnostic.range) && match(lamp#protocol#range#get_text(bufnr('%'), diagnostic.range), '[^[:blank:]]') == -1
       \   )
       \ })
       let l:diagnostics += l:ds

@@ -122,3 +122,16 @@ function! lamp#protocol#range#has_length(range) abort
         \ )
 endfunction
 
+"
+" lamp#protocol#range#get_text
+"
+function! lamp#protocol#range#get_text(bufnr, range) abort
+  let l:lines = []
+  for l:line in range(a:range.start.line, a:range.end.line)
+    let l:lines += getbufline(a:bufnr, l:line + 1)
+  endfor
+  let l:lines[-1] = strcharpart(l:lines[-1], 0, a:range.end.character)
+  let l:lines[0] = strcharpart(l:lines[0], a:range.start.character, strchars(l:lines[0]))
+  return join(l:lines, "\n")
+endfunction
+

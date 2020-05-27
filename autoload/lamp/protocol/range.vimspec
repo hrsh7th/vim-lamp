@@ -1,0 +1,67 @@
+let s:Promise = vital#lamp#import('Async.Promise')
+let s:expect = themis#helper('expect')
+
+Describe lamp#protocol#range
+
+  After each
+    call lamp#view#buffer#reset()
+  End
+
+  It Should return text of range 1
+    call setline(1, [
+    \   'abcdefg',
+    \   'hijklmn',
+    \   'opqrstu'
+    \ ])
+    call s:expect(lamp#protocol#range#get_text(bufnr('%'), {
+    \   'start': {
+    \     'line': 0,
+    \     'character': 0,
+    \   },
+    \   'end': {
+    \     'line': 0,
+    \     'character': 0,
+    \   },
+    \ })).to_equal('')
+  End
+
+  It Should return text of range 2
+    call setline(1, [
+    \   'abcdefg',
+    \   'hijklmn',
+    \   'opqrstu'
+    \ ])
+    call s:expect(lamp#protocol#range#get_text(bufnr('%'), {
+    \   'start': {
+    \     'line': 0,
+    \     'character': 0,
+    \   },
+    \   'end': {
+    \     'line': 0,
+    \     'character': 1,
+    \   },
+    \ })).to_equal('a')
+  End
+
+  It Should return text of range 3
+    call setline(1, [
+    \   'abcdefg',
+    \   'hijklmn',
+    \   'opqrstu'
+    \ ])
+    call s:expect(lamp#protocol#range#get_text(bufnr('%'), {
+    \   'start': {
+    \     'line': 0,
+    \     'character': 0,
+    \   },
+    \   'end': {
+    \     'line': 1,
+    \     'character': 0,
+    \   },
+    \ })).to_equal("abcdefg\n")
+  End
+
+End
+
+
+
