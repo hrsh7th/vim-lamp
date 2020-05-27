@@ -112,9 +112,9 @@ function! s:initialize() abort
   \   'guifg': 'LightGray'
   \ }]
     if has('nvim')
-      execute printf('highlight! default Lamp%s gui=underline cterm=underline', l:definition.kind)
+      execute printf('highlight! default Lamp%s gui=undercurl cterm=underline', l:definition.kind)
     else
-      execute printf('highlight! default Lamp%s gui=underline cterm=underline guifg=%s', l:definition.kind, l:definition.guifg)
+      execute printf('highlight! default Lamp%s gui=undercurl cterm=underline guifg=%s', l:definition.kind, l:definition.guifg)
     endif
   endfor
 
