@@ -68,21 +68,17 @@ function! s:compute(old, new) abort
     \ }
   endif
 
-  let l:first_line = 0
-  while l:first_line < l:min_len - 1
+  for l:first_line in range(0, l:min_len - 1)
     if l:old[l:first_line] !=# l:new[l:first_line]
       break
     endif
-    let l:first_line += 1
-  endwhile
+  endfor
 
-  let l:last_line = -1
-  while l:last_line > -l:min_len + l:first_line
+  for l:last_line in range(-1, -l:min_len + l:first_line, -1)
     if l:old[l:last_line] !=# l:new[l:last_line]
       break
     endif
-    let l:last_line -= 1
-  endwhile
+  endfor
 
   let l:old_lines = l:old[l:first_line : l:last_line]
   let l:new_lines = l:new[l:first_line : l:last_line]
@@ -92,21 +88,17 @@ function! s:compute(old, new) abort
   let l:new_text_len = strchars(l:new_text)
   let l:min_text_len = min([l:old_text_len, l:new_text_len])
 
-  let l:first_char = 0
-  while l:first_char < l:min_text_len - 1
+  for l:first_char in range(0, l:min_text_len - 1)
     if strgetchar(l:old_text, l:first_char) != strgetchar(l:new_text, l:first_char)
       break
     endif
-    let l:first_char += 1
-  endwhile
+  endfor
 
-  let l:last_char = 0
-  while l:last_char > -l:min_text_len + l:first_char
+  for l:last_char in range(0, -l:min_text_len + l:first_char, -1)
     if strgetchar(l:old_text, l:old_text_len + l:last_char - 1) != strgetchar(l:new_text, l:new_text_len + l:last_char - 1)
       break
     endif
-    let l:last_char -= 1
-  endwhile
+  endfor
 
   return {
   \   'range': {

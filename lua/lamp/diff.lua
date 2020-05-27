@@ -6,7 +6,7 @@ local function attach(id, bufnr)
   end
   attached[id][bufnr] = true
 
-  result = vim.api.nvim_buf_attach(bufnr, false, {
+  vim.api.nvim_buf_attach(bufnr, false, {
     on_lines=function(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
       if attached[id] == nil then
         return true

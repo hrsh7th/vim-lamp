@@ -45,7 +45,6 @@ function! s:Connection.new(args) abort
   \   }),
   \   'emitter': s:Emitter.new(),
   \   'buffer':  '',
-  \   'request_id': 0,
   \   'request_map': {},
   \ })
 endfunction
