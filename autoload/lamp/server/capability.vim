@@ -96,7 +96,7 @@ function! lamp#server#capability#get_default_capability() abort
         \         }
         \       },
         \     },
-        \     'hoverSupport': {
+        \     'hover': {
         \       'dynamicRegistration': v:false,
         \       'contentFormat': ['plaintext', 'markdown'],
         \     },

@@ -294,6 +294,8 @@ function! s:on_complete_done_after() abort
 
   call s:clear_managed_user_data()
 
+  call lamp#log('[COMPLETE_DONE]', s:context)
+
   " completionItem/resolve
   try
     let l:completion_item = lamp#sync(s:resolve_completion_item(l:user_data))

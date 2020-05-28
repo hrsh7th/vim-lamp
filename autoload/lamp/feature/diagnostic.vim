@@ -5,21 +5,6 @@ let s:highlight_ns = 'lamp#feature#diagnostic:highlight'
 let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 
 "
-" {
-"   state: {
-"     [bufname]: {
-"       [lnum]: {
-"         [server_name]: Diagnostic
-"       }
-"     }
-"   }
-" }
-"
-let s:context = {
-\   'state': {}
-\ }
-
-"
 " init
 "
 function! lamp#feature#diagnostic#init() abort
@@ -213,26 +198,9 @@ function! s:apply(server_name, diagnostics) abort
   call lamp#view#highlight#remove(l:highlight_ns, l:bufnr)
   call lamp#view#virtual_text#remove(l:virtual_text_ns, l:bufnr)
 
-  " initialize buffer state
-  let s:context.state[l:bufnr] = get(s:context.state, l:bufnr, {})
-
   " update.
   for l:diagnostic in a:diagnostics.diagnostics
     let l:line = l:diagnostic.range.start.line
-
-    " initialize line state
-    let s:context.state[l:bufnr][l:line] = get(s:context.state[l:bufnr], l:line, {})
-
-    " skip if already applied for l:line
-    if has_key(s:context.state[l:bufnr][l:line], a:server_name)
-      unlet s:context.state[l:bufnr][l:line][a:server_name]
-    endif
-    if len(keys(s:context.state[l:bufnr][l:line])) != 0
-      continue
-    endif
-
-    " add diagnostic
-    let s:context.state[l:bufnr][l:line][a:server_name] = l:diagnostic
     let l:severity = get(l:diagnostic, 'severity', 1)
     if l:severity == 1
       call lamp#view#sign#error(l:sign_ns, l:bufnr, l:line + 1)
