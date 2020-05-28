@@ -70,7 +70,7 @@ function! lamp#server#capability#get_default_capability() abort
         \       'completionItem': {
         \         'snippetSupport': !empty(lamp#config('feature.completion.snippet.expand')) ? v:true : v:false,
         \         'commitCharactersSupport': v:true,
-        \         'documentationFormat': ['plaintext', 'markdown'],
+        \         'documentationFormat': ['markdown'],
         \         'deprecatedSupport': v:true,
         \         'preselectSupport': v:true,
         \       },
@@ -90,7 +90,7 @@ function! lamp#server#capability#get_default_capability() abort
         \     'signatureHelp': {
         \       'dynamicRegistration': v:false,
         \       'signatureInformation': {
-        \         'documentationFormat': ['plaintext', 'markdown'],
+        \         'documentationFormat': ['markdown'],
         \         'parameterInformation': {
         \           'labelOffsetSupport': v:true
         \         }
@@ -98,7 +98,7 @@ function! lamp#server#capability#get_default_capability() abort
         \     },
         \     'hover': {
         \       'dynamicRegistration': v:false,
-        \       'contentFormat': ['plaintext', 'markdown'],
+        \       'contentFormat': ['markdown'],
         \     },
         \     'documentSymbol': {
         \       'dynamicRegistration': v:false,
