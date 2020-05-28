@@ -150,6 +150,8 @@ lua << EOF
             complete_position = complete_position;
           };
         };
+        _filter_text = completion_item.filterText or word;
+        _sort_text = completion_item.sortText or word;
       })
     end
     return complete_items

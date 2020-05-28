@@ -36,7 +36,7 @@ function! lamp#feature#rename#do() abort
 
   let l:p = s:Promise.resolve()
   let l:p = l:p.then({ -> s:request_prepare(l:bufnr, l:server) })
-  let l:p = l:p.then({ target -> s:request_rename(l:bufnr, l:server, target) })
+  let l:p = l:p.then({ prepare -> s:request_rename(l:bufnr, l:server, prepare) })
   let l:p = l:p.then({ edits -> s:edits(edits) })
   let l:p = l:p.catch(lamp#rescue())
 endfunction
@@ -47,26 +47,26 @@ endfunction
 function! s:request_prepare(bufnr, server) abort
   if a:server.supports('capabilities.renameProvider.prepareProvider')
     return a:server.request('textDocument/prepareRename', {
-          \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
-          \   'position': s:Position.cursor()
-          \ }, {
-          \   'cancellation_token': s:cancellation_token,
-          \ })
+    \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
+    \   'position': s:Position.cursor()
+    \ }, {
+    \   'cancellation_token': s:cancellation_token,
+    \ })
   endif
 
   return {
-        \   'range': lamp#protocol#range#current_word(),
-        \   'placeholder': expand('<cword>')
-        \ }
+  \   'range': lamp#protocol#range#current_word()
+  \ }
 endfunction
 
 "
 " s:request_rename
 "
-function! s:request_rename(bufnr, server, target) abort
+function! s:request_rename(bufnr, server, prepare) abort
   if !has_key(s:test, 'new_name')
-    let l:new_name = input('New name: ', get(a:target, 'placeholder', ''))
-    if l:new_name ==# '' || l:new_name ==# get(a:target, 'placeholder', '')
+    let l:placeholder = s:extract_placeholder(a:bufnr, a:prepare)
+    let l:new_name = input('New name: ', l:placeholder)
+    if l:new_name ==# '' || l:new_name ==# l:placeholder
       return
     endif
   else
@@ -120,3 +120,25 @@ function! s:edits(workspace_edit) abort
         \ })
 endfunction
 
+"
+" extract_placeholder
+"
+function! s:extract_placeholder(bufnr, prepare) abort
+  if type(a:prepare) == type({})
+    " has placeholder.
+    if !empty(get(a:prepare, 'placholder', v:null))
+      return a:prepare.placeholder
+    endif
+
+    " has range.
+    if has_key(a:prepare, 'range')
+      return lamp#protocol#range#get_text(a:bufnr, a:prepare.range)
+    endif
+
+    " range.
+    if has_key(a:prepare, 'start')
+      return lamp#protocol#range#get_text(a:bufnr, a:prepare)
+    endif
+  endif
+  return ''
+endfunction

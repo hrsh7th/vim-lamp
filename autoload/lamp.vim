@@ -366,6 +366,7 @@ function! lamp#complete(find_start, base) abort
         call add(l:returns.words, l:completed_item)
       endfor
     catch /.*/
+      call lamp#log('[ERROR]', v:exception, v:throwpoint)
       echomsg 'lamp#complete: request timeout.'
     endtry
   endfor
