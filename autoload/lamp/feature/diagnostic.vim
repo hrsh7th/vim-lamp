@@ -21,6 +21,50 @@ function! lamp#feature#diagnostic#init() abort
 endfunction
 
 "
+" lamp#feature#diagnostic#goto_next
+"
+function! lamp#feature#diagnostic#goto_next() abort
+  call s:goto({ cursor_position, start_position ->
+  \   lamp#protocol#position#after(cursor_position, start_position) && !lamp#protocol#position#same(cursor_position, start_position)
+  \ })
+endfunction
+
+"
+" lamp#feature#diagnostic#goto_prev
+"
+function! lamp#feature#diagnostic#goto_prev() abort
+  call s:goto({ cursor_position, start_position ->
+  \   lamp#protocol#position#after(start_position, cursor_position) && !lamp#protocol#position#same(cursor_position, start_position)
+  \ })
+endfunction
+
+"
+" s:goto
+"
+function! s:goto(filter) abort
+  let l:cursor_position = s:Position.cursor()
+
+  let l:diagnostics = []
+  for l:server in lamp#server#registry#find_by_filetype(&filetype)
+    let l:d = get(l:server.diagnostics, lamp#protocol#document#encode_uri(bufname('%')), {})
+    for l:diagnostic in copy(get(l:d, 'applied_diagnostics', []))
+      if a:filter(l:cursor_position, l:diagnostic.range.start)
+        call add(l:diagnostics, l:diagnostic)
+      endif
+    endfor
+  endfor
+
+  if empty(l:diagnostics)
+    return lamp#view#notice#add({ 'lines': ['`Diagnostics`: No diagnostics found.'] })
+  endif
+
+  let l:diagnostics = sort(l:diagnostics, { d1, d2 ->
+  \   lamp#protocol#range#compare_nearest(d1.range, d2.range, l:cursor_position)
+  \ })
+  call cursor(s:Position.lsp_to_vim('%', l:diagnostics[0].range.start))
+endfunction
+
+"
 " on_buf_write_pre
 "
 function! s:on_buf_write_pre() abort

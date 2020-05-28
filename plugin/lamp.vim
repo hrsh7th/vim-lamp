@@ -31,6 +31,8 @@ command! LampReferences                   call lamp#feature#references#do(v:fals
 command! LampReferencesIncludeDeclaration call lamp#feature#references#do(v:true)
 command! LampSelectionRangeExpand         call lamp#feature#selection_range#do(+1)
 command! LampSelectionRangeCollapse       call lamp#feature#selection_range#do(-1)
+command! LampDiagnosticsNext              call lamp#feature#diagnostic#goto_next()
+command! LampDiagnosticsPrev              call lamp#feature#diagnostic#goto_prev()
 command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
       \  LampCodeAction                   call lamp#feature#code_action#do({ 'range': <range> != 0, 'query': '<args>', 'sync': v:false })
 command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete

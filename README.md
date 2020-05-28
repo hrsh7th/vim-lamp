@@ -107,6 +107,8 @@ function! s:on_text_document_did_open() abort
   nnoremap <buffer> <C-p>        :<C-u>LampSelectionRangeCollapse<CR>
   vnoremap <buffer> <C-n>        :<C-u>LampSelectionRangeExpand<CR>
   vnoremap <buffer> <C-p>        :<C-u>LampSelectionRangeCollapse<CR>
+  nnoremap <buffer> <C-k>        :<C-u>LampDiagnosticsPrev<CR>
+  nnoremap <buffer> <C-j>        :<C-u>LampDiagnosticsNext<CR>
 endfunction
 ```
 
