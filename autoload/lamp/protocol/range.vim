@@ -40,28 +40,33 @@ function! lamp#protocol#range#compare_nearest(range1, range2, position) abort
     return 1
   endif
 
-  let l:end_line_diff1 = abs(a:range1.end.line - a:position.line)
-  let l:end_line_diff2 = abs(a:range2.end.line - a:position.line)
-  if l:end_line_diff1 < l:end_line_diff2
-    return -1
-  elseif l:end_line_diff1 > l:end_line_diff2
-    return 1
-  endif
+  let l:cursor_line_diff = a:range1.start.line - a:position.line
+  if l:cursor_line_diff == 0
+    let l:start_char_diff1 = abs(a:range1.start.character - a:position.character)
+    let l:start_char_diff2 = abs(a:range2.start.character - a:position.character)
+    if l:start_char_diff1 < l:start_char_diff2
+      return -1
+    elseif l:start_char_diff1 > l:start_char_diff2
+      return 1
+    endif
 
-  let l:start_char_diff1 = abs(a:range1.start.character - a:position.character)
-  let l:start_char_diff2 = abs(a:range2.start.character - a:position.character)
-  if l:start_char_diff1 < l:start_char_diff2
-    return -1
-  elseif l:start_char_diff1 > l:start_char_diff2
-    return 1
-  endif
+    let l:end_char_diff1 = abs(a:range1.end.character - a:position.character)
+    let l:end_char_diff2 = abs(a:range2.end.character - a:position.character)
+    if l:end_char_diff1 < l:end_char_diff2
+      return -1
+    elseif l:end_char_diff1 > l:end_char_diff2
+      return 1
+    endif
+  else
+    let l:start_char_diff = a:range2.start.character - a:range1.start.character
+    if l:start_char_diff != 0
+      return l:start_char_diff * (l:cursor_line_diff > 0 ? -1 : 1)
+    endif
 
-  let l:end_char_diff1 = abs(a:range1.end.character - a:position.character)
-  let l:end_char_diff2 = abs(a:range2.end.character - a:position.character)
-  if l:end_char_diff1 < l:end_char_diff2
-    return -1
-  elseif l:end_char_diff1 > l:end_char_diff2
-    return 1
+    let l:end_char_diff = a:range2.end.character - a:range1.end.character
+    if l:end_char_diff != 0
+      return l:end_char_diff * (l:cursor_line_diff > 0 ? -1 : 1)
+    endif
   endif
 
   return 0
