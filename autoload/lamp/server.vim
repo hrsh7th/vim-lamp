@@ -274,7 +274,7 @@ function! s:Server.close_document(bufnr) abort
   let l:path = lamp#protocol#document#decode_uri(l:document.uri)
 
   " buffer is not unloaded.
-  if bufexists(l:path)
+  if bufloaded(l:path)
     return
   endif
 
