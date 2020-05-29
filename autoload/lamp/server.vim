@@ -285,7 +285,12 @@ function! s:Server.close_document(bufnr) abort
   endif
 
   " remove managed document.
-  call remove(self.documents, l:document.uri)
+  if has_key(self.documents, l:document.uri)
+    call remove(self.documents, l:document.uri)
+  endif
+  if has_key(self.diagnostics, l:document.uri)
+    call remove(self.diagnostics, l:document.uri)
+  endif
   call self.diff.detach(a:bufnr)
 
   call self.channel.notify('textDocument/didClose', {
