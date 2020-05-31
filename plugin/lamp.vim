@@ -56,8 +56,8 @@ augroup END
 "
 function! s:on_text_document_did_open() abort
   let l:bufnr = bufnr('%')
-  let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
 
+  let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
   if !empty(l:servers)
     call s:initialize_buffer()
   endif
@@ -65,33 +65,26 @@ function! s:on_text_document_did_open() abort
   let l:ctx = {}
   function! l:ctx.callback(bufnr, servers) abort
     call map(copy(a:servers), { _, server ->
-    \   server.initialize(a:bufnr).then({ -> server.ensure_document(a:bufnr) })
+    \   server.initialize(a:bufnr).then({ -> server.open_document(a:bufnr) })
     \ })
   endfunction
-  call lamp#debounce(
-        \   's:on_text_document_did_open:' . l:bufnr,
-        \   { -> l:ctx.callback(l:bufnr, l:servers) },
-        \   100
-        \ )
+  call lamp#debounce('s:on_text_document_did_open:' . l:bufnr, { -> l:ctx.callback(l:bufnr, l:servers) }, 20)
 endfunction
 
 "
 " on_text_document_did_change
 "
 function! s:on_text_document_did_change() abort
+  let l:bufnr = bufnr('%')
+
   let l:ctx = {}
   function! l:ctx.callback(bufnr) abort
     for l:server in lamp#server#registry#find_by_filetype(getbufvar(a:bufnr, '&filetype'))
-      call l:server.ensure_document(a:bufnr)
+      call l:server.sync_document(a:bufnr)
     endfor
   endfunction
 
-  let l:bufnr = bufnr('%')
-  call lamp#debounce(
-        \   's:on_text_document_did_change:' . l:bufnr,
-        \   { -> l:ctx.callback(l:bufnr) },
-        \   100
-        \ )
+  call lamp#debounce('s:on_text_document_did_change:' . l:bufnr, { -> l:ctx.callback(l:bufnr) }, 200)
 endfunction
 
 "
@@ -118,24 +111,21 @@ endfunction
 " on_text_document_did_close
 "
 function! s:on_text_document_did_close() abort
+  let l:bufnr = str2nr(expand('<abuf>'))
+
   let l:ctx = {}
   function! l:ctx.callback(bufnr) abort
     if !lamp#state('exiting')
       for l:server in lamp#server#registry#all()
         let l:bufnrs = map(values(l:server.documents), { k, v -> v.bufnr })
         if index(l:bufnrs, a:bufnr) >= 0
-          call l:server.ensure_document(a:bufnr)
+          call l:server.close_document(a:bufnr)
         endif
       endfor
     endif
   endfunction
 
-  let l:bufnr = str2nr(expand('<abuf>'))
-  call lamp#debounce(
-        \   's:on_text_document_did_close:' . l:bufnr,
-        \   { -> l:ctx.callback(l:bufnr) },
-        \   100
-        \ )
+  call lamp#debounce('s:on_text_document_did_close:' . l:bufnr, { -> l:ctx.callback(l:bufnr) }, 20)
 endfunction
 
 "

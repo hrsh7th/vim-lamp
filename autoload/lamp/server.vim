@@ -193,17 +193,16 @@ endfunction
 "
 function! s:Server.ensure_document(bufnr) abort
   return self.initialize(a:bufnr).then({ -> [
-  \   self.ensure_workspace(a:bufnr),
+  \   self.detect_workspace(a:bufnr),
   \   self.open_document(a:bufnr),
-  \   self.close_document(a:bufnr),
-  \   self.change_document(a:bufnr)
+  \   self.sync_document(a:bufnr),
   \ ] })
 endfunction
 
 "
-" ensure_workspace.
+" detect_workspace.
 "
-function! s:Server.ensure_workspace(bufnr) abort
+function! s:Server.detect_workspace(bufnr) abort
   call lamp#feature#workspace#update(self, a:bufnr)
 endfunction
 
@@ -225,9 +224,9 @@ function! s:Server.open_document(bufnr) abort
 endfunction
 
 "
-" change_document.
+" sync_document.
 "
-function! s:Server.change_document(bufnr) abort
+function! s:Server.sync_document(bufnr) abort
   let l:uri = lamp#protocol#document#encode_uri(bufname(a:bufnr))
   if !has_key(self.documents, l:uri)
     return
@@ -272,17 +271,6 @@ function! s:Server.close_document(bufnr) abort
   endif
 
   let l:path = lamp#protocol#document#decode_uri(l:document.uri)
-
-  " buffer is not unloaded.
-  if bufloaded(l:path)
-    return
-  endif
-
-  " ignore if buffer is not related to file.
-  " if remove this, occurs infinite loop because bufloaded always return -1
-  if !filereadable(l:path)
-    return
-  endif
 
   " remove managed document.
   if has_key(self.documents, l:document.uri)
@@ -337,21 +325,6 @@ function! s:Server.did_save_document(bufnr) abort
     endif
     call self.notify('textDocument/didSave', l:message)
   endif
-endfunction
-
-"
-" force_sync_document
-"
-function! s:Server.force_sync_document(bufnr) abort
-  let l:uri = lamp#protocol#document#encode_uri(bufname(a:bufnr))
-  if !has_key(self.documents, l:uri)
-    return
-  endif
-
-  call self.notify('textDocument/didChange', {
-  \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-  \   'contentChanges': []
-  \ })
 endfunction
 
 "

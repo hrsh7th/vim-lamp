@@ -1,3 +1,5 @@
+let s:exiting = v:false
+
 "
 " lamp#server#channel#job#import
 "
@@ -38,6 +40,10 @@ endfunction
 " flush
 "
 function! s:Job.flush(...) abort
+  if s:exiting
+    return
+  endif
+
   let self.timer_id = -1
   if strlen(self.buffer) == 0 || !self.is_running()
     return
@@ -175,4 +181,9 @@ function! s:vim(command, option) abort
   \ 'is_running': function('s:is_running', [l:job], {})
   \ }
 endfunction
+
+augroup lamp#server#channel#job
+  autocmd!
+  autocmd VimLeave * let s:exiting = v:true
+augroup END
 
