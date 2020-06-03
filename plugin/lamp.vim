@@ -134,13 +134,11 @@ endfunction
 function! s:on_vim_leave_pre() abort
   call lamp#state('exiting', v:true)
 
+  let l:p = s:Promise.resolve()
   for l:server in lamp#server#registry#all()
-    try
-      call lamp#sync(l:server.exit(), 200)
-    catch /.*/
-      call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
-    endtry
+    let l:p = l:p.then(function({ server -> server.exit() }, [l:server]))
   endfor
+  call lamp#sync(l:p, 200)
   call lamp#log('[FINISHED]')
 endfunction
 

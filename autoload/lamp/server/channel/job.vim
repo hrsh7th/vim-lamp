@@ -1,5 +1,4 @@
 let s:exiting = v:false
-
 "
 " lamp#server#channel#job#import
 "
@@ -40,23 +39,25 @@ endfunction
 " flush
 "
 function! s:Job.flush(...) abort
-  if s:exiting
-    return
-  endif
-
   let self.timer_id = -1
   if strlen(self.buffer) == 0 || !self.is_running()
     return
   endif
 
-  if strlen(self.buffer) < 1024
-    call self.job.send(self.buffer)
-    let self.buffer = ''
-  else
-    call self.job.send(strpart(self.buffer, 0, 1024))
-    let self.buffer = strpart(self.buffer, 1024, strlen(self.buffer) - 1024)
-    let self.timer_id = timer_start(0, function(self.flush, [], self))
-  endif
+  try
+    if strlen(self.buffer) < 1024
+      call self.job.send(self.buffer)
+      let self.buffer = ''
+    else
+      call self.job.send(strpart(self.buffer, 0, 1024))
+      let self.buffer = strpart(self.buffer, 1024, strlen(self.buffer) - 1024)
+      let self.timer_id = timer_start(0, function(self.flush, [], self))
+    endif
+  catch /.*/
+    if !s:exiting
+      call lamp#log('[ERROR]', v:exception, v:throwpoint)
+    endif
+  endtry
 endfunction
 
 "

@@ -40,6 +40,15 @@ function! s:Channel.start(on_notification, opts) abort
 endfunction
 
 "
+" flush
+"
+function! s:Channel.flush() abort
+  if !empty(self.job)
+    call self.job.flush()
+  endif
+endfunction
+
+"
 " stop
 "
 function! s:Channel.stop() abort

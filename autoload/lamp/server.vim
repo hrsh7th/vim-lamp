@@ -56,44 +56,28 @@ endfunction
 " stop
 "
 function! s:Server.stop() abort
+  let l:p = s:Promise.resolve()
   if self.state.started
     if !empty(self.state.initialized)
-      try
-        call lamp#sync(self.channel.request('shutdown', v:null), 200)
-      catch /.*/
-        call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
-      endtry
-      call self.channel.notify('exit')
-      doautocmd User lamp#server#exited
+      let l:p = l:p.then({ -> self.channel.request('shutdown', v:null) })
+      let l:p = l:p.then({ -> self.channel.notify('exit') })
+      let l:p = l:p.then({ -> execute('doautocmd User lamp#server#exited') })
     endif
-    " call lamp#sync({ -> !self.channel.is_running() }, 100) NOTE: This line is needed maybe but it makes bad experience.
-    call self.channel.stop()
-    let self.state.started = v:false
-    let self.state.initialized = v:null
+    let l:p = l:p.then({ -> self.channel.flush() })
+    let l:p = l:p.then({ -> self.channel.stop() })
+    let l:p = l:p.catch(lamp#rescue())
   endif
-  return s:Promise.resolve()
+  let self.state.initialized = v:null
+  let self.state.started = v:false
+  return s:Promise.race([l:p, s:Promise.new({ resolve -> timer_start(100, resolve) })])
 endfunction
 
 "
 " exit
 "
 function! s:Server.exit() abort
-  if self.state.started
-    if !empty(self.state.initialized)
-      try
-        call lamp#sync(self.channel.request('shutdown', v:null), 200)
-      catch /.*/
-        call lamp#log('[ERROR]', { 'exception': v:exception, 'throwpoint': v:throwpoint })
-      endtry
-      call self.channel.notify('exit')
-      doautocmd User lamp#server#exited
-    endif
-    " call lamp#sync({ -> !self.channel.is_running() }, 100) NOTE: This line is needed maybe but it makes bad experience.
-    call self.channel.stop()
-    let self.state.initialized = v:null
-    let self.state.exited = v:true
-  endif
-  return s:Promise.resolve()
+  let self.state.exited = v:true
+  return self.stop()
 endfunction
 
 "
