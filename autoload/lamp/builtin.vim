@@ -98,6 +98,11 @@ function! lamp#builtin#yaml_language_server(...) abort
   call lamp#register('yaml-language-server', lamp#merge({
   \   'command': ['yaml-language-server', '--stdio'],
   \   'filetypes': ['yaml', 'yaml.ansible'],
+  \   'capabilities': {
+  \     'completionProvider': {
+  \       'triggerCharacters': [':']
+  \     }
+  \   }
   \ }, get(a:000, 0, {})))
 endfunction
 
