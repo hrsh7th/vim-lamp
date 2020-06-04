@@ -76,8 +76,16 @@ function! s:convert(params, current_line, current_position, server_name, complet
     let l:word = trim(l:completion_item.label)
     let l:abbr = l:word
 
-    if type(get(l:completion_item, 'textEdit', v:null)) == type({}) && l:word !=# l:completion_item.textEdit.newText
-      let l:abbr = l:word . '~'
+    if type(get(l:completion_item, 'textEdit', v:null)) == type({})
+      if a:complete_position.character != l:completion_item.text_edit.range.end.character
+        let l:postfix = strcharpart(a:current_line, a:complete_position.character, l:completion_item.range.end.character - a:complete_position.character)
+        if l:word =~# '\V' . l:postfix . '\m$'
+          let l:word = strcharpart(l:word, 0, strchars(l:word) - strchars(l:postfix))
+        endif
+      endif
+      if l:word !=# l:completion_item.textEdit.newText
+        let l:abbr = l:word . '~'
+      endif
     elseif type(get(completion_item, 'insertText', v:null)) == type('') && l:word !=# l:completion_item.insertText
       let l:abbr = l:word . '~'
     end
@@ -110,52 +118,67 @@ function! s:convert(params, current_line, current_position, server_name, complet
   return l:completed_items
 endfunction
 
+function! s:fix_word_for_text_edit(word, text_edit, line, complete_position) abort
+endfunction
+
 "
 " lamp_feature_completion_convert
 "
 if has('nvim')
 lua << EOF
-  function lamp_feature_completion_convert(params, current_line, current_position, server_name, complete_position, completion_items)
-    local kind_map = vim.call('lamp#protocol#completion#get_kind_map')
+function lamp_feature_completion_convert(params, current_line, current_position, server_name, complete_position, completion_items)
+  local kind_map = vim.call('lamp#protocol#completion#get_kind_map')
 
-    local complete_items = {}
-    for _, completion_item in pairs(completion_items) do
-      local word = string.gsub(completion_item.label, "^%s*(.-)%s*$", "%1")
-      local abbr = word
+  local complete_items = {}
+  for _, completion_item in pairs(completion_items) do
+    local word = string.gsub(completion_item.label, "^%s*(.-)%s*$", "%1")
+    local abbr = word
 
-      if completion_item.textEdit ~= nil and word ~= completion_item.textEdit.newText then
-        abbr = word .. '~'
-      elseif completion_item.insertText ~= nil and word ~= completion_item.insertText then
-        abbr = word .. '~'
-      end
-
-      local kind = kind_map[completion_item.kind] or ''
-      if type(completion_item.detail) == 'string' then
-        local match = string.match(string.gsub(completion_item.detail, "^%s*(.-)%s*$", "%1"), '^[^\n]+')
-        if match ~= nil then
-          kind = match
+    if completion_item.textEdit ~= nil then
+      local complete_col = vim.str_byteindex(current_line, complete_position.character)
+      local text_edit_col = vim.str_byteindex(current_line, completion_item.textEdit.range['end'].character)
+      if complete_col ~= text_edit_col then
+        local postfix = string.sub(current_line, complete_col + 1, text_edit_col)
+        local word_len = #word
+        local postfix_len = #postfix
+        if postfix == string.sub(word, (word_len - postfix_len) + 1, word_len) then
+          word = string.sub(word, 1, word_len - postfix_len)
         end
       end
-
-      table.insert(complete_items, {
-        word = word;
-        abbr = abbr;
-        menu = params.menu;
-        dup = params.dup;
-        kind = kind;
-        user_data = {
-          lamp = {
-            server_name = server_name;
-            completion_item = completion_item;
-            complete_position = complete_position;
-          };
-        };
-        _filter_text = completion_item.filterText or word;
-        _sort_text = completion_item.sortText or word;
-      })
+      if word ~= completion_item.textEdit.newText then
+        abbr = word .. '~'
+      end
+    elseif completion_item.insertText ~= nil and word ~= completion_item.insertText then
+      abbr = word .. '~'
     end
-    return complete_items
+
+    local kind = kind_map[completion_item.kind] or ''
+    if type(completion_item.detail) == 'string' then
+      local match = string.match(string.gsub(completion_item.detail, "^%s*(.-)%s*$", "%1"), '^[^\n]+')
+      if match ~= nil then
+        kind = match
+      end
+    end
+
+    table.insert(complete_items, {
+    word = word;
+    abbr = abbr;
+    menu = params.menu;
+    dup = params.dup;
+    kind = kind;
+    user_data = {
+    lamp = {
+    server_name = server_name;
+    completion_item = completion_item;
+    complete_position = complete_position;
+    };
+    };
+    _filter_text = completion_item.filterText or word;
+    _sort_text = completion_item.sortText or word;
+    })
   end
+  return complete_items
+end
 EOF
 endif
 
@@ -241,15 +264,15 @@ function! s:on_complete_changed() abort
     endif
 
     call s:resolve_completion_item(self.user_data).then({ completion_item ->
-          \   s:show_documentation(self.event, self.completed_item, completion_item)
-          \ })
+    \   s:show_documentation(self.event, self.completed_item, completion_item)
+    \ })
   endfunction
 
   call lamp#debounce(
-        \   'lamp#feature#completion:show_documentation',
-        \   { -> l:ctx.callback() },
-        \   10
-        \ )
+  \   'lamp#feature#completion:show_documentation',
+  \   { -> l:ctx.callback() },
+  \   10
+  \ )
 endfunction
 
 "
@@ -309,12 +332,12 @@ function! s:on_complete_done_after() abort
   let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
   if !empty(l:expandable_state)
     undojoin | call s:clear_completed_string(
-          \   l:completed_item,
-          \   l:completion_item,
-          \   l:done_line,
-          \   l:done_position,
-          \   l:user_data.complete_position
-          \ )
+    \   l:completed_item,
+    \   l:completion_item,
+    \   l:done_line,
+    \   l:done_position,
+    \   l:user_data.complete_position
+    \ )
   endif
 
   " additionalTextEdits.
@@ -327,9 +350,9 @@ function! s:on_complete_done_after() abort
     let l:server = lamp#server#registry#get_by_name(l:user_data.server_name)
     if !empty(l:server)
       let l:p = l:server.request('workspace/executeCommand', {
-            \   'command': l:completion_item.command.command,
-            \   'arguments': get(l:completion_item.command, 'arguments', [])
-            \ }).catch(lamp#rescue())
+      \   'command': l:completion_item.command.command,
+      \   'arguments': get(l:completion_item.command, 'arguments', [])
+      \ }).catch(lamp#rescue())
       try
         call lamp#sync(l:p)
       catch /.*/
@@ -340,8 +363,8 @@ function! s:on_complete_done_after() abort
   " snippet or textEdit.
   if !empty(l:expandable_state)
     undojoin | call lamp#config('feature.completion.snippet.expand')({
-          \   'body': l:expandable_state.text
-          \ })
+    \   'body': l:expandable_state.text
+    \ })
   endif
 
   return ''
@@ -387,6 +410,7 @@ function! s:get_expandable_state(completed_item, completion_item) abort
   endif
   return {}
 endfunction
+
 
 "
 " clear_completed_string
@@ -439,9 +463,9 @@ function! s:show_documentation(event, completed_item, completion_item) abort
   " detail
   if type(get(a:completion_item, 'detail', v:null)) == type('')
     let l:contents += lamp#protocol#markup_content#normalize({
-          \   'language': &filetype,
-          \   'value': a:completion_item.detail
-          \ })
+    \   'language': &filetype,
+    \   'value': a:completion_item.detail
+    \ })
   endif
 
   " documentation
