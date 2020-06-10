@@ -58,7 +58,7 @@ function! s:on_insert_char_pre() abort
   " Ignore other plugin's feature.
   let s:processing = v:true
   let v:char = ''
-  call feedkeys(s:context.original_char, 'n')
+  call feedkeys(s:context.original_char, 'ni')
   call feedkeys("\<Plug>(lamp-on-type-formatting:formatting)", '')
   call feedkeys("\<Plug>(lamp-on-type-formatting:finish)", '')
 endfunction

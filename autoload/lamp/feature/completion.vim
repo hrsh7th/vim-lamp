@@ -118,9 +118,6 @@ function! s:convert(params, current_line, current_position, server_name, complet
   return l:completed_items
 endfunction
 
-function! s:fix_word_for_text_edit(word, text_edit, line, complete_position) abort
-endfunction
-
 "
 " lamp_feature_completion_convert
 "
@@ -362,9 +359,20 @@ function! s:on_complete_done_after() abort
 
   " snippet or textEdit.
   if !empty(l:expandable_state)
-    undojoin | call lamp#config('feature.completion.snippet.expand')({
-    \   'body': l:expandable_state.text
-    \ })
+    let l:position = s:Position.cursor()
+    if l:expandable_state.is_snippet
+      undojoin | call lamp#config('feature.completion.snippet.expand')({
+      \   'body': s:fix_word_for_expand(l:position, l:expandable_state.text)
+      \ })
+    else
+      undojoin | call s:TextEdit.apply('%', [{
+      \   'range': {
+      \     'start': l:position,
+      \     'end': l:position,
+      \   },
+      \   'newText': s:fix_word_for_expand(l:position, l:expandable_state.text),
+      \ }])
+    endif
   endif
 
   return ''
@@ -397,20 +405,22 @@ function! s:get_expandable_state(completed_item, completion_item) abort
   if type(get(a:completion_item, 'textEdit', v:null)) == type({})
     let l:expandable = v:false
     let l:expandable = l:expandable || a:completed_item.word !=# a:completion_item.textEdit.newText
-    let l:expandable = l:expandable || lamp#protocol#range#has_length(a:completion_item.textEdit.range)
-    return {
-    \   'text': a:completion_item.textEdit.newText
-    \ }
+    if l:expandable
+      return {
+      \   'is_snippet': get(a:completion_item, 'insertTextFormat', 1) == 2,
+      \   'text': a:completion_item.textEdit.newText
+      \ }
+    endif
   endif
 
   if get(a:completion_item, 'insertTextFormat', 1) == 2 && type(get(a:completion_item, 'insertText', v:null)) == type('') && a:completed_item.word !=# a:completion_item.insertText
     return {
+    \   'is_snippet': v:true,
     \   'text': a:completion_item.insertText
     \ }
   endif
   return {}
 endfunction
-
 
 "
 " clear_completed_string
@@ -517,5 +527,23 @@ function! s:get_floatwin_screenpos(event, contents) abort
   endif
 
   return [l:row, l:col]
+endfunction
+
+"
+" s:fix_word_for_expand
+"
+function! s:fix_word_for_expand(position, word) abort
+  let [l:over, l:over_spos, l:over_epos] = matchstrpos(a:word, '^\w*.')
+  if l:over_spos == -1
+    return a:word
+  end
+
+  let l:before_line = lamp#view#cursor#get_before_line()
+
+  let l:has_postfix = strcharpart(l:before_line, a:position.character - strchars(l:over), a:position.character) ==# l:over
+  if !l:has_postfix
+    return a:word
+  end
+  return strcharpart(a:word, strchars(l:over), strchars(a:word) - strchars(l:over))
 endfunction
 
