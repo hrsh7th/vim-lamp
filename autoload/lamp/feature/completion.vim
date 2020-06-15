@@ -268,7 +268,7 @@ function! s:on_complete_changed() abort
   call lamp#debounce(
   \   'lamp#feature#completion:show_documentation',
   \   { -> l:ctx.callback() },
-  \   10
+  \   100
   \ )
 endfunction
 
@@ -464,7 +464,7 @@ function! s:show_documentation(event, completed_item, completion_item) abort
     return
   endif
 
-  if !pumvisible() || empty(v:completed_item) || get(v:completed_item, 'user_data') !=# get(a:completed_item, 'user_data')
+  if !pumvisible() || empty(v:completed_item) || get(v:completed_item, 'user_data', v:null) !=# get(a:completed_item, 'user_data', v:null)
     return
   endif
 
