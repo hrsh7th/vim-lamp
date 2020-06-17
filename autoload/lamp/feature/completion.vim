@@ -44,7 +44,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
 
-  if has('nvim')
+  if has('nvim') && v:false
     return luaeval('lamp_feature_completion_convert(_A[1], _A[2], _A[3], _A[4], _A[5], _A[6])', [
     \   l:params,
     \   l:current_line,
@@ -158,20 +158,20 @@ function lamp_feature_completion_convert(params, current_line, current_position,
     end
 
     table.insert(complete_items, {
-    word = word;
-    abbr = abbr;
-    menu = params.menu;
-    dup = params.dup;
-    kind = kind;
-    user_data = {
-    lamp = {
-    server_name = server_name;
-    completion_item = completion_item;
-    complete_position = complete_position;
-    };
-    };
-    _filter_text = completion_item.filterText or word;
-    _sort_text = completion_item.sortText or word;
+      word = word;
+      abbr = abbr;
+      menu = params.menu;
+      dup = params.dup;
+      kind = kind;
+      user_data = {
+        lamp = {
+          server_name = server_name;
+          completion_item = completion_item;
+          complete_position = complete_position;
+        };
+      };
+      _filter_text = completion_item.filterText or word;
+      _sort_text = completion_item.sortText or word;
     })
   end
   return complete_items
@@ -184,13 +184,13 @@ endif
 "
 function! s:get_managed_user_data(completed_item) abort
   let l:user_data = get(a:completed_item, 'user_data', v:null)
-  if type(l:user_data) is# v:null
+  if l:user_data is# v:null
     return {}
   endif
 
   " dict.
-  if type(l:user_data) == type({}) && has_key(l:user_data, 'lamp')
-    return l:user_data.lamp
+  if type(l:user_data) == type({})
+    return get(l:user_data, 'lamp', {})
   endif
 
   " just key.
@@ -252,7 +252,7 @@ function! s:on_complete_changed() abort
   let l:ctx.completed_item = copy(v:completed_item)
   let l:ctx.user_data = l:user_data
   function! l:ctx.callback() abort
-    if empty(v:completed_item) || get(v:completed_item, 'user_data', '') !=# get(self.completed_item, 'user_data', '')
+    if empty(self.user_data)
       return
     endif
 
@@ -464,7 +464,7 @@ function! s:show_documentation(event, completed_item, completion_item) abort
     return
   endif
 
-  if !pumvisible() || empty(v:completed_item) || get(v:completed_item, 'user_data', v:null) !=# get(a:completed_item, 'user_data', v:null)
+  if !pumvisible() || empty(v:completed_item) || get(v:completed_item, 'user_data', v:null) isnot# get(a:completed_item, 'user_data', v:null)
     return
   endif
 
