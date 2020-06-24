@@ -88,13 +88,16 @@ endfunction
 function! s:on_responses(query, sync, responses) abort
   let l:code_actions = [] " [{ 'server': ..., 'action': CodeAction }]
   for l:response in a:responses
+    if type(l:response) != type({})
+      continue
+    endif
     let l:response.data = type(l:response.data) == type([]) ? l:response.data : []
     let l:code_actions += map(l:response.data, { k, v ->
-          \   {
-          \     'server': l:response.server,
-          \     'action': v
-          \   }
-          \ })
+    \   {
+    \     'server': l:response.server,
+    \     'action': v
+    \   }
+    \ })
   endfor
 
   if empty(l:code_actions)
