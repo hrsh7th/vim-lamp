@@ -24,16 +24,14 @@ endfunction
 " lamp#view#buffer#open
 "
 function! lamp#view#buffer#open(command, location) abort
-  let l:bufnr = bufnr(a:location.filename, v:true)
-  call setbufvar(l:bufnr, '&buflisted', v:true)
-
-  if l:bufnr != bufnr('%') || a:command !=# 'edit'
-    keepalt keepjumps execute printf('%s %s', a:command, a:location.filename)
+  normal! m'
+  if bufnr(a:location.filename) != bufnr('%') || a:command !=# 'edit'
+    execute printf('keepalt keepjumps %s %s', a:command, a:location.filename)
   endif
 
   let l:lnum = get(a:location, 'lnum', 1)
   let l:col = get(a:location, 'col', 1)
-  execute printf('normal! %sG%s|', l:lnum, l:col)
+  execute printf('keepalt keepjumps normal! %sG%s|zz', l:lnum, l:col)
 endfunction
 
 "

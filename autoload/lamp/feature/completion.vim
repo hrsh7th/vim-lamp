@@ -44,7 +44,7 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
 
-  if has('nvim') && v:false
+  if has('nvim')
     return luaeval('lamp_feature_completion_convert(_A[1], _A[2], _A[3], _A[4], _A[5], _A[6])', [
     \   l:params,
     \   l:current_line,
@@ -75,20 +75,17 @@ function! s:convert(params, current_line, current_position, server_name, complet
   for l:completion_item in a:completion_items
     let l:word = trim(l:completion_item.label)
     let l:abbr = l:word
-
-    if type(get(l:completion_item, 'textEdit', v:null)) == type({})
-      if a:complete_position.character != l:completion_item.text_edit.range.end.character
-        let l:postfix = strcharpart(a:current_line, a:complete_position.character, l:completion_item.range.end.character - a:complete_position.character)
-        if l:word =~# '\V' . l:postfix . '\m$'
-          let l:word = strcharpart(l:word, 0, strchars(l:word) - strchars(l:postfix))
-        endif
+    if get(l:completion_item, 'insertTextFormat', 1) == 2
+      let l:expandable = v:false
+      if has_key(l:completion_item, 'textEdit') && has_key(l:completion_item.textEdit, 'newText')
+        let l:expandable = l:word !=# l:completion_item.textEdit.newText
+      elseif has_key(l:completion_item, 'insertText')
+        let l:expandable = l:word !=# l:completion_item.insertText
       endif
-      if l:word !=# l:completion_item.textEdit.newText
+      if l:expandable
         let l:abbr = l:word . '~'
       endif
-    elseif type(get(completion_item, 'insertText', v:null)) == type('') && l:word !=# l:completion_item.insertText
-      let l:abbr = l:word . '~'
-    end
+    endif
 
     " create user_data
     let l:user_data_key = '{"lamp/key":"' . s:managed_user_data_key . '"}'
@@ -111,10 +108,11 @@ function! s:convert(params, current_line, current_position, server_name, complet
     \   'dup': a:params.dup,
     \   'kind': l:kind,
     \   'user_data': l:user_data_key,
-    \   '_filter_text': get(l:completion_item, 'filterText', l:word),
-    \   '_sort_text': get(l:completion_item, 'sortText', l:word)
+    \   'filter_text': get(l:completion_item, 'filterText', v:null),
+    \   'sort_text': get(l:completion_item, 'sortText', v:null)
     \ })
   endfor
+
   return l:completed_items
 endfunction
 
@@ -131,22 +129,16 @@ function lamp_feature_completion_convert(params, current_line, current_position,
     local word = string.gsub(completion_item.label, "^%s*(.-)%s*$", "%1")
     local abbr = word
 
-    if completion_item.textEdit ~= nil then
-      local complete_col = vim.str_byteindex(current_line, complete_position.character)
-      local text_edit_col = vim.str_byteindex(current_line, completion_item.textEdit.range['end'].character)
-      if complete_col ~= text_edit_col then
-        local postfix = string.sub(current_line, complete_col + 1, text_edit_col)
-        local word_len = #word
-        local postfix_len = #postfix
-        if postfix == string.sub(word, (word_len - postfix_len) + 1, word_len) then
-          word = string.sub(word, 1, word_len - postfix_len)
-        end
+    if completion_item.insertTextFormat == 2 then
+      local expandable = false
+      if completion_item.textEdit ~= nil and completion_item.textEdit.newText ~= nil then
+        expandable = word ~= completion_item.textEdit.newText
+      elseif completion_item.insertText ~= nil then
+        expandable = word ~= completion_item.insertText
       end
-      if word ~= completion_item.textEdit.newText then
+      if expandable then
         abbr = word .. '~'
       end
-    elseif completion_item.insertText ~= nil and word ~= completion_item.insertText then
-      abbr = word .. '~'
     end
 
     local kind = kind_map[completion_item.kind] or ''
@@ -170,8 +162,8 @@ function lamp_feature_completion_convert(params, current_line, current_position,
           complete_position = complete_position;
         };
       };
-      _filter_text = completion_item.filterText or word;
-      _sort_text = completion_item.sortText or word;
+      filter_text = completion_item.filterText or nil;
+      sort_text = completion_item.sortText or nil;
     })
   end
   return complete_items
@@ -362,7 +354,7 @@ function! s:on_complete_done_after() abort
     let l:position = s:Position.cursor()
     if l:expandable_state.is_snippet
       undojoin | call lamp#config('feature.completion.snippet.expand')({
-      \   'body': s:fix_word_for_expand(l:position, l:expandable_state.text)
+      \   'body': l:expandable_state.text,
       \ })
     else
       undojoin | call s:TextEdit.apply('%', [{
@@ -370,7 +362,7 @@ function! s:on_complete_done_after() abort
       \     'start': l:position,
       \     'end': l:position,
       \   },
-      \   'newText': s:fix_word_for_expand(l:position, l:expandable_state.text),
+      \   'newText': l:expandable_state.text,
       \ }])
     endif
   endif
@@ -527,23 +519,5 @@ function! s:get_floatwin_screenpos(event, contents) abort
   endif
 
   return [l:row, l:col]
-endfunction
-
-"
-" s:fix_word_for_expand
-"
-function! s:fix_word_for_expand(position, word) abort
-  let [l:over, l:over_spos, l:over_epos] = matchstrpos(a:word, '^\w*.')
-  if l:over_spos == -1
-    return a:word
-  end
-
-  let l:before_line = lamp#view#cursor#get_before_line()
-
-  let l:has_postfix = strcharpart(l:before_line, a:position.character - strchars(l:over), a:position.character) ==# l:over
-  if !l:has_postfix
-    return a:word
-  end
-  return strcharpart(a:word, strchars(l:over), strchars(a:word) - strchars(l:over))
 endfunction
 

@@ -34,7 +34,7 @@ endfunction
 "
 function! lamp#view#floatwin#nvim#enter(floatwin) abort
   if lamp#view#floatwin#nvim#is_showing(a:floatwin)
-    execute printf('%swincmd w', win_id2win(lamp#view#floatwin#nvim#winid(a:floatwin)))
+    execute printf('keepalt keepjumps %swincmd w', win_id2win(lamp#view#floatwin#nvim#winid(a:floatwin)))
   endif
 endfunction
 
