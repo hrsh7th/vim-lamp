@@ -360,7 +360,7 @@ function! lamp#complete(find_start, base) abort
   for [l:server_name, l:request] in items(s:context.requests)
     try
       for l:completed_item in lamp#feature#completion#convert(l:server_name, s:context.position, lamp#sync(l:request))
-        if l:completed_item.filter_text !~ '^\V' . join(split(a:base, '\zs'), '\m.\{-}\V') . '\m.*$' && strlen(a:base) >= 1
+        if get(l:completed_item, 'filter_text', l:completed_item.word) !~ '^\V' . join(split(a:base, '\zs'), '\m.\{-}\V') . '\m.*$' && strlen(a:base) >= 1
           continue
         endif
         call add(l:returns.words, l:completed_item)
