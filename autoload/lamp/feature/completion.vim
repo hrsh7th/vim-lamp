@@ -73,18 +73,26 @@ function! s:convert(params, current_line, current_position, server_name, complet
 
   let l:completed_items = []
   for l:completion_item in a:completion_items
-    let l:word = trim(l:completion_item.label)
-    let l:abbr = l:word
+    let l:label = trim(l:completion_item.label)
+    let l:insert_text = trim(get(l:completion_item, 'insertText', l:label))
+
     if get(l:completion_item, 'insertTextFormat', 1) == 2
+      let l:word = l:label
+      let l:abbr = l:label
+
       let l:expandable = v:false
       if has_key(l:completion_item, 'textEdit') && has_key(l:completion_item.textEdit, 'newText')
         let l:expandable = l:word !=# l:completion_item.textEdit.newText
       elseif has_key(l:completion_item, 'insertText')
         let l:expandable = l:word !=# l:completion_item.insertText
       endif
+
       if l:expandable
-        let l:abbr = l:word . '~'
+        let l:abbr = l:abbr . '~'
       endif
+    else
+      let l:word = l:insert_text
+      let l:abbr = l:label
     endif
 
     " create user_data
@@ -126,19 +134,28 @@ function lamp_feature_completion_convert(params, current_line, current_position,
 
   local complete_items = {}
   for _, completion_item in pairs(completion_items) do
-    local word = string.gsub(completion_item.label, "^%s*(.-)%s*$", "%1")
-    local abbr = word
+    local label = string.gsub(completion_item.label, "^%s*(.-)%s*$", "%1")
+    local insert_text = string.gsub(completion_item.insertText, "^%s*(.-)%s*$", "%1") or label
 
+    local word = ''
+    local abbr = ''
     if completion_item.insertTextFormat == 2 then
+      word = label
+      abbr = label
+
       local expandable = false
       if completion_item.textEdit ~= nil and completion_item.textEdit.newText ~= nil then
         expandable = word ~= completion_item.textEdit.newText
       elseif completion_item.insertText ~= nil then
         expandable = word ~= completion_item.insertText
       end
+
       if expandable then
-        abbr = word .. '~'
+        abbr = abbr .. '~'
       end
+    else
+      word = insert_text
+      abbr = label
     end
 
     local kind = kind_map[completion_item.kind] or ''
