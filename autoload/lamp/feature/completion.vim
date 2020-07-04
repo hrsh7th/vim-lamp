@@ -135,7 +135,7 @@ function lamp_feature_completion_convert(params, current_line, current_position,
   local complete_items = {}
   for _, completion_item in pairs(completion_items) do
     local label = string.gsub(completion_item.label, "^%s*(.-)%s*$", "%1")
-    local insert_text = string.gsub(completion_item.insertText, "^%s*(.-)%s*$", "%1") or label
+    local insert_text = completion_item.insertText and string.gsub(completion_item.insertText, "^%s*(.-)%s*$", "%1") or label
 
     local word = ''
     local abbr = ''
