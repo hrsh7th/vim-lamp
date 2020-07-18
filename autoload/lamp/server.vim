@@ -2,7 +2,6 @@ let s:Promise = vital#lamp#import('Async.Promise')
 let s:Document = lamp#server#document#import()
 let s:Channel = lamp#server#channel#import()
 let s:Capability = lamp#server#capability#import()
-let s:Diff = lamp#view#diff#import()
 
 "
 " lamp#server#import
@@ -24,7 +23,6 @@ function! s:Server.new(name, option) abort
   \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
   \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
   \   'trace': get(a:option, 'trace', 'off'),
-  \   'diff': s:Diff.new(),
   \   'documents': {},
   \   'diagnostics': {},
   \   'capability': s:Capability.new({
@@ -200,7 +198,6 @@ function! s:Server.open_document(bufnr) abort
   endif
 
   " create document.
-  call self.diff.attach(a:bufnr)
   let self.documents[l:uri] = s:Document.new(a:bufnr)
   call self.channel.notify('textDocument/didOpen', {
   \   'textDocument': lamp#protocol#document#item(a:bufnr),
@@ -226,15 +223,14 @@ function! s:Server.sync_document(bufnr) abort
   " full sync.
   if l:sync_kind == 1
     call l:doc.sync()
-    call self.diff.sync(a:bufnr)
     call self.channel.notify('textDocument/didChange', {
     \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-    \   'contentChanges': [{ 'text': join(self.diff.get_lines(a:bufnr), "\n") }]
+    \   'contentChanges': [{ 'text': join(lamp#view#buffer#get_lines(a:bufnr), "\n") }]
     \ })
 
     " incremental sync.
   elseif l:sync_kind == 2
-    let l:diff = self.diff.compute(a:bufnr)
+    let l:diff = l:doc.diff()
     if l:diff.rangeLength != 0 || l:diff.text !=# ''
       call l:doc.sync()
       call self.channel.notify('textDocument/didChange', {
@@ -263,7 +259,6 @@ function! s:Server.close_document(bufnr) abort
   if has_key(self.diagnostics, l:document.uri)
     call remove(self.diagnostics, l:document.uri)
   endif
-  call self.diff.detach(a:bufnr)
 
   call self.channel.notify('textDocument/didClose', {
   \   'textDocument': {
