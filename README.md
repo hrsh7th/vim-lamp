@@ -193,12 +193,10 @@ endfunction
 
 # TODO
 - Use VS.System.Job and VS.RPC.JSON
-- Support `textDocument/semanticTokens`
-- Investigate the wrong diff problem.
-    - I worry to `autoread` caused the problem.
-- Support `$/progress`
-- Support `textDocument/onTypeFormatting` with `<CR>`
-- Support `textDocument/foldingRange`
 - Support `textDocument/codeLens`
+- Support `textDocument/onTypeFormatting` with `<CR>`
+- Support `$/progress`
+- Support `textDocument/semanticTokens`
+- Support `textDocument/foldingRange`
 - Custom highlighting in fenced language (e.g. underlined)
 - Improve documentation
