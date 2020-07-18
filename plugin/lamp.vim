@@ -84,7 +84,7 @@ function! s:on_text_document_did_change() abort
     endfor
   endfunction
 
-  call lamp#debounce('s:on_text_document_did_change:' . l:bufnr, { -> l:ctx.callback(l:bufnr) }, 200)
+  call lamp#debounce('s:on_text_document_did_change:' . l:bufnr, { -> l:ctx.callback(l:bufnr) }, 20)
 endfunction
 
 "
