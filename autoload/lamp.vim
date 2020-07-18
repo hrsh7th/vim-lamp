@@ -11,36 +11,36 @@ let s:debounce_ids = {}
 let s:profiles = {}
 
 let s:state = {
-      \   'exiting': v:false,
-      \ }
+\   'exiting': v:false,
+\ }
 
 let s:config = {
-      \   'global.root': expand('<sfile>:p:h:h'),
-      \   'global.debug': v:null,
-      \   'global.debug.clear_on_start': v:false,
-      \   'global.timeout': 3000,
-      \   'feature.completion.snippet.expand': v:null,
-      \   'feature.completion.floating_docs': v:true,
-      \   'feature.diagnostic.increase_delay.normal': 200,
-      \   'feature.diagnostic.increase_delay.insert': 1200,
-      \   'view.location.on_location': { locations -> [
-      \     setqflist(locations, 'r'),
-      \     execute('copen')
-      \   ] },
-      \   'view.location.on_fallback': { command, position -> [
-      \     lamp#view#notice({ 'lines': ['`Location`: no locations found.'] })
-      \   ] },
-      \   'view.sign.error.text': '>>',
-      \   'view.sign.warning.text': '>>',
-      \   'view.sign.information.text': '>>',
-      \   'view.sign.hint.text': '>>',
-      \   'view.floatwin.fenced_languages': {
-      \     'help': ['help'],
-      \     'vim': ['vim'],
-      \     'typescript': ['ts', 'tsx', 'typescript', 'typescriptreact', 'typescript.tsx'],
-      \     'javascript': ['js', 'jsx', 'javascript', 'javascriptreact', 'javascript.jsx'],
-      \   }
-      \ }
+\   'global.root': expand('<sfile>:p:h:h'),
+\   'global.debug': v:null,
+\   'global.debug.clear_on_start': v:false,
+\   'global.timeout': 3000,
+\   'feature.completion.snippet.expand': v:null,
+\   'feature.completion.floating_docs': v:true,
+\   'feature.diagnostic.increase_delay.normal': 200,
+\   'feature.diagnostic.increase_delay.insert': 1200,
+\   'view.location.on_location': { locations -> [
+\     setqflist(locations, 'r'),
+\     execute('copen')
+\   ] },
+\   'view.location.on_fallback': { command, position -> [
+\     lamp#view#notice({ 'lines': ['`Location`: no locations found.'] })
+\   ] },
+\   'view.sign.error.text': '>>',
+\   'view.sign.warning.text': '>>',
+\   'view.sign.information.text': '>>',
+\   'view.sign.hint.text': '>>',
+\   'view.floatwin.fenced_languages': {
+\     'help': ['help'],
+\     'vim': ['vim'],
+\     'typescript': ['ts', 'tsx', 'typescript', 'typescriptreact', 'typescript.tsx'],
+\     'javascript': ['js', 'jsx', 'javascript', 'javascriptreact', 'javascript.jsx'],
+\   }
+\ }
 
 function! s:on_unhandled_rejection(err) abort
   if strlen(lamp#config('global.debug')) > 0
@@ -56,10 +56,10 @@ call s:Promise.on_unhandled_rejection(function('s:on_unhandled_rejection'))
 function! lamp#profile(name, ...) abort
   if !has_key(s:profiles, a:name)
     let s:profiles[a:name] = {
-          \   'count': 0,
-          \   'start': reltime(),
-          \   'end': -1,
-          \ }
+    \   'count': 0,
+    \   'start': reltime(),
+    \   'end': -1,
+    \ }
   endif
 
   if get(a:000, 0, v:false)
@@ -76,10 +76,10 @@ endfunction
 function! lamp#profile_finish() abort
   for [l:name, l:profile] in items(s:profiles)
     echomsg string({
-          \   'name': l:name,
-          \   'count': l:profile.count,
-          \   'time': l:profile.end
-          \ })
+    \   'name': l:name,
+    \   'count': l:profile.count,
+    \   'time': l:profile.end
+    \ })
   endfor
   let s:profiles = {}
 endfunction
@@ -346,13 +346,12 @@ function! lamp#complete(find_start, base) abort
   " send request.
   for l:server in l:servers
     let s:context.requests[l:server.name] = l:server.request('textDocument/completion', {
-          \   'textDocument': lamp#protocol#document#identifier(bufnr('%')),
-          \   'position': s:context.position,
-          \   'context': {
-          \     'triggerKind': 2,
-          \     'triggerCharacter': lamp#view#cursor#get_before_char_skip_white()
-          \   }
-          \ }).catch(lamp#rescue([]))
+    \   'textDocument': lamp#protocol#document#identifier(bufnr('%')),
+    \   'position': s:context.position,
+    \   'context': {
+    \     'triggerKind': 1
+    \   }
+    \ }).catch(lamp#rescue([]))
   endfor
 
   " consume response.
@@ -360,7 +359,7 @@ function! lamp#complete(find_start, base) abort
   for [l:server_name, l:request] in items(s:context.requests)
     try
       for l:completed_item in lamp#feature#completion#convert(l:server_name, s:context.position, lamp#sync(l:request))
-        if get(l:completed_item, 'filter_text', l:completed_item.word) !~ '^\V' . join(split(a:base, '\zs'), '\m.\{-}\V') . '\m.*$' && strlen(a:base) >= 1
+        if l:completed_item.word !~ '^\V' . join(split(a:base, '\zs'), '\m.\{-}\V') . '\m.*$' && strlen(a:base) >= 1
           continue
         endif
         call add(l:returns.words, l:completed_item)

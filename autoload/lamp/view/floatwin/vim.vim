@@ -71,7 +71,7 @@ function! s:get_config(floatwin) abort
         \   'line': a:floatwin.screenpos[0] + 1,
         \   'col':  a:floatwin.screenpos[1] + 1,
         \   'pos': 'topleft',
-        \   'moved': [0, 100000],
+        \   'moved': [0, 0, 0],
         \   'scrollbar': 0,
         \   'maxwidth': a:floatwin.get_width(a:floatwin.contents),
         \   'maxheight': a:floatwin.get_height(a:floatwin.contents),
