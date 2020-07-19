@@ -335,7 +335,7 @@ function! s:on_complete_done_after() abort
   endtry
 
   " Clear completed string if needed.
-  let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item)
+  let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item, l:done_position, l:done_line)
   if !empty(l:expandable_state)
     undojoin | call s:clear_completed_string(
     \   l:completed_item,
@@ -410,23 +410,29 @@ endfunction
 "
 " get_expandable_state
 "
-function! s:get_expandable_state(completed_item, completion_item) abort
+function! s:get_expandable_state(completed_item, completion_item, done_position, done_line) abort
+  let l:word_len = strchars(a:completed_item.word)
+  let l:before = strcharpart(a:done_line, 0, a:done_position.character - l:word_len)
+  let l:after = strcharpart(a:done_line, a:done_position.character, l:word_len - a:done_position.character)
+
   if type(get(a:completion_item, 'textEdit', v:null)) == type({})
-    let l:expandable = v:false
-    let l:expandable = l:expandable || a:completed_item.word !=# a:completion_item.textEdit.newText
-    if l:expandable
+    let l:new_text = s:trim_word(a:completion_item.textEdit.newText, l:before, l:after)
+    if a:completed_item.word !=# l:new_text
       return {
       \   'is_snippet': get(a:completion_item, 'insertTextFormat', 1) == 2,
-      \   'text': a:completion_item.textEdit.newText
+      \   'text': l:new_text
       \ }
     endif
   endif
 
-  if get(a:completion_item, 'insertTextFormat', 1) == 2 && type(get(a:completion_item, 'insertText', v:null)) == type('') && a:completed_item.word !=# a:completion_item.insertText
-    return {
-    \   'is_snippet': v:true,
-    \   'text': a:completion_item.insertText
-    \ }
+  if get(a:completion_item, 'insertTextFormat', 1) == 2 && type(get(a:completion_item, 'insertText', v:null)) == type('')
+    let l:insert_text = s:trim_word(a:completion_item.insertText, l:before, l:after)
+    if a:completed_item.word !=# l:insert_text
+      return {
+      \   'is_snippet': v:true,
+      \   'text': l:insert_text
+      \ }
+    endif
   endif
   return {}
 endfunction
@@ -538,3 +544,27 @@ function! s:get_floatwin_screenpos(event, contents) abort
   return [l:row, l:col]
 endfunction
 
+function! s:trim_word(word, before, after) abort
+  let l:word = a:word
+  let l:word_len = strchars(l:word)
+  let l:before_len = strchars(a:before)
+  let l:after_len = strchars(a:after)
+
+  " trim before.
+  for l:i in range(min([l:before_len, l:word_len]), 0, -1)
+    if strcharpart(a:before, l:before_len - l:i, l:before_len) ==# strcharpart(l:word, 0, l:i)
+      let l:word = strcharpart(l:word, l:i, l:word_len - l:i)
+      break
+    endif
+  endfor
+
+  " trim after.
+  for l:i in range(min([l:after_len, l:word_len]), 0, -1)
+    if strcharpart(l:word, l:word_len - l:i, l:i) ==# strcharpart(a:after, 0, l:i)
+      let l:word = strcharpart(l:word, 0, l:word_len - l:i)
+      break
+    endif
+  endfor
+
+  return l:word
+endfunction
