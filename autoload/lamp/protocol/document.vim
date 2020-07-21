@@ -3,6 +3,11 @@ let s:language_id_map = {
       \   'javascript.jsx': 'javascriptreact'
       \ }
 
+let s:cache = {
+\   'uri_path': {},
+\   'path_uri': {},
+\ }
+
 "
 " lamp#protocol#document#encode_uri
 "
@@ -12,18 +17,27 @@ function! lamp#protocol#document#encode_uri(bufnr_or_path) abort
     let l:path = getcwd()
   endif
   let l:path = lamp#fnamemodify(l:path, ':p')
-  let l:path = l:path[-1 : -1] ==# '/' ? l:path[0 : -2] : l:path
-  let l:path = 'file://' . substitute(l:path, '\([^a-zA-Z0-9-_.~/]\)', '\=printf("%%%02x", char2nr(submatch(1)))', 'g')
-  return l:path
+  if has_key(s:cache.path_uri, l:path)
+    return s:cache.path_uri[l:path]
+  endif
+
+  let l:uri = 'file://' . substitute(l:path, '\([^a-zA-Z0-9-_.~/]\)', '\=printf("%%%02x", char2nr(submatch(1)))', 'g')
+  let s:cache.path_uri[l:path] = l:uri
+  return l:uri
 endfunction
 
 "
 " lamp#protocol#document#decode_uri
 "
 function! lamp#protocol#document#decode_uri(uri) abort
-  let l:path = a:uri
-  let l:path = substitute(l:path, '^\Vfile://', '', 'g')
+  if has_key(s:cache.uri_path, a:uri)
+    return s:cache.uri_path[a:uri]
+  endif
+
+  let l:path = ''
+  let l:path = substitute(a:uri, '^\Vfile://', '', 'g')
   let l:path = substitute(l:path, '%\([a-fA-F0-9]\{2}\)', '\=nr2char(str2nr(submatch(1), 16))', 'g')
+  let s:cache.uri_path[a:uri] = l:path
   return l:path
 endfunction
 

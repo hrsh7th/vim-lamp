@@ -127,6 +127,9 @@ endfunction
 "
 " lamp_feature_completion_convert
 "
+" @see https://github.com/neoclide/coc.nvim/blob/master/src/util/complete.ts#L16
+" @see https://github.com/neoclide/coc.nvim/blob/master/src/languages.ts#L726
+"
 if has('nvim')
 lua << EOF
 function lamp_feature_completion_convert(params, current_line, current_position, server_name, complete_position, completion_items)
