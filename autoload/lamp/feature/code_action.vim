@@ -56,15 +56,15 @@ function! lamp#feature#code_action#do(option) abort
   for l:server in l:servers
     let l:diagnostic = s:get_nearest_diagnostic(l:range, l:bufnr, l:server)
     call add(l:promises, l:server.request('textDocument/codeAction', {
-          \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
-          \   'range': s:get_range(l:range, l:diagnostic),
-          \   'context': {
-          \     'diagnostics': !empty(l:diagnostic) ? [l:diagnostic] : [],
-          \     'only': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
-          \   }
-          \ }, {
-          \   'cancellation_token': s:cancellation_token
-          \ }).then({ data -> { 'server': l:server, 'data': data } }).catch(lamp#rescue([])))
+    \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
+    \   'range': s:get_range(l:range, l:diagnostic),
+    \   'context': {
+    \     'diagnostics': !empty(l:diagnostic) ? [l:diagnostic] : [],
+    \     'only': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
+    \   }
+    \ }, {
+    \   'cancellation_token': s:cancellation_token
+    \ }).then({ data -> { 'server': l:server, 'data': data } }).catch(lamp#rescue([])))
   endfor
 
   let l:p = s:Promise.all(l:promises)

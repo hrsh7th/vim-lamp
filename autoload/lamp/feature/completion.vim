@@ -29,6 +29,19 @@ function! lamp#feature#completion#init() abort
 endfunction
 
 "
+" lamp#feature#completion#compute_start_offset
+"
+function! lamp#feature#completion#compute_start_offset(response) abort
+  let l:start_offset = v:null
+  for l:item in a:response[0 : min([len(a:response) - 1, 20])]
+    if has_key(l:item, 'textEdit')
+      let l:start_offset = min([l:start_offset, l:item.textEdit.range.start.character])
+    endif
+  endfor
+  return l:start_offset
+endfunction
+
+"
 " lamp#feature#completion#convert
 "
 function! lamp#feature#completion#convert(server_name, complete_position, response, ...) abort
@@ -115,6 +128,7 @@ function! s:convert(params, current_line, current_position, server_name, complet
     \   'menu': a:params.menu,
     \   'dup': a:params.dup,
     \   'kind': l:kind,
+    \   'preselect': get(l:completion_item, 'preselect', v:false),
     \   'user_data': l:user_data_key,
     \   'filter_text': get(l:completion_item, 'filterText', v:null),
     \   'sort_text': get(l:completion_item, 'sortText', v:null)
@@ -174,6 +188,7 @@ function lamp_feature_completion_convert(params, current_line, current_position,
       abbr = abbr;
       menu = params.menu;
       dup = params.dup;
+      preselect = completion_item.preselect or false,
       kind = kind;
       user_data = {
         lamp = {
@@ -415,11 +430,9 @@ endfunction
 "
 function! s:get_expandable_state(completed_item, completion_item, done_position, done_line) abort
   let l:word_len = strchars(a:completed_item.word)
-  let l:before = strcharpart(a:done_line, 0, a:done_position.character - l:word_len)
-  let l:after = strcharpart(a:done_line, a:done_position.character, l:word_len - a:done_position.character)
 
   if type(get(a:completion_item, 'textEdit', v:null)) == type({})
-    let l:new_text = s:trim_word(a:completion_item.textEdit.newText, l:before, l:after)
+    let l:new_text = a:completion_item.textEdit.newText
     if a:completed_item.word !=# l:new_text
       return {
       \   'is_snippet': get(a:completion_item, 'insertTextFormat', 1) == 2,
@@ -429,7 +442,7 @@ function! s:get_expandable_state(completed_item, completion_item, done_position,
   endif
 
   if get(a:completion_item, 'insertTextFormat', 1) == 2 && type(get(a:completion_item, 'insertText', v:null)) == type('')
-    let l:insert_text = s:trim_word(a:completion_item.insertText, l:before, l:after)
+    let l:insert_text = a:completion_item.insertText
     if a:completed_item.word !=# l:insert_text
       return {
       \   'is_snippet': v:true,
@@ -545,29 +558,4 @@ function! s:get_floatwin_screenpos(event, contents) abort
   endif
 
   return [l:row, l:col]
-endfunction
-
-function! s:trim_word(word, before, after) abort
-  let l:word = a:word
-  let l:word_len = strchars(l:word)
-  let l:before_len = strchars(a:before)
-  let l:after_len = strchars(a:after)
-
-  " trim before.
-  for l:i in range(min([l:before_len, l:word_len]), 0, -1)
-    if strcharpart(a:before, l:before_len - l:i, l:before_len) ==# strcharpart(l:word, 0, l:i)
-      let l:word = strcharpart(l:word, l:i, l:word_len - l:i)
-      break
-    endif
-  endfor
-
-  " trim after.
-  for l:i in range(min([l:after_len, l:word_len]), 0, -1)
-    if strcharpart(l:word, l:word_len - l:i, l:i) ==# strcharpart(a:after, 0, l:i)
-      let l:word = strcharpart(l:word, 0, l:word_len - l:i)
-      break
-    endif
-  endfor
-
-  return l:word
 endfunction

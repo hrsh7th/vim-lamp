@@ -82,8 +82,8 @@ function! lamp#protocol#range#get_current_line() abort
         \     'character': 0,
         \   },
         \   'end': {
-        \     'line': line('.'),
-        \     'character': 0,
+        \     'line': line('.') - 1,
+        \     'character': strchars(getline('.')),
         \   }
         \ }
 endfunction

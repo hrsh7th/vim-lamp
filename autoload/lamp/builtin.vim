@@ -48,12 +48,7 @@ function! lamp#builtin#html_languageserver(...) abort
   \       'html': v:true,
   \       'javascript': v:true,
   \     }
-  \   } },
-  \   'capabilities': {
-  \     'completionProvider': {
-  \       'triggerCharacters': ['>', '"']
-  \     }
-  \   }
+  \   } }
   \ }, get(a:000, 0, {})))
 endfunction
 
@@ -98,11 +93,6 @@ function! lamp#builtin#yaml_language_server(...) abort
   call lamp#register('yaml-language-server', lamp#merge({
   \   'command': ['yaml-language-server', '--stdio'],
   \   'filetypes': ['yaml', 'yaml.ansible'],
-  \   'capabilities': {
-  \     'completionProvider': {
-  \       'triggerCharacters': [':']
-  \     }
-  \   }
   \ }, get(a:000, 0, {})))
 endfunction
 
@@ -128,11 +118,6 @@ function! lamp#builtin#json_languageserver(...) abort
   call lamp#register('json-languageserver', lamp#merge({
   \   'command': ['json-languageserver', '--stdio'],
   \   'filetypes': ['json'],
-  \   'capabilities': {
-  \     'completionProvider': {
-  \       'triggerCharacters': ['[', '{', ','],
-  \     }
-  \   }
   \ }, get(a:000, 0, {})))
 endfunction
 
@@ -150,11 +135,6 @@ function! lamp#builtin#typescript_language_server(...) abort
   \   'command': ['typescript-language-server', '--stdio'],
   \   'filetypes': ['typescript', 'typescript.tsx', 'typescriptreact', 'javascript', 'javascript.jsx', 'javascriptreact'],
   \   'root_uri': { bufnr -> lamp#findup(['tsconfig.json', '.git'], bufname(bufnr)) },
-  \   'capabilities': {
-  \     'completionProvider': {
-  \       'triggerCharacters': [',']
-  \     }
-  \   }
   \ }, get(a:000, 0, {})))
 endfunction
 
@@ -173,12 +153,15 @@ function! lamp#builtin#vim_language_server(...) abort
   \   'filetypes': ['vim', 'vimspec'],
   \   'initialization_options': { -> {
   \     'iskeyword': &iskeyword . ',:',
-  \     'vimruntime': $VIMRUNTIME,
-  \     'runtimepath': &runtimepath,
-  \     'suggest': {
-  \       'fromVimruntime': v:true,
-  \       'fromRuntimepath': v:true
-  \     }
+  \    'vimruntime': $VIMRUNTIME,
+  \    'runtimepath': &runtimepath,
+  \    'diagnostic': {
+  \      'enable': v:true,
+  \    },
+  \    'suggest': {
+  \      'fromVimruntime': v:false,
+  \      'fromRuntimepath': v:true,
+  \    }
   \   } }
   \ }, get(a:000, 0, {})))
 endfunction
