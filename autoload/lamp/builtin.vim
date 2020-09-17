@@ -152,7 +152,7 @@ function! lamp#builtin#vim_language_server(...) abort
   \   'command': ['vim-language-server', '--stdio'],
   \   'filetypes': ['vim', 'vimspec'],
   \   'initialization_options': { -> {
-  \     'iskeyword': &iskeyword . ',:',
+  \     'iskeyword': &iskeyword,
   \    'vimruntime': $VIMRUNTIME,
   \    'runtimepath': &runtimepath,
   \    'diagnostic': {

@@ -164,10 +164,10 @@ function! s:initialize_buffer() abort
       echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
     endtry
   endfor
-  doautocmd User lamp#text_document_did_open
+  doautocmd <nomodeline> User lamp#text_document_did_open
 endfunction
 
-doautocmd User lamp#initialized
+doautocmd <nomodeline> User lamp#initialized
 
 call lamp#log_clear()
 call lamp#log('')

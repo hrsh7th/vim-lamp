@@ -59,7 +59,7 @@ function! s:Server.stop() abort
     if !empty(self.state.initialized)
       let l:p = l:p.then({ -> self.channel.request('shutdown', v:null) })
       let l:p = l:p.then({ -> self.channel.notify('exit') })
-      let l:p = l:p.then({ -> execute('doautocmd User lamp#server#exited') })
+      let l:p = l:p.then({ -> execute('doautocmd <nomodeline> User lamp#server#exited') })
     endif
     let l:p = l:p.then({ -> self.channel.flush() })
     let l:p = l:p.then({ -> self.channel.stop() })
@@ -101,7 +101,7 @@ function! s:Server.initialize(bufnr) abort
     call self.channel.notify('workspace/didChangeConfiguration', { 'settings': lamp#feature#workspace#get_config() })
 
     let self.initialized = v:true
-    doautocmd User lamp#server#initialized
+    doautocmd <nomodeline> User lamp#server#initialized
 
     call lamp#view#notice#add({ 'lines': [printf('`%s` initialized', self.name)] })
 
