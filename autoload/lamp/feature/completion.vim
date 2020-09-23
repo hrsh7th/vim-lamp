@@ -301,7 +301,7 @@ function! s:on_complete_done() abort
   let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
   if !empty(v:completed_item) && strlen(get(v:completed_item, 'word', '')) > 0
-    undojoin | noautocmd call feedkeys("\<Plug>(lamp-completion:on_complete_done_after)", '')
+    noautocmd call feedkeys("\<Plug>(lamp-completion:on_complete_done_after)", '')
   endif
 endfunction
 
@@ -342,7 +342,7 @@ function! s:on_complete_done_after() abort
   " Clear completed string if needed.
   let l:is_expandable = s:is_expandable(l:done_line, l:done_position, l:user_data.complete_position, l:completion_item, l:completed_item)
   if l:is_expandable
-    undojoin | call s:clear_completed_string(
+    call s:clear_completed_string(
     \   l:done_line,
     \   l:done_position,
     \   l:user_data.complete_position
@@ -351,7 +351,7 @@ function! s:on_complete_done_after() abort
 
   " additionalTextEdits.
   if type(get(l:completion_item, 'additionalTextEdits', v:null)) == type([])
-    undojoin | call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
+    call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
   endif
 
   " snippet or textEdit.
