@@ -376,14 +376,17 @@ function! s:on_complete_done_after() abort
   " snippet or textEdit.
   if !empty(l:expandable_state)
     if l:expandable_state.is_snippet
-      let l:position = s:Position.cursor()
-      let l:range = {
-      \   'start': {
-      \     'line': l:position.line,
-      \     'character': l:done_position.character - strchars(l:completed_item.word)
-      \   },
-      \   'end': l:position
-      \ }
+      if has_key(l:completion_item, 'textEdit')
+        let l:range = l:completion_item.textEdit.range
+      else
+        let l:range = {
+        \   'start': {
+        \     'line': l:done_position.line,
+        \     'character': l:done_position.character - strchars(l:completed_item.word)
+        \   },
+        \   'end': s:Position.cursor(),
+        \ }
+      endif
       undojoin | call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': '' }])
       noautocmd call cursor(s:Position.lsp_to_vim('%', l:range.start))
       undojoin | call lamp#config('feature.completion.snippet.expand')({
