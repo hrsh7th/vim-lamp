@@ -172,13 +172,7 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, diagnostics) abort
-  if a:diagnostics.is_decreased() || a:diagnostics.not_modified() || mode()[0] ==# 'n'
-    call lamp#log('[LOG]', 'diagnostics update immediately', a:server.name)
-    call s:apply(a:server.name, a:diagnostics)
-  else
-    call lamp#log('[LOG]', 'diagnostics update debounced', a:server.name)
-    call s:check()
-  endif
+  call s:apply(a:server.name, a:diagnostics)
 endfunction
 
 "

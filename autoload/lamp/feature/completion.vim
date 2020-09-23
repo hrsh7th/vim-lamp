@@ -35,7 +35,11 @@ function! lamp#feature#completion#compute_start_offset(response) abort
   let l:start_offset = v:null
   for l:item in a:response[0 : min([len(a:response) - 1, 20])]
     if has_key(l:item, 'textEdit')
-      let l:start_offset = min([l:start_offset, l:item.textEdit.range.start.character])
+      if l:start_offset is# v:null
+        let l:start_offset = l:item.textEdit.range.start.character + 1
+      else
+        let l:start_offset = min([l:start_offset, l:item.textEdit.range.start.character + 1])
+      endif
     endif
   endfor
   return l:start_offset

@@ -90,6 +90,7 @@ function! lamp#server#capability#get_default_capability() abort
         \     'signatureHelp': {
         \       'dynamicRegistration': v:false,
         \       'signatureInformation': {
+        \         'contextSupport': v:true,
         \         'documentationFormat': ['markdown'],
         \         'parameterInformation': {
         \           'labelOffsetSupport': v:true
