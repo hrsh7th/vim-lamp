@@ -373,6 +373,27 @@ function! s:on_complete_done_after() abort
     undojoin | call lamp#view#edit#apply(bufnr('%'), l:completion_item.additionalTextEdits)
   endif
 
+  " snippet or textEdit.
+  if !empty(l:expandable_state)
+    if l:expandable_state.is_snippet
+      let l:position = s:Position.cursor()
+      let l:range = {
+      \   'start': {
+      \     'line': l:position.line,
+      \     'character': l:done_position.character - strchars(l:completed_item.word)
+      \   },
+      \   'end': l:position
+      \ }
+      undojoin | call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': '' }])
+      noautocmd call cursor(s:Position.lsp_to_vim('%', l:range.start))
+      undojoin | call lamp#config('feature.completion.snippet.expand')({
+      \   'body': l:expandable_state.text,
+      \ })
+    else
+      undojoin | call s:TextEdit.apply('%', [l:completion_item.textEdit])
+    endif
+  endif
+
   " executeCommand.
   if type(get(l:completion_item, 'command', v:null)) == type({})
     let l:server = lamp#server#registry#get_by_name(l:user_data.server_name)
@@ -385,24 +406,6 @@ function! s:on_complete_done_after() abort
         call lamp#sync(l:p)
       catch /.*/
       endtry
-    endif
-  endif
-
-  " snippet or textEdit.
-  if !empty(l:expandable_state)
-    let l:position = s:Position.cursor()
-    if l:expandable_state.is_snippet
-      undojoin | call lamp#config('feature.completion.snippet.expand')({
-      \   'body': l:expandable_state.text,
-      \ })
-    else
-      undojoin | call s:TextEdit.apply('%', [{
-      \   'range': {
-      \     'start': l:position,
-      \     'end': l:position,
-      \   },
-      \   'newText': l:expandable_state.text,
-      \ }])
     endif
   endif
 
@@ -437,22 +440,18 @@ function! s:get_expandable_state(completed_item, completion_item, done_position,
 
   if type(get(a:completion_item, 'textEdit', v:null)) == type({})
     let l:new_text = a:completion_item.textEdit.newText
-    if a:completed_item.word !=# l:new_text
-      return {
-      \   'is_snippet': get(a:completion_item, 'insertTextFormat', 1) == 2,
-      \   'text': l:new_text
-      \ }
-    endif
+    return {
+    \   'is_snippet': get(a:completion_item, 'insertTextFormat', 1) == 2,
+    \   'text': l:new_text
+    \ }
   endif
 
   if get(a:completion_item, 'insertTextFormat', 1) == 2 && type(get(a:completion_item, 'insertText', v:null)) == type('')
     let l:insert_text = a:completion_item.insertText
-    if a:completed_item.word !=# l:insert_text
-      return {
-      \   'is_snippet': v:true,
-      \   'text': l:insert_text
-      \ }
-    endif
+    return {
+    \   'is_snippet': v:true,
+    \   'text': l:insert_text
+    \ }
   endif
   return {}
 endfunction
@@ -464,31 +463,20 @@ function! s:clear_completed_string(completed_item, completion_item, done_line, d
   " Remove commit characters.
   call setline('.', a:done_line)
 
-  " Create remove range.
-  let l:range = {
-  \   'start': {
-  \     'line': a:done_position.line,
-  \     'character': a:done_position.character - strchars(a:completed_item.word)
+  " Remove for a:complete_position
+  undojoin | call s:TextEdit.apply('%', [{
+  \   'range': {
+  \     'start': {
+  \       'line': a:complete_position.line,
+  \       'character': a:complete_position.character,
+  \     },
+  \     'end': {
+  \       'line': a:done_position.line,
+  \       'character': a:done_position.character,
+  \     }
   \   },
-  \   'end': a:done_position
-  \ }
-
-  " Expand remove range to textEdit.
-  if type(get(a:completion_item, 'textEdit', v:null)) == type({})
-    let l:range = {
-    \   'start': {
-    \     'line': a:completion_item.textEdit.range.start.line,
-    \     'character': a:completion_item.textEdit.range.start.character,
-    \   },
-    \   'end': {
-    \     'line': a:completion_item.textEdit.range.end.line,
-    \     'character': a:completion_item.textEdit.range.end.character + strchars(a:completed_item.word) - (a:complete_position.character - l:range.start.character)
-    \   }
-    \ }
-  endif
-
-  undojoin | call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': '' }])
-  call cursor(s:Position.lsp_to_vim('%', l:range.start))
+  \   'newText': ''
+  \ }])
 endfunction
 
 "
