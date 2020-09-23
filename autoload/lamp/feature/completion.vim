@@ -29,23 +29,6 @@ function! lamp#feature#completion#init() abort
 endfunction
 
 "
-" lamp#feature#completion#compute_start_offset
-"
-function! lamp#feature#completion#compute_start_offset(response) abort
-  let l:start_offset = v:null
-  for l:item in a:response[0 : min([len(a:response) - 1, 20])]
-    if has_key(l:item, 'textEdit') && l:item.textEdit.range.start.character != 0
-      if l:start_offset is# v:null
-        let l:start_offset = l:item.textEdit.range.start.character + 1
-      else
-        let l:start_offset = min([l:start_offset, l:item.textEdit.range.start.character + 1])
-      endif
-    endif
-  endfor
-  return l:start_offset
-endfunction
-
-"
 " lamp#feature#completion#convert
 "
 function! lamp#feature#completion#convert(server_name, complete_position, response, ...) abort
@@ -357,11 +340,9 @@ function! s:on_complete_done_after() abort
   endtry
 
   " Clear completed string if needed.
-  let l:expandable_state = s:get_expandable_state(l:completed_item, l:completion_item, l:done_position, l:done_line)
-  if !empty(l:expandable_state)
+  let l:is_expandable = s:is_expandable(l:done_line, l:done_position, l:user_data.complete_position, l:completion_item, l:completed_item)
+  if l:is_expandable
     undojoin | call s:clear_completed_string(
-    \   l:completed_item,
-    \   l:completion_item,
     \   l:done_line,
     \   l:done_position,
     \   l:user_data.complete_position
@@ -374,26 +355,32 @@ function! s:on_complete_done_after() abort
   endif
 
   " snippet or textEdit.
-  if !empty(l:expandable_state)
-    if l:expandable_state.is_snippet
-      if has_key(l:completion_item, 'textEdit')
-        let l:range = l:completion_item.textEdit.range
-      else
-        let l:range = {
-        \   'start': {
-        \     'line': l:done_position.line,
-        \     'character': l:done_position.character - strchars(l:completed_item.word)
-        \   },
-        \   'end': s:Position.cursor(),
-        \ }
-      endif
-      undojoin | call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': '' }])
-      noautocmd call cursor(s:Position.lsp_to_vim('%', l:range.start))
-      undojoin | call lamp#config('feature.completion.snippet.expand')({
-      \   'body': l:expandable_state.text,
+  if l:is_expandable
+    " create text_edit
+    if type(get(l:completion_item, 'textEdit', v:null)) == type({})
+      let l:text_edit = l:completion_item.textEdit
+    else
+      let l:text_edit = {
+      \   'range': {
+      \     'start': {
+      \       'line': l:done_position.line,
+      \       'character': l:done_position.character - strchars(l:completed_item.word)
+      \     },
+      \     'end': s:Position.cursor()
+      \   },
+      \   'newText': get(l:completion_item, 'insertText', '')
+      \ }
+    endif
+
+    " apply snipept or text_edit
+    if get(l:completion_item, 'insertTextFormat', 1) == 2
+      call s:TextEdit.apply('%', [{ 'range': l:text_edit.range, 'newText': '' }])
+      call cursor(s:Position.lsp_to_vim('%', l:text_edit.range.start))
+      call lamp#config('feature.completion.snippet.expand')({
+      \   'body': l:text_edit.newText,
       \ })
     else
-      undojoin | call s:TextEdit.apply('%', [l:completion_item.textEdit])
+      call s:TextEdit.apply('%', [l:text_edit])
     endif
   endif
 
@@ -416,6 +403,43 @@ function! s:on_complete_done_after() abort
 endfunction
 
 "
+" clear_completed_string
+"
+function! s:clear_completed_string(done_line, done_position, complete_position) abort
+  let l:before = strcharpart(a:done_line, 0, a:complete_position.character)
+  let l:after = strcharpart(a:done_line, a:done_position.character, strchars(a:done_line) - a:done_position.character)
+  call setline('.', l:before . l:after)
+  call cursor([a:done_position.line + 1, strlen(l:before) + 1])
+endfunction
+
+"
+" is_expandable
+"
+function! s:is_expandable(done_line, done_position, complete_position, completion_item, completed_item) abort
+  if get(a:completion_item, 'textEdit', v:null) isnot# v:null
+    if a:completion_item.textEdit.range.start.line != a:completion_item.textEdit.range.end.line
+      return v:true
+    endif
+
+    " compute if textEdit will change text.
+    let l:completed_before = strcharpart(a:done_line, 0, a:complete_position.character)
+    let l:completed_after = strcharpart(a:done_line, a:done_position.character, strchars(a:done_line) - a:done_position.character)
+    let l:completed_line = l:completed_before . l:completed_after
+    let l:text_edit_before = strcharpart(l:completed_line, 0, a:completion_item.textEdit.range.start.character)
+    let l:text_edit_after = strcharpart(l:completed_line, a:completion_item.textEdit.range.end.character, strchars(l:completed_line) - a:completion_item.textEdit.range.end.character)
+    return a:done_line !=# l:text_edit_before . s:trim_unmeaning_tabstop(a:completion_item.textEdit.newText) . l:text_edit_after
+  endif
+  return get(a:completion_item, 'insertText', a:completed_item.word) !=# s:trim_unmeaning_tabstop(a:completed_item.word)
+endfunction
+
+"
+" trim_unmeaning_tabstop
+"
+function! s:trim_unmeaning_tabstop(text) abort
+  return substitute(a:text, '\%(\$0\|\${0}\)$', '', 'g')
+endfunction
+
+"
 " resolve_completion_item
 "
 function! s:resolve_completion_item(user_data) abort
@@ -433,53 +457,6 @@ function! s:resolve_completion_item(user_data) abort
   let a:user_data.resolve = a:user_data.resolve.then({ item -> empty(item) ? a:user_data.completion_item : item })
   let a:user_data.resolve = a:user_data.resolve.catch(lamp#rescue(a:user_data.completion_item))
   return a:user_data.resolve
-endfunction
-
-"
-" get_expandable_state
-"
-function! s:get_expandable_state(completed_item, completion_item, done_position, done_line) abort
-  let l:word_len = strchars(a:completed_item.word)
-
-  if type(get(a:completion_item, 'textEdit', v:null)) == type({})
-    let l:new_text = a:completion_item.textEdit.newText
-    return {
-    \   'is_snippet': get(a:completion_item, 'insertTextFormat', 1) == 2,
-    \   'text': l:new_text
-    \ }
-  endif
-
-  if get(a:completion_item, 'insertTextFormat', 1) == 2 && type(get(a:completion_item, 'insertText', v:null)) == type('')
-    let l:insert_text = a:completion_item.insertText
-    return {
-    \   'is_snippet': v:true,
-    \   'text': l:insert_text
-    \ }
-  endif
-  return {}
-endfunction
-
-"
-" clear_completed_string
-"
-function! s:clear_completed_string(completed_item, completion_item, done_line, done_position, complete_position) abort
-  " Remove commit characters.
-  call setline('.', a:done_line)
-
-  " Remove for a:complete_position
-  undojoin | call s:TextEdit.apply('%', [{
-  \   'range': {
-  \     'start': {
-  \       'line': a:complete_position.line,
-  \       'character': a:complete_position.character,
-  \     },
-  \     'end': {
-  \       'line': a:done_position.line,
-  \       'character': a:done_position.character,
-  \     }
-  \   },
-  \   'newText': ''
-  \ }])
 endfunction
 
 "
