@@ -13,9 +13,7 @@ let s:cache = {
 "
 function! lamp#protocol#document#encode_uri(bufnr_or_path) abort
   let l:path = type(a:bufnr_or_path) == type('') ? a:bufnr_or_path : bufname(a:bufnr_or_path)
-  if empty(l:path)
-    let l:path = getcwd()
-  endif
+  let l:path = empty(l:path) ? getcwd() : l:path
   let l:path = lamp#fnamemodify(l:path, ':p')
   if has_key(s:cache.path_uri, l:path)
     return s:cache.path_uri[l:path]

@@ -37,9 +37,6 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   \   'dup': 1,
   \ })
 
-  let l:current_line = getline('.')
-  let l:current_position = s:Position.cursor()
-
   let l:completion_items = []
   let l:completion_items = type(a:response) == type({}) ? get(a:response, 'items', []) : l:completion_items
   let l:completion_items = type(a:response) == type([]) ? a:response : l:completion_items
@@ -47,8 +44,6 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   if has('nvim')
     return luaeval('lamp_feature_completion_convert(_A[1], _A[2], _A[3], _A[4], _A[5], _A[6])', [
     \   l:params,
-    \   l:current_line,
-    \   l:current_position,
     \   a:server_name,
     \   a:complete_position,
     \   l:completion_items
@@ -56,8 +51,6 @@ function! lamp#feature#completion#convert(server_name, complete_position, respon
   else
     return s:convert(
     \   l:params,
-    \   l:current_line,
-    \   l:current_position,
     \   a:server_name,
     \   a:complete_position,
     \   l:completion_items
@@ -68,7 +61,7 @@ endfunction
 "
 " convert
 "
-function! s:convert(params, current_line, current_position, server_name, complete_position, completion_items) abort
+function! s:convert(params, server_name, complete_position, completion_items) abort
   let l:kind_map = lamp#protocol#completion#get_kind_map()
 
   let l:completed_items = []
@@ -133,7 +126,7 @@ endfunction
 "
 if has('nvim')
 lua << EOF
-function lamp_feature_completion_convert(params, current_line, current_position, server_name, complete_position, completion_items)
+function lamp_feature_completion_convert(params, server_name, complete_position, completion_items)
   local kind_map = vim.call('lamp#protocol#completion#get_kind_map')
 
   local complete_items = {}
@@ -282,7 +275,7 @@ function! s:on_complete_changed() abort
   call lamp#debounce(
   \   'lamp#feature#completion:show_documentation',
   \   { -> l:ctx.callback() },
-  \   100
+  \   80
   \ )
 endfunction
 
@@ -300,7 +293,7 @@ function! s:on_complete_done() abort
   let s:context.completed_item = v:completed_item
   let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
-  if !empty(v:completed_item) && strlen(get(v:completed_item, 'word', '')) > 0
+  if !empty(v:completed_item) && strlen(get(v:completed_item, 'word', '')) > 0 && !empty(s:context.user_data)
     noautocmd call feedkeys("\<Plug>(lamp-completion:on_complete_done_after)", '')
   endif
 endfunction
@@ -314,12 +307,10 @@ function! s:on_complete_done_after() abort
   let l:done_line = s:context.done_line
   let l:completed_item = s:context.completed_item
   let l:user_data = s:context.user_data
+  let l:complete_position = l:user_data.complete_position
+  let l:complete_start_character = l:done_position.character - strchars(l:completed_item.word)
 
   if mode()[0] ==# 'n'
-    return ''
-  endif
-
-  if empty(l:user_data)
     return ''
   endif
 
@@ -340,12 +331,12 @@ function! s:on_complete_done_after() abort
   endtry
 
   " Clear completed string if needed.
-  let l:is_expandable = s:is_expandable(l:done_line, l:done_position, l:user_data.complete_position, l:completion_item, l:completed_item)
+  let l:is_expandable = s:is_expandable(l:done_line, l:done_position, l:complete_position, l:completion_item, l:completed_item)
   if l:is_expandable
     call s:clear_completed_string(
     \   l:done_line,
     \   l:done_position,
-    \   l:user_data.complete_position
+    \   l:complete_position
     \ )
   endif
 
@@ -358,29 +349,35 @@ function! s:on_complete_done_after() abort
   if l:is_expandable
     " create text_edit
     if type(get(l:completion_item, 'textEdit', v:null)) == type({})
-      let l:text_edit = l:completion_item.textEdit
+      let l:overflow_before = l:complete_start_character - l:completion_item.textEdit.range.start.character
+      let l:overflow_after = l:completion_item.textEdit.range.end.character - l:complete_position.character
+      let l:text = l:completion_item.textEdit.newText
     else
-      let l:text_edit = {
-      \   'range': {
-      \     'start': {
-      \       'line': l:done_position.line,
-      \       'character': l:done_position.character - strchars(l:completed_item.word)
-      \     },
-      \     'end': s:Position.cursor()
-      \   },
-      \   'newText': get(l:completion_item, 'insertText', '')
-      \ }
+      let l:overflow_before = 0
+      let l:overflow_after = 0
+      let l:text = get(l:completion_item, 'insertText', l:completed_item.word)
     endif
 
     " apply snipept or text_edit
+    let l:position = s:Position.cursor()
+    let l:range = {
+    \   'start': {
+    \     'line': l:position.line,
+    \     'character': l:position.character - (l:complete_position.character - l:complete_start_character) - l:overflow_before,
+    \   },
+    \   'end': {
+    \     'line': l:position.line,
+    \     'character': l:position.character + l:overflow_after,
+    \   }
+    \ }
     if get(l:completion_item, 'insertTextFormat', 1) == 2
-      call s:TextEdit.apply('%', [{ 'range': l:text_edit.range, 'newText': '' }])
-      call cursor(s:Position.lsp_to_vim('%', l:text_edit.range.start))
+      call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': '' }])
+      call cursor(s:Position.lsp_to_vim('%', l:range.start))
       call lamp#config('feature.completion.snippet.expand')({
-      \   'body': l:text_edit.newText,
+      \   'body': l:text,
       \ })
     else
-      call s:TextEdit.apply('%', [l:text_edit])
+      call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': l:text }])
     endif
   endif
 
@@ -491,6 +488,8 @@ function! s:show_documentation(event, completed_item, completion_item) abort
     if !empty(l:screenpos)
       call lamp#view#floatwin#show('completion', l:screenpos, l:contents)
     endif
+  else
+    call lamp#view#floatwin#hide('completion')
   endif
 endfunction
 

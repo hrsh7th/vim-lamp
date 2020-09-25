@@ -1,8 +1,6 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
-
 let s:sign_ns = 'lamp#feature#diagnostic:sign'
 let s:highlight_ns = 'lamp#feature#diagnostic:highlight'
-let s:virtual_text_ns = 'lamp#feature#diagnostic:virtual_text'
 
 "
 " init
@@ -14,6 +12,7 @@ function! lamp#feature#diagnostic#init() abort
     autocmd BufWinEnter <buffer> call s:on_buf_win_enter()
     autocmd InsertEnter <buffer> call s:on_action()
     autocmd InsertLeave <buffer> call s:on_action()
+    autocmd WinEnter <buffer> call s:on_action()
     autocmd CursorMoved <buffer> call s:on_cursor_moved()
   augroup END
 
@@ -68,14 +67,14 @@ endfunction
 " on_buf_write_pre
 "
 function! s:on_buf_write_pre() abort
-  call s:update(v:true)
+  call s:update()
 endfunction
 
 "
 " on_buf_win_enter
 "
 function! s:on_buf_win_enter() abort
-  call s:update(v:false)
+  call s:update()
 endfunction
 
 "
@@ -84,7 +83,6 @@ endfunction
 function! s:on_action() abort
   call lamp#view#floatwin#hide('diagnostic')
   call lamp#debounce('lamp#feature#diagnostic:on_cursor_moved', { -> {} }, 0)
-  call s:check()
 endfunction
 
 "
@@ -172,25 +170,13 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, diagnostics) abort
-  call s:apply(a:server.name, a:diagnostics)
-endfunction
-
-"
-" check
-"
-function! s:check() abort
-  let l:timeout = mode()[0] ==# 'i'
-  \   ? lamp#config('feature.diagnostic.increase_delay.insert')
-  \   : lamp#config('feature.diagnostic.increase_delay.normal')
-  call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, l:timeout)
+  call s:update()
 endfunction
 
 "
 " update
 "
-function! s:update(...) abort
-  let l:force = get(a:000, 0, v:false)
-
+function! s:update() abort
   let l:bufnames = {}
   for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
     let l:bufnames[lamp#fnamemodify(bufname(winbufnr(l:winnr)), ':p')] = 1
@@ -201,10 +187,8 @@ function! s:update(...) abort
     for l:server in lamp#server#registry#find_by_filetype(getbufvar(l:bufname, '&filetype'))
       let l:diagnostics = get(l:server.diagnostics, l:uri)
       let l:document = get(l:server.documents, l:uri)
-      if !empty(l:diagnostics) && !empty(l:document) && (l:diagnostics.updated(l:document.version) || l:force)
+      if !empty(l:diagnostics) && !empty(l:document) && l:diagnostics.updated(l:document.version)
         call s:apply(l:server.name, l:server.diagnostics[l:uri])
-      else
-        call lamp#log('[LOG]', 'diagnostics skipped: it does not updated', l:server.name)
       endif
     endfor
   endfor
@@ -230,11 +214,9 @@ function! s:apply(server_name, diagnostics) abort
 
   " remove per server.
   let l:highlight_ns = printf('%s:%s', s:highlight_ns, a:server_name)
-  let l:virtual_text_ns = printf('%s:%s', s:virtual_text_ns, a:server_name)
   let l:sign_ns = printf('%s:%s', s:sign_ns, a:server_name)
   call lamp#view#sign#remove(l:sign_ns, l:bufnr)
   call lamp#view#highlight#remove(l:highlight_ns, l:bufnr)
-  call lamp#view#virtual_text#remove(l:virtual_text_ns, l:bufnr)
 
   " update.
   for l:diagnostic in a:diagnostics.diagnostics
