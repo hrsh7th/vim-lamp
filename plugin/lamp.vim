@@ -44,7 +44,7 @@ command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
 augroup lamp
   autocmd!
   autocmd BufWinEnter,FileType * call <SID>on_text_document_did_open()
-  autocmd TextChanged,TextChangedI,TextChangedP * call <SID>on_text_document_did_change()
+  autocmd TextChanged,TextChangedI * call <SID>on_text_document_did_change()
   autocmd BufWritePre * call <SID>on_text_document_will_save()
   autocmd BufWritePost * call <SID>on_text_document_did_save()
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
