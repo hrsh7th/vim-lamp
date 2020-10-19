@@ -21,6 +21,7 @@ function! s:Server.new(name, option) abort
   \   'channel': s:Channel.new({ 'name': a:name, 'command': a:option.command }),
   \   'filetypes': a:option.filetypes,
   \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
+  \   'root_uri_cache': {},
   \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
   \   'trace': get(a:option, 'trace', 'off'),
   \   'documents': {},
@@ -44,7 +45,7 @@ function! s:Server.start() abort
   if !self.state.started && !self.state.exited
     let self.state.started = v:true
     call self.channel.start(function(s:Server.on_notification, [], self), {
-    \   'cwd': self.root_uri(bufnr('%'))
+    \   'cwd': self.get_root_uri(bufnr('%'))
     \ })
   endif
   return s:Promise.resolve()
@@ -86,6 +87,16 @@ function! s:Server.is_running() abort
 endfunction
 
 "
+" get_root_uri
+"
+function! s:Server.get_root_uri(bufnr) abort
+  if !has_key(self.root_uri_cache, a:bufnr)
+    let self.root_uri_cache[a:bufnr] = self.root_uri(a:bufnr)
+  endif
+  return self.root_uri_cache[a:bufnr]
+endfunction
+
+"
 " initialize
 "
 function! s:Server.initialize(bufnr) abort
@@ -108,7 +119,7 @@ function! s:Server.initialize(bufnr) abort
     return a:response
   endfunction
 
-  let l:root_uri = self.root_uri(a:bufnr)
+  let l:root_uri = self.get_root_uri(a:bufnr)
   if l:root_uri ==# ''
     let l:root_uri = lamp#fnamemodify(bufname('%'), ':p:h')
   endif

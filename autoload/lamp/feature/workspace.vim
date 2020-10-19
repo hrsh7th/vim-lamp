@@ -32,7 +32,7 @@ function! lamp#feature#workspace#update(server, bufnr) abort
     return
   endif
 
-  let l:uri = lamp#protocol#document#encode_uri(a:server.root_uri(a:bufnr))
+  let l:uri = lamp#protocol#document#encode_uri(a:server.get_root_uri(a:bufnr))
   if l:uri ==# ''
     return
   endif

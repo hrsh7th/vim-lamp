@@ -259,6 +259,9 @@ function! s:on_complete_changed() abort
   let l:ctx.completed_item = copy(v:completed_item)
   let l:ctx.user_data = l:user_data
   function! l:ctx.callback() abort
+    if mode()[0] ==# 'n'
+      return
+    endif
     if empty(self.user_data)
       return
     endif
