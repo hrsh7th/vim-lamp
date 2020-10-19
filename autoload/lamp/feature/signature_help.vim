@@ -1,9 +1,16 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Promise = vital#lamp#import('Async.Promise')
 
+let s:context = {
+\   'lnum': -1
+\ }
+
+let s:close_character = [')', '>', '}', ']', ';', ' ']
+
 function! lamp#feature#signature_help#init() abort
   call lamp#view#floatwin#configure('signature_help', {
-  \   'max_height': 12,
+  \   'max_width': float2nr(floor(&columns * 0.8)),
+  \   'max_height': 6,
   \ })
   execute printf('augroup lamp#feature#signature_help_%d', bufnr('%'))
     autocmd!
@@ -24,6 +31,10 @@ endfunction
 " s:trigger_signature_help
 "
 function! s:trigger_signature_help() abort
+  if line('.') != s:context.lnum
+    call s:close_signature_help()
+  endif
+
   let l:ctx = {}
   function! l:ctx.callback() abort
     if index(['i', 's'], mode()[0]) == -1
@@ -51,11 +62,14 @@ function! s:trigger_signature_help() abort
 
     " check trigger character.
     let l:char = lamp#view#cursor#get_before_char_skip_white()
-    if index(l:trigger_chars, l:char) == -1
+    if index(s:close_character, l:char) >= 0
       call s:close_signature_help()
+    endif
+    if index(l:trigger_chars, l:char) == -1
       return
     endif
 
+    let s:context.lnum = line('.')
     let l:promises = map(l:servers, { k, v -> v.request('textDocument/signatureHelp', {
           \   'textDocument': lamp#protocol#document#identifier(l:bufnr),
           \   'position': s:Position.cursor()

@@ -25,8 +25,13 @@ endfunction
 " lamp#view#cursor#get_before_line
 "
 function! lamp#view#cursor#get_before_line() abort
+  if mode()[0] ==# 'i'
+    let l:col = col('.') - 2
+  elseif mode()[0] ==# 's'
+    let l:col = col('v') - 2
+  endif
   let l:text = getline('.')
-  return l:text[0 : min([strlen(l:text), col('.') - 2])]
+  return l:text[0 : min([strlen(l:text), l:col])]
 endfunction
 
 "
