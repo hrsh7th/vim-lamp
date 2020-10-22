@@ -170,7 +170,7 @@ endfunction
 " lamp#feature#diagnostic#update
 "
 function! lamp#feature#diagnostic#update(server, diagnostics) abort
-  call lamp#debounce('lamp#feature#diagnostic#update', { -> s:update() }, mode()[0] ==# 'i' ? 800 : 100)
+  call s:update()
 endfunction
 
 "
