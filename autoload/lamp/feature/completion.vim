@@ -236,8 +236,6 @@ endfunction
 " on_insert_leave
 "
 function! s:on_insert_leave() abort
-  call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
-  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 0)
   call lamp#view#floatwin#hide('completion')
   call s:clear_managed_user_data()
 endfunction
@@ -255,33 +253,19 @@ function! s:on_complete_changed() abort
     call lamp#view#floatwin#hide('completion')
     return
   endif
+  if mode()[0] ==# 'n'
+    return
+  endif
 
-  let l:ctx = {}
-  let l:ctx.event = copy(v:event)
-  let l:ctx.completed_item = copy(v:completed_item)
-  let l:ctx.user_data = l:user_data
-  function! l:ctx.callback() abort
-    if mode()[0] ==# 'n'
-      return
-    endif
-    if empty(self.user_data)
-      return
-    endif
+  let l:event = copy(v:event)
+  if l:event.width >= float2nr(&columns / 2)
+    return
+  endif
 
-    if self.event.width >= float2nr(&columns / 2)
-      return
-    endif
-
-    call s:resolve_completion_item(self.user_data).then({ completion_item ->
-    \   s:show_documentation(self.event, self.completed_item, completion_item)
-    \ })
-  endfunction
-
-  call lamp#debounce(
-  \   'lamp#feature#completion:show_documentation',
-  \   { -> l:ctx.callback() },
-  \   80
-  \ )
+  let l:completed_item = v:completed_item
+  call s:resolve_completion_item(l:user_data).then({ completion_item ->
+  \   s:show_documentation(l:event, l:completed_item, completion_item)
+  \ })
 endfunction
 
 "
@@ -289,8 +273,6 @@ endfunction
 "
 function! s:on_complete_done() abort
   " clear.
-  call lamp#debounce('lamp#feature#completion:resolve', { -> {} }, 0)
-  call lamp#debounce('lamp#feature#completion:show_documentation', { -> {} }, 0)
   call lamp#view#floatwin#hide('completion')
 
   let s:context.done_position = s:Position.cursor()
