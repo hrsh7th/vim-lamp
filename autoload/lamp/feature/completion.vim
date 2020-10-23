@@ -2,6 +2,7 @@ let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
+let s:CancellationToken = lamp#server#channel#cancellation_token#import()
 
 let s:context = {}
 
@@ -12,6 +13,7 @@ let s:context = {}
 "
 let s:managed_user_data_map = {}
 let s:managed_user_data_key = 0
+let s:resolve_cancellation_token = v:null
 
 "
 " lamp#feature#completion#init
@@ -447,13 +449,18 @@ function! s:resolve_completion_item(user_data) abort
     return a:user_data.resolve
   endif
 
+  if !empty(s:resolve_cancellation_token)
+    call s:resolve_cancellation_token.cancel()
+  endif
+  let s:resolve_cancellation_token = s:CancellationToken.new()
+
   let l:server = lamp#server#registry#get_by_name(a:user_data.server_name)
   if empty(l:server) || !l:server.supports('capabilities.completionProvider.resolveProvider')
     let a:user_data.resolve = s:Promise.resolve(a:user_data.completion_item)
     return a:user_data.resolve
   endif
 
-  let a:user_data.resolve = l:server.request('completionItem/resolve',a:user_data.completion_item)
+  let a:user_data.resolve = l:server.request('completionItem/resolve',a:user_data.completion_item, { 'cancellation_token': s:resolve_cancellation_token })
   let a:user_data.resolve = a:user_data.resolve.then({ item -> empty(item) ? a:user_data.completion_item : item })
   let a:user_data.resolve = a:user_data.resolve.catch(lamp#rescue(a:user_data.completion_item))
   return a:user_data.resolve

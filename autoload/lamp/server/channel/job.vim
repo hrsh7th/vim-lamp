@@ -29,7 +29,7 @@ function! s:Job.send(data) abort
     if self.timer_id != -1
       return
     endif
-    let self.timer_id = timer_start(8, function(self.flush, [], self))
+    let self.timer_id = timer_start(10, function(self.flush, [], self))
   else
     call lamp#log('[LOG]', 's:Job.send', 'channel is not running.')
   endif
@@ -51,7 +51,7 @@ function! s:Job.flush(...) abort
     else
       call self.job.send(strpart(self.buffer, 0, 1024))
       let self.buffer = strpart(self.buffer, 1024, strlen(self.buffer) - 1024)
-      let self.timer_id = timer_start(0, function(self.flush, [], self))
+      let self.timer_id = timer_start(10, function(self.flush, [], self))
     endif
   catch /.*/
     if !s:exiting
