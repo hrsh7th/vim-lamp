@@ -1,9 +1,9 @@
 let s:id = 0
 
 "
-" lamp#server#channel#cancellation_token#import
+" lamp#server#cancellation_token#import
 "
-function! lamp#server#channel#cancellation_token#import() abort
+function! lamp#server#cancellation_token#import() abort
   return s:CancellationToken
 endfunction
 

@@ -25,26 +25,22 @@ endfunction
 " new
 "
 function! s:new(args) abort
-  if has('nvim')
-    return s:Nvim.new(a:args)
-  else
-    return s:Vim.new(a:args)
-  endif
+  return s:Job.new(a:args)
 endfunction
 
-"
-" Nvim
-"
-let s:Nvim = {}
+let s:Job = {}
 
 "
 " new
 "
-function! s:Nvim.new(args) abort
-  return extend(deepcopy(s:Nvim), {
-  \   'running': v:false,
+function! s:Job.new(args) abort
+  return extend(deepcopy(s:Job), {
   \   'command': a:args.command,
   \   'emitter': s:Emitter.new(),
+  \   'read_buffer': '',
+  \   'read_timer': -1,
+  \   'write_buffer': '',
+  \   'write_timer': -1,
   \   'job': v:null,
   \ })
 endfunction
@@ -52,152 +48,144 @@ endfunction
 "
 " start
 "
-function! s:Nvim.start(...) abort
-  let l:option = get(a:000, 0, {})
-
-  let l:params = {
-  \   'on_stdout': function(self.on_stdout, [], self),
-  \   'on_stderr': function(self.on_stderr, [], self),
-  \   'on_exit': function(self.on_exit, [], self),
-  \ }
-
-  if has_key(l:option, 'cwd') && isdirectory(l:option.cwd)
-    let l:params.cwd = l:option.cwd
+function! s:Job.start(...) abort
+  if self.is_running()
+    return
   endif
 
-  let self.job = jobstart(self.command, l:params)
-  let self.running = v:true
+  let l:args = extend(get(a:000, 0, {}), { 'cwd': getcwd() }, 'keep')
+  if !isdirectory(l:args.cwd) || l:args.cwd !~# '/'
+    unlet l:args.cwd
+  endif
+  let self.job = s:_create(
+  \   self.command,
+  \   l:args,
+  \   function(self.on_stdout, [], self),
+  \   function(self.on_stderr, [], self),
+  \   function(self.on_exit, [], self)
+  \ )
 endfunction
 
 "
 " stop
 "
-function! s:Nvim.stop() abort
-  call jobstop(self.job)
+function! s:Job.stop() abort
+  if !self.is_running()
+    return
+  endif
+  call self.job.stop()
   let self.job = v:null
-endfunction
-
-"
-" send
-"
-function! s:Nvim.send(data) abort
-  call jobsend(self.job, a:data)
 endfunction
 
 "
 " is_running
 "
-function! s:Nvim.is_running() abort
-  return self.running
-endfunction
-
-"
-" on_stdout
-"
-function! s:Nvim.on_stdout(id, data, event) abort
-  call self.emitter.emit('stdout', join(a:data, "\n"))
-endfunction
-
-"
-" on_stderr
-"
-function! s:Nvim.on_stderr(id, data, event) abort
-  call self.emitter.emit('stderr', join(a:data, "\n"))
-endfunction
-
-"
-" on_exit
-"
-function! s:Nvim.on_exit(id, data, event) abort
-  let self.running = v:false
-  call self.emitter.emit('exit', a:data)
-endfunction
-
-"
-" Vim
-"
-let s:Vim = {}
-
-"
-" new
-"
-function! s:Vim.new(args) abort
-  return extend(deepcopy(s:Vim), {
-  \   'running': v:false,
-  \   'command': a:args.command,
-  \   'emitter': s:Emitter.new(),
-  \   'job': v:null,
-  \ })
-endfunction
-
-"
-" start
-"
-function! s:Vim.start(...) abort
-  let l:option = get(a:000, 0, {})
-
-  let l:params = {
-  \   'in_io': 'pipe',
-  \   'in_mode': 'raw',
-  \   'out_io': 'pipe',
-  \   'out_mode': 'raw',
-  \   'err_io': 'pipe',
-  \   'err_mode': 'raw',
-  \   'out_cb': function(self.on_stdout, [], self),
-  \   'err_cb': function(self.on_stderr, [], self),
-  \   'exit_cb': function(self.on_exit, [], self)
-  \ }
-
-  if has_key(l:option, 'cwd') && isdirectory(l:option.cwd)
-    let l:params.cwd = l:option.cwd
-  endif
-
-  let self.job = job_start(self.command, l:params)
-  let self.running = v:true
-endfunction
-
-"
-" stop
-"
-function! s:Vim.stop() abort
-  if !empty(self.job)
-    call ch_close(self.job)
-  endif
-  let self.job = v:null
+function! s:Job.is_running() abort
+  return !empty(self.job)
 endfunction
 
 "
 " send
 "
-function! s:Vim.send(data) abort
-  call ch_sendraw(self.job, a:data)
+function! s:Job.send(data) abort
+  if !self.is_running()
+    return
+  endif
+  let self.write_buffer .= a:data
+  if self.write_timer != -1
+    return
+  endif
+  let self.write_timer = timer_start(0, function(self.write, [], self))
 endfunction
 
 "
-" is_running
+" write
 "
-function! s:Vim.is_running() abort
-  return self.running
+function! s:Job.write(...) abort
+  let self.write_timer = -1
+  let l:buffer_len = strlen(self.write_buffer)
+  if l:buffer_len == 0
+    return
+  endif
+  call self.job.send(strpart(self.write_buffer, 0, 1024))
+  let self.write_buffer = strpart(self.write_buffer, 1024)
+  if l:buffer_len > 1024
+    let self.write_timer = timer_start(0, function(self.write, [], self))
+  endif
+endfunction
+
+"
+" read
+"
+function! s:Job.read(...) abort
+  let self.read_timer = -1
+  let l:buffer_len = strlen(self.read_buffer)
+  if l:buffer_len == 0
+    return
+  endif
+  call self.emitter.emit('stdout', strpart(self.read_buffer, 0, 1024))
+  let self.read_buffer = strpart(self.read_buffer, 1024)
+  if l:buffer_len > 1024
+    let self.read_timer = timer_start(0, function(self.read, [], self))
+  endif
 endfunction
 
 "
 " on_stdout
 "
-function! s:Vim.on_stdout(job, data) abort
-  call self.emitter.emit('stdout', a:data)
+function! s:Job.on_stdout(data) abort
+  let self.read_buffer .= a:data
+  if self.read_timer != -1
+    return
+  endif
+  let self.read_timer = timer_start(0, function(self.read, [], self))
 endfunction
 
 "
 " on_stderr
 "
-function! s:Vim.on_stderr(job, data) abort
+function! s:Job.on_stderr(data) abort
   call self.emitter.emit('stderr', a:data)
 endfunction
 
 "
 " on_exit
 "
-function! s:Vim.on_exit(job, data) abort
-  let self.running = v:false
-  call self.emitter.emit('exit', a:data)
+function! s:Job.on_exit(code) abort
+  call self.emitter.emit('exit', a:code)
 endfunction
+
+"
+" create job instance
+"
+if has('nvim')
+  function! s:_create(command, args, out, err, exit) abort
+    let a:args.on_stdout = { id, data, event -> a:out(join(data, "\n")) }
+    let a:args.on_stderr = { id, data, event -> a:err(join(data, "\n")) }
+    let a:args.on_exit = { id, data, code -> a:exit(code) }
+    let l:job = jobstart(a:command, a:args)
+    return {
+    \   'stop': { -> jobstop(l:job) },
+    \   'send': { data -> jobsend(l:job, data) }
+    \ }
+  endfunction
+else
+  function! s:_create(command, args, out, err, exit) abort
+    let a:args.noblock = v:true
+    let a:args.in_io = 'pipe'
+    let a:args.in_mode = 'raw'
+    let a:args.out_io = 'pipe'
+    let a:args.out_mode = 'raw'
+    let a:args.err_io = 'pipe'
+    let a:args.err_mode = 'raw'
+    let a:args.out_cb = { job, data -> a:out(data) }
+    let a:args.err_cb = { job, data -> a:err(data) }
+    let a:args.exit_cb = { job, code -> a:exit(code) }
+    let l:job = job_start(a:command, a:args)
+    return {
+    \   'stop': { ->  ch_close(l:job) },
+    \   'send': { data -> ch_sendraw(l:job, data) }
+    \ }
+  endfunction
+endif
+

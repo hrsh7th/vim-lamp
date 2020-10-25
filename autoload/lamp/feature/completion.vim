@@ -2,7 +2,7 @@ let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
-let s:CancellationToken = lamp#server#channel#cancellation_token#import()
+let s:CancellationToken = lamp#server#cancellation_token#import()
 
 let s:context = {}
 
