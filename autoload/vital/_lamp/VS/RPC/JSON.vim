@@ -170,10 +170,11 @@ function! s:Connection.flush(...) abort
   endif
 
   " content length check.
-  let l:content_length = get(matchlist(self.buffer, 'Content-Length:\s*\(\d\+\)', 0, 1), 1, v:null)
-  if l:content_length is v:null
+  let l:content_length = stridx(self.buffer, 'Content-Length:') + 15
+  if l:content_length < 15
     return
   endif
+  let l:content_length = str2nr(self.buffer[l:content_length : l:header_length])
   let l:message_length = l:header_length + l:content_length
 
   " content check.
@@ -185,10 +186,9 @@ function! s:Connection.flush(...) abort
   let l:content = strpart(self.buffer, l:header_length, l:message_length - l:header_length)
   let self.buffer = self.buffer[l:message_length : ]
   try
-    let l:message = json_decode(l:content)
+    call self.on_message(json_decode(l:content))
   catch /.*/
   endtry
-  call self.on_message(l:message)
 
   if l:buffer_len > l:message_length
     let self.timer = timer_start(0, function(self.flush, [], self))
