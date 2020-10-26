@@ -28,6 +28,8 @@ function! s:new(args) abort
   return s:Job.new(a:args)
 endfunction
 
+let s:chunk_size = 2048
+
 let s:Job = {}
 
 "
@@ -107,9 +109,9 @@ function! s:Job.write(...) abort
   if l:buffer_len == 0
     return
   endif
-  call self.job.send(strpart(self.write_buffer, 0, 1024))
-  let self.write_buffer = strpart(self.write_buffer, 1024)
-  if l:buffer_len > 1024
+  call self.job.send(strpart(self.write_buffer, 0, s:chunk_size))
+  let self.write_buffer = strpart(self.write_buffer, s:chunk_size)
+  if l:buffer_len > s:chunk_size
     let self.write_timer = timer_start(0, function(self.write, [], self))
   endif
 endfunction
@@ -123,9 +125,9 @@ function! s:Job.read(...) abort
   if l:buffer_len == 0
     return
   endif
-  call self.emitter.emit('stdout', strpart(self.read_buffer, 0, 1024))
-  let self.read_buffer = strpart(self.read_buffer, 1024)
-  if l:buffer_len > 1024
+  call self.emitter.emit('stdout', strpart(self.read_buffer, 0, s:chunk_size))
+  let self.read_buffer = strpart(self.read_buffer, s:chunk_size)
+  if l:buffer_len > s:chunk_size
     let self.read_timer = timer_start(0, function(self.read, [], self))
   endif
 endfunction

@@ -123,7 +123,15 @@ function! s:Server.initialize(bufnr) abort
   function! l:ctx.callback(bufnr, response) abort dict
     call self.capability.merge(a:response)
     call self.notify_raw('initialized', {})
-    call self.notify_raw('workspace/didChangeConfiguration', { 'settings': lamp#feature#workspace#get_config() })
+    call self.notify_raw('workspace/didChangeConfiguration', {
+    \   'settings': lamp#feature#workspace#get_config()
+    \ })
+    call self.notify_raw('workspace/didChangeWorkspaceFolders', {
+    \   'event': {
+    \     'added': lamp#feature#workspace#get_folders(),
+    \     'removed': [],
+    \   }
+    \ })
 
     let self.initialized = v:true
     doautocmd <nomodeline> User lamp#server#initialized
@@ -230,6 +238,7 @@ function! s:Server.open_document(bufnr) abort
 
   " create document.
   let self.documents[l:uri] = s:Document.new(a:bufnr)
+  call self.detect_workspace(a:bufnr)
   call self.notify_raw('textDocument/didOpen', {
   \   'textDocument': lamp#protocol#document#item(a:bufnr),
   \ })
@@ -254,6 +263,7 @@ function! s:Server.sync_document(bufnr) abort
   " full sync.
   if l:sync_kind == 1
     call l:doc.sync()
+    call self.detect_workspace(a:bufnr)
     call self.notify_raw('textDocument/didChange', {
     \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
     \   'contentChanges': [{ 'text': join(lamp#view#buffer#get_lines(a:bufnr), "\n") }]
@@ -264,6 +274,7 @@ function! s:Server.sync_document(bufnr) abort
     let l:diff = l:doc.diff()
     if l:diff.rangeLength != 0 || l:diff.text !=# ''
       call l:doc.sync()
+      call self.detect_workspace(a:bufnr)
       call self.notify_raw('textDocument/didChange', {
       \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
       \   'contentChanges': [l:diff]
