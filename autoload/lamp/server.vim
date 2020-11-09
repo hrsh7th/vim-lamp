@@ -39,6 +39,8 @@ function! s:Server.new(name, option) abort
   \     'exited': v:false,
   \   },
   \ })
+  call l:server.rpc.emitter.on('stderr', function(l:server.on_stderr, [], l:server))
+  call l:server.rpc.emitter.on('exit', function(l:server.on_exit, [], l:server))
   call l:server.rpc.emitter.on('request', function(l:server.on_request, [], l:server))
   call l:server.rpc.emitter.on('notify', function(l:server.on_notify, [], l:server))
   return l:server
@@ -395,6 +397,20 @@ endfunction
 function! s:Server.on_response(id, response) abort
   call self.log('<- ON_RESPONSE', a:id, a:response)
   return a:response
+endfunction
+
+"
+" on_stderr
+"
+function! s:Server.on_stderr(data) abort
+  call self.log('[STDERR]', a:data)
+endfunction
+
+"
+" on_exit
+"
+function! s:Server.on_exit(code) abort
+  call self.log('[EXIT]', a:code)
 endfunction
 
 "

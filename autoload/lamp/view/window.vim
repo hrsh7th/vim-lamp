@@ -12,21 +12,19 @@ function! lamp#view#window#do(winid, fn) abort
     return
   endif
 
-  let l:mode = mode()
+  noautocmd keepalt keepjumps call win_gotoid(a:winid)
   try
-    execute printf('noautocmd keepalt keepjumps %swindo call a:fn()', win_id2win(a:winid))
+    call a:fn()
   catch /.*/
     echomsg string({ 'e': v:exception, 't': v:throwpoint })
   endtry
-  execute printf('noautocmd keepalt keepjumps %swincmd w', win_id2win(l:current_winid))
+  noautocmd keepalt keepjumps call win_gotoid(l:current_winid)
+endfunction
 
-  if index(['v', 'V', "\<C-v>"], l:mode) >= 0
-    normal! gv
-  endif
-
-  if index(['s', 'S', "\<C-S>"], l:mode) >= 0
-    normal! gv
-    call feedkeys("\<C-g>", 'n')
-  endif
+"
+" lamp#view#window#find_floating_winids
+"
+function! lamp#view#window#find_floating_winids() abort
+  
 endfunction
 
