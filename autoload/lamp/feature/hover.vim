@@ -9,9 +9,9 @@ function! lamp#feature#hover#init() abort
   \   'keep': v:false,
   \   'priority': 100
   \ })
-  execute printf('augroup lamp#feature#hover_%d', bufnr('%'))
+  augroup lamp#feature#hover
     autocmd!
-    autocmd InsertEnter,CursorMoved <buffer> call s:close()
+    autocmd InsertEnter,CursorMoved * call s:close()
   augroup END
 endfunction
 

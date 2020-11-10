@@ -6,13 +6,17 @@ let s:highlight_ns = 'lamp#feature#diagnostic:highlight'
 " init
 "
 function! lamp#feature#diagnostic#init() abort
+  augroup lamp#feature#diagnostic
+    autocmd!
+    autocmd InsertEnter * call s:on_action()
+    autocmd InsertLeave * call s:on_action()
+    autocmd WinEnter * call s:on_action()
+  augroup END
+
   execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
     autocmd!
     autocmd BufWritePost <buffer> call s:on_buf_write_pre()
     autocmd BufWinEnter <buffer> call s:on_buf_win_enter()
-    autocmd InsertEnter <buffer> call s:on_action()
-    autocmd InsertLeave <buffer> call s:on_action()
-    autocmd WinEnter <buffer> call s:on_action()
     autocmd CursorMoved <buffer> call s:on_cursor_moved()
   augroup END
 
