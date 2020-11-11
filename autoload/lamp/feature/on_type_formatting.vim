@@ -109,7 +109,7 @@ function! s:get_on_type_formatting_context(bufnr, char) abort
   let s:cache[a:bufnr][a:char] = v:null
 
   for l:server in lamp#server#registry#find_by_filetype(&filetype)
-    let l:chars = l:server.capability.get_on_type_formatting_trigger_characters()
+    let l:chars = l:server.capabilities.get_on_type_formatting_trigger_characters()
 
     if index(l:chars, a:char) != -1
       let s:cache[a:bufnr][a:char] = { 'server': l:server, 'char': a:char }

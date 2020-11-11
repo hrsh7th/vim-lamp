@@ -11,15 +11,9 @@ function! lamp#server#on_request#on(server, request) abort
   elseif a:request.method ==# 'window/showMessageRequest'
     call s:window_show_message_request(a:server, a:request)
   elseif a:request.method ==# 'client/registerCapability'
-    call lamp#log('[UNHANDLED]', a:request.method, get(a:request, 'params', v:null))
-    call a:server.response(a:request.id, {
-    \   'result': v:null
-    \ })
+    call s:client_register_capability(a:server, a:request)
   elseif a:request.method ==# 'client/unregisterCapability'
-    call lamp#log('[UNHANDLED]', a:request.method, get(a:request, 'params', v:null))
-    call a:server.response(a:request.id, {
-    \   'result': v:null
-    \ })
+    call s:client_unregister_capability(a:server, a:request)
   else
     call lamp#log('[UNHANDLED]', a:request.method, get(a:request, 'params', v:null))
     if has_key(a:request, 'id')
@@ -31,6 +25,26 @@ function! lamp#server#on_request#on(server, request) abort
       \ })
     endif
   endif
+endfunction
+
+"
+" client_register_capability
+"
+function! s:client_register_capability(server, request) abort
+  call a:server.capabilities.register(a:request.params)
+  call a:server.response(a:request.id, {
+  \   'result': v:null
+  \ })
+endfunction
+
+"
+" client_unregister_capability
+"
+function! s:client_unregister_capability(server, request) abort
+  call a:server.capabilities.unregister(a:request.params.id)
+  call a:server.response(a:request.id, {
+  \   'result': v:null
+  \ })
 endfunction
 
 "

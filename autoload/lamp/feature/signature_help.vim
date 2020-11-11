@@ -57,7 +57,7 @@ function! s:trigger_signature_help() abort
     " gather trigger characters.
     let l:trigger_chars = []
     for l:server in l:servers
-      let l:trigger_chars += l:server.capability.get_signature_help_trigger_characters()
+      let l:trigger_chars += l:server.capabilities.get_signature_help_trigger_characters()
     endfor
 
     " check trigger character.

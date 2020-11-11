@@ -55,7 +55,7 @@ function! lamp#feature#workspace#update(server, bufnr) abort
     let s:workspace.folders += [l:folder]
 
     " Send folder changes if server supported.
-    if a:server.capability.is_workspace_folder_supported()
+    if a:server.capabilities.is_workspace_folder_supported()
       call a:server.notify('workspace/didChangeWorkspaceFolders', {
       \   'event': {
       \     'added': [l:folder],

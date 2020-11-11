@@ -1,7 +1,7 @@
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:JSON = vital#lamp#import('VS.RPC.JSON')
 let s:Document = lamp#server#document#import()
-let s:Capability = lamp#server#capability#import()
+let s:Capabilities = lamp#server#capabilities#import()
 
 "
 " lamp#server#import
@@ -29,9 +29,7 @@ function! s:Server.new(name, option) abort
   \   'request_id': 0,
   \   'documents': {},
   \   'diagnostics': {},
-  \   'capability': s:Capability.new({
-  \     'capabilities': get(a:option, 'capabilities', {})
-  \   }),
+  \   'capabilities': s:Capabilities.new(),
   \   'initialized': v:false,
   \   'state': {
   \     'started': v:false,
@@ -123,7 +121,7 @@ function! s:Server.initialize(bufnr) abort
 
   let l:ctx = {}
   function! l:ctx.callback(bufnr, response) abort dict
-    call self.capability.merge(a:response)
+    call self.capabilities.merge(a:response)
     call self.notify_raw('initialized', {})
     call self.notify_raw('workspace/didChangeConfiguration', {
     \   'settings': lamp#feature#workspace#get_config()
@@ -155,7 +153,7 @@ function! s:Server.initialize(bufnr) abort
   \   'rootUri': lamp#protocol#document#encode_uri(l:root_uri),
   \   'initializationOptions': self.initialization_options(),
   \   'trace': self.trace,
-  \   'capabilities': lamp#server#capability#get_default_capability(),
+  \   'capabilities': lamp#server#capabilities#get_default_capabilities(),
   \   'workspaceFolders': lamp#feature#workspace#get_folders(),
   \ }).then(function(l:ctx.callback, [a:bufnr], self))
   return self.state.initialized
@@ -199,7 +197,7 @@ endfunction
 " supports.
 "
 function! s:Server.supports(path) abort
-  return self.capability.supports(a:path)
+  return self.capabilities.supports(a:path)
 endfunction
 
 "
@@ -260,7 +258,7 @@ function! s:Server.sync_document(bufnr) abort
     return
   endif
 
-  let l:sync_kind = self.capability.get_text_document_sync_kind()
+  let l:sync_kind = self.capabilities.get_text_document_sync_kind()
 
   " full sync.
   if l:sync_kind == 1
@@ -315,14 +313,14 @@ endfunction
 " will_save_document
 "
 function! s:Server.will_save_document(bufnr) abort
-  if self.capability.get_text_document_sync_will_save()
+  if self.capabilities.get_text_document_sync_will_save()
     call self.notify('textDocument/willSave', {
     \   'textDocument': lamp#protocol#document#identifier(a:bufnr),
     \   'reason': 1,
     \ })
   endif
 
-  if self.capability.get_text_document_sync_will_save_wait_until()
+  if self.capabilities.get_text_document_sync_will_save_wait_until()
     try
       let l:edits = lamp#sync(
       \   self.notify('textDocument/willSaveWaitUntil', {
@@ -341,9 +339,9 @@ endfunction
 " did_save_document
 "
 function! s:Server.did_save_document(bufnr) abort
-  if self.capability.get_text_document_sync_save()
+  if self.capabilities.get_text_document_sync_save()
     let l:message = { 'textDocument': lamp#protocol#document#identifier(a:bufnr) }
-    if self.capability.get_text_document_sync_save_include_text() 
+    if self.capabilities.get_text_document_sync_save_include_text() 
       let l:message.text = join(lamp#view#buffer#get_lines(a:bufnr), "\n")
     endif
     call self.notify('textDocument/didSave', l:message)
