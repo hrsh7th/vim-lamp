@@ -178,8 +178,13 @@ function! s:Floatwin.show(screenpos, contents) abort
     return
   endif
 
+  let l:contents = self.fix_contents(a:contents)
+  if self.screenpos == a:screenpos && self.contents == l:contents
+    return
+  endif
+
   let self.screenpos = a:screenpos
-  let self.contents = self.fix_contents(a:contents)
+  let self.contents = l:contents
 
   " create lines.
   let l:lines = []
