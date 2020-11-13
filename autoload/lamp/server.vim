@@ -37,10 +37,10 @@ function! s:Server.new(name, option) abort
   \     'exited': v:false,
   \   },
   \ })
-  call l:server.rpc.emitter.on('stderr', function(l:server.on_stderr, [], l:server))
-  call l:server.rpc.emitter.on('exit', function(l:server.on_exit, [], l:server))
-  call l:server.rpc.emitter.on('request', function(l:server.on_request, [], l:server))
-  call l:server.rpc.emitter.on('notify', function(l:server.on_notify, [], l:server))
+  call l:server.rpc.events.on('stderr', function(l:server.on_stderr, [], l:server))
+  call l:server.rpc.events.on('exit', function(l:server.on_exit, [], l:server))
+  call l:server.rpc.events.on('request', function(l:server.on_request, [], l:server))
+  call l:server.rpc.events.on('notify', function(l:server.on_notify, [], l:server))
   return l:server
 endfunction
 

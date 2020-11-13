@@ -262,15 +262,6 @@ endfunction
 " fix_contents
 "
 function! s:Floatwin.fix_contents(contents) abort
-  if self.fix
-    if a:contents[0].lines[0] != ''
-      call insert(a:contents[0].lines, '')
-    endif
-    if a:contents[-1].lines[-1] != ''
-      call add(a:contents[-1].lines, '')
-    endif
-  endif
-
   return a:contents
 endfunction
 

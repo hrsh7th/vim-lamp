@@ -41,7 +41,7 @@ let s:Connection = {}
 function! s:Connection.new(args) abort
   return extend(deepcopy(s:Connection), {
   \   'job': s:Job.new({ 'command': a:args.command }),
-  \   'emitter': s:Emitter.new(),
+  \   'events': s:Emitter.new(),
   \   'buffer':  '',
   \   'timer': -1,
   \   'request_map': {},
@@ -53,9 +53,9 @@ endfunction
 "
 function! s:Connection.start(...) abort
   if !self.job.is_running()
-    call self.job.emitter.on('stdout', self.on_stdout)
-    call self.job.emitter.on('stderr', self.on_stderr)
-    call self.job.emitter.on('exit', self.on_exit)
+    call self.job.events.on('stdout', self.on_stdout)
+    call self.job.events.on('stderr', self.on_stderr)
+    call self.job.events.on('exit', self.on_exit)
     call call(self.job.start, a:000, self.job)
   endif
 endfunction
@@ -65,9 +65,9 @@ endfunction
 "
 function! s:Connection.stop() abort
   if self.job.is_running()
-    call self.job.emitter.off('stdout', self.on_stdout)
-    call self.job.emitter.off('stderr', self.on_stderr)
-    call self.job.emitter.off('exit', self.on_exit)
+    call self.job.events.off('stdout', self.on_stdout)
+    call self.job.events.off('stderr', self.on_stderr)
+    call self.job.events.off('exit', self.on_exit)
     call self.job.stop()
   endif
 endfunction
@@ -137,7 +137,7 @@ function! s:Connection.on_message(message) abort
   if has_key(a:message, 'id')
     " Request from server.
     if has_key(a:message, 'method')
-      call self.emitter.emit('request', a:message)
+      call self.events.emit('request', a:message)
 
     " Response from server.
     else
@@ -153,7 +153,7 @@ function! s:Connection.on_message(message) abort
 
   " Notify from server.
   elseif has_key(a:message, 'method')
-    call self.emitter.emit('notify', a:message)
+    call self.events.emit('notify', a:message)
   endif
 endfunction
 
@@ -210,13 +210,13 @@ endfunction
 " on_stderr
 "
 function! s:Connection.on_stderr(data) abort
-  call self.emitter.emit('stderr', a:data)
+  call self.events.emit('stderr', a:data)
 endfunction
 
 "
 " on_exit
 "
 function! s:Connection.on_exit(code) abort
-  call self.emitter.emit('exit', a:code)
+  call self.events.emit('exit', a:code)
 endfunction
 

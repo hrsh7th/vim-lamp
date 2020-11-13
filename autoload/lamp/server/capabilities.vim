@@ -1,31 +1,31 @@
 let g:lamp#server#capabilities#symbol_kinds = {
-      \   'File': 1,
-      \   'Module': 2,
-      \   'Namespace': 3,
-      \   'Package': 4,
-      \   'Class': 5,
-      \   'Method': 6,
-      \   'Property': 7,
-      \   'Field': 8,
-      \   'Constructor': 9,
-      \   'Enum': 10,
-      \   'Interface': 11,
-      \   'Function': 12,
-      \   'Variable': 13,
-      \   'Constant': 14,
-      \   'String': 15,
-      \   'Number': 16,
-      \   'Boolean': 17,
-      \   'Array': 18,
-      \   'Object': 19,
-      \   'Key': 20,
-      \   'Null': 21,
-      \   'EnumMember': 22,
-      \   'Struct': 23,
-      \   'Event': 24,
-      \   'Operator': 25,
-      \   'TypeParameter': 26,
-      \ }
+\   'File': 1,
+\   'Module': 2,
+\   'Namespace': 3,
+\   'Package': 4,
+\   'Class': 5,
+\   'Method': 6,
+\   'Property': 7,
+\   'Field': 8,
+\   'Constructor': 9,
+\   'Enum': 10,
+\   'Interface': 11,
+\   'Function': 12,
+\   'Variable': 13,
+\   'Constant': 14,
+\   'String': 15,
+\   'Number': 16,
+\   'Boolean': 17,
+\   'Array': 18,
+\   'Object': 19,
+\   'Key': 20,
+\   'Null': 21,
+\   'EnumMember': 22,
+\   'Struct': 23,
+\   'Event': 24,
+\   'Operator': 25,
+\   'TypeParameter': 26,
+\ }
 
 "
 " lamp#server#capabilities#get_default_capabilities
@@ -40,24 +40,24 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'failureHandling': 'abort',
   \     },
   \     'didChangeConfiguration': {
-  \       'dynamicRegistration': v:true
+  \       'dynamicRegistration': v:false
   \     },
   \     'didChangeWatchedFiles': {
-  \       'dynamicRegistration': v:true
+  \       'dynamicRegistration': v:false
   \     },
   \     'symbol': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
   \     },
   \     'executeCommand': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \     },
   \     'workspaceFolders': v:true,
   \     'configuration': v:true,
   \   },
   \   'textDocument': {
   \     'synchronization': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'willSave': v:true,
   \       'willSaveWaitUntil': v:true,
   \       'didSave': v:true
@@ -66,7 +66,7 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'prepareSupport': v:true
   \     },
   \     'completion': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'completionItem': {
   \         'snippetSupport': !empty(lamp#config('feature.completion.snippet.expand')) ? v:true : v:false,
   \         'commitCharactersSupport': v:true,
@@ -80,7 +80,7 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'contextSupport': v:true
   \     },
   \     'codeAction': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'codeActionLiteralSupport': {
   \         'codeActionKind': {
   \           'valueSet': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
@@ -88,7 +88,7 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       }
   \     },
   \     'signatureHelp': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'signatureInformation': {
   \         'contextSupport': v:true,
   \         'documentationFormat': ['markdown'],
@@ -98,43 +98,43 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       },
   \     },
   \     'hover': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'contentFormat': ['markdown'],
   \     },
   \     'documentSymbol': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'symbolKind': {
   \         'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
   \       },
   \       'hierarchicalDocumentSymbolSupport': v:true
   \     },
   \     'documentHighlight': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \     },
   \     'declaration': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'linkSupport': v:true,
   \     },
   \     'definition': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'linkSupport': v:true,
   \     },
   \     'typeDefinition': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'linkSupport': v:true,
   \     },
   \     'implementation': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \       'linkSupport': v:true,
   \     },
   \     'formatting': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \     },
   \     'rangeFormatting': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \     },
   \     'onTypeFormatting': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \     }
   \   },
   \   'experimental': {},

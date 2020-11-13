@@ -237,6 +237,7 @@ endfunction
 "
 function! s:on_insert_leave() abort
   call lamp#view#floatwin#hide('completion')
+  call lamp#debounce('lamp#feature#completion:on_complete_changed', { -> {} }, 0)
   call s:clear_managed_user_data()
 endfunction
 
@@ -262,10 +263,16 @@ function! s:on_complete_changed() abort
     return
   endif
 
-  let l:completed_item = v:completed_item
-  call s:resolve_completion_item(l:user_data).then({ completion_item ->
-  \   s:show_documentation(l:event, l:completed_item, completion_item)
-  \ })
+  let l:ctx = {}
+  let l:ctx.user_data = l:user_data
+  let l:ctx.event = l:event
+  let l:ctx.completed_item = v:completed_item
+  function! l:ctx.callback() abort
+    call s:resolve_completion_item(self.user_data).then({ completion_item ->
+    \   s:show_documentation(self.event, self.completed_item, completion_item)
+    \ })
+  endfunction
+  call lamp#debounce('lamp#feature#completion:on_complete_changed', { -> l:ctx.callback() }, 80)
 endfunction
 
 "
