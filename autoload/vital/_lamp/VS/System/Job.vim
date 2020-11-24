@@ -39,8 +39,6 @@ function! s:Job.new(args) abort
   return extend(deepcopy(s:Job), {
   \   'command': a:args.command,
   \   'events': s:Emitter.new(),
-  \   'read_buffer': '',
-  \   'read_timer': -1,
   \   'write_buffer': '',
   \   'write_timer': -1,
   \   'job': v:null,
@@ -117,30 +115,10 @@ function! s:Job.write(...) abort
 endfunction
 
 "
-" read
-"
-function! s:Job.read(...) abort
-  let self.read_timer = -1
-  let l:buffer_len = strlen(self.read_buffer)
-  if l:buffer_len == 0
-    return
-  endif
-  call self.events.emit('stdout', strpart(self.read_buffer, 0, s:chunk_size))
-  let self.read_buffer = strpart(self.read_buffer, s:chunk_size)
-  if l:buffer_len > s:chunk_size
-    let self.read_timer = timer_start(0, function(self.read, [], self))
-  endif
-endfunction
-
-"
 " on_stdout
 "
 function! s:Job.on_stdout(data) abort
-  let self.read_buffer .= a:data
-  if self.read_timer != -1
-    return
-  endif
-  let self.read_timer = timer_start(0, function(self.read, [], self))
+  call self.events.emit('stdout', a:data)
 endfunction
 
 "

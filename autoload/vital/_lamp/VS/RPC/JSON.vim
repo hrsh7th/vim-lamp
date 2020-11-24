@@ -43,7 +43,6 @@ function! s:Connection.new(args) abort
   \   'job': s:Job.new({ 'command': a:args.command }),
   \   'events': s:Emitter.new(),
   \   'buffer':  '',
-  \   'timer': -1,
   \   'request_map': {},
   \ })
 endfunction
@@ -160,50 +159,48 @@ endfunction
 "
 " flush
 "
-function! s:Connection.flush(...) abort
-  let self.timer = -1
+function! s:Connection.flush(data) abort
+  let self.buffer .= a:data
 
-  " header check.
-  let l:header_length = stridx(self.buffer, "\r\n\r\n") + 4
-  if l:header_length < 4
-    return
-  endif
+  while 1
+    " header check.
+    let l:header_length = stridx(self.buffer, "\r\n\r\n") + 4
+    if l:header_length < 4
+      return
+    endif
 
-  " content length check.
-  let l:content_length = stridx(self.buffer, 'Content-Length:') + 15
-  if l:content_length < 15
-    return
-  endif
-  let l:content_length = str2nr(self.buffer[l:content_length : l:header_length])
-  let l:message_length = l:header_length + l:content_length
+    " content length check.
+    let l:content_length = stridx(self.buffer, 'Content-Length:') + 15
+    if l:content_length < 15
+      return
+    endif
+    let l:content_length = str2nr(self.buffer[l:content_length : l:header_length])
+    let l:message_length = l:header_length + l:content_length
 
-  " content check.
-  let l:buffer_len = strlen(self.buffer)
-  if l:buffer_len < l:message_length
-    return
-  endif
+    " content check.
+    let l:buffer_len = strlen(self.buffer)
+    if l:buffer_len < l:message_length
+      return
+    endif
 
-  let l:content = strpart(self.buffer, l:header_length, l:message_length - l:header_length)
-  let self.buffer = self.buffer[l:message_length : ]
-  try
-    call self.on_message(json_decode(l:content))
-  catch /.*/
-  endtry
+    let l:content = strpart(self.buffer, l:header_length, l:message_length - l:header_length)
+    let self.buffer = self.buffer[l:message_length : ]
+    try
+      call self.on_message(json_decode(l:content))
+    catch /.*/
+    endtry
 
-  if l:buffer_len > l:message_length
-    let self.timer = timer_start(0, function(self.flush, [], self))
-  endif
+    if l:buffer_len <= l:message_length
+      break
+    endif
+  endwhile
 endfunction
 
 "
 " on_stdout
 "
 function! s:Connection.on_stdout(data) abort
-  let self.buffer .= a:data
-  if self.timer != -1
-    return
-  endif
-  let self.timer = timer_start(0, function(self.flush, [], self))
+  call self.flush(a:data)
 endfunction
 
 "

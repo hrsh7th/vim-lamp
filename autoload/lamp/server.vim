@@ -114,7 +114,12 @@ endfunction
 " initialize
 "
 function! s:Server.initialize(bufnr) abort
-  call self.start()
+  try
+    call self.start()
+  catch /.*/
+    return s:Promise.resolve()
+  endtry
+
   if !empty(self.state.initialized)
     return self.state.initialized
   endif
