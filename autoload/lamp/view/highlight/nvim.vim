@@ -6,18 +6,19 @@ let s:highlights = []
 "
 " lamp#view#highlight#nvim#remove
 "
-function! lamp#view#highlight#nvim#remove(namespace, bufnr) abort
-  if !exists('*nvim_buf_add_highlight')
-    return
-  endif
-
-  if has_key(s:namespaces, a:namespace)
-    call nvim_buf_clear_namespace(a:bufnr, s:namespaces[a:namespace], 0, -1)
-  endif
-  let s:highlights = filter(s:highlights, { _, h ->
-  \   h.namespace != a:namespace || h.bufnr != a:bufnr
-  \ })
-endfunction
+if exists('*nvim_buf_set_extmark')
+  function! lamp#view#highlight#nvim#remove(namespace, bufnr) abort
+    if has_key(s:namespaces, a:namespace)
+      call nvim_buf_clear_namespace(a:bufnr, s:namespaces[a:namespace], 0, -1)
+    endif
+    let s:highlights = filter(s:highlights, { _, h ->
+    \   h.namespace != a:namespace || h.bufnr != a:bufnr
+    \ })
+  endfunction
+else
+  function! lamp#view#highlight#nvim#remove(namespace, bufnr) abort
+  endfunction
+endif
 
 "
 " lamp#view#highlight#nvim#add
