@@ -224,19 +224,19 @@ function! s:apply(server_name, diagnostics) abort
 
   " update.
   for l:diagnostic in a:diagnostics.diagnostics
-    let l:line = l:diagnostic.range.start.line
+    let l:lnum = l:diagnostic.range.start.line + 1
     let l:severity = get(l:diagnostic, 'severity', 1)
     if l:severity == 1
-      call lamp#view#sign#error(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#sign#error(l:sign_ns, l:bufnr, l:lnum)
       call lamp#view#highlight#error(l:highlight_ns, l:bufnr, l:diagnostic.range)
     elseif l:severity == 2
-      call lamp#view#sign#warning(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#sign#warning(l:sign_ns, l:bufnr, l:lnum)
       call lamp#view#highlight#warning(l:highlight_ns, l:bufnr, l:diagnostic.range)
     elseif l:severity == 3
-      call lamp#view#sign#information(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#sign#information(l:sign_ns, l:bufnr, l:lnum)
       call lamp#view#highlight#information(l:highlight_ns, l:bufnr, l:diagnostic.range)
     elseif l:severity == 4
-      call lamp#view#sign#hint(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#sign#hint(l:sign_ns, l:bufnr, l:lnum)
       call lamp#view#highlight#hint(l:highlight_ns, l:bufnr, l:diagnostic.range)
     endif
   endfor

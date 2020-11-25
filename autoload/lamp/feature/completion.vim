@@ -279,15 +279,13 @@ endfunction
 " on_complete_done
 "
 function! s:on_complete_done() abort
-  " clear.
-  call lamp#view#floatwin#hide('completion')
-
   let s:context.done_position = s:Position.cursor()
   let s:context.done_line = getline('.')
   let s:context.completed_item = v:completed_item
   let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
   if !empty(v:completed_item) && strlen(get(v:completed_item, 'word', '')) > 0 && !empty(s:context.user_data)
+    call lamp#view#floatwin#hide('completion')
     noautocmd call feedkeys("\<Plug>(lamp-completion:on_complete_done_after)", '')
   endif
 endfunction

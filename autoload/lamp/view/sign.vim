@@ -2,7 +2,6 @@
 " lamp#view#sign#remove
 "
 function! lamp#view#sign#remove(namespace, bufnr) abort
-  call s:initialize()
   try
     call sign_unplace(a:namespace, {
     \   'buffer': a:bufnr
