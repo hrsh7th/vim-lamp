@@ -95,18 +95,19 @@ function! s:Job.send(data) abort
   if self.write_timer != -1
     return
   endif
-  let self.write_timer = timer_start(0, function(self.write, [], self))
+  call self.write()
 endfunction
 
 "
 " write
 "
-function! s:Job.write(...) abort
+function! s:Job.write() abort
   let self.write_timer = -1
   let l:buffer_len = strlen(self.write_buffer)
   if l:buffer_len == 0
     return
   endif
+
   call self.job.send(strpart(self.write_buffer, 0, s:chunk_size))
   let self.write_buffer = strpart(self.write_buffer, s:chunk_size)
   if l:buffer_len > s:chunk_size
