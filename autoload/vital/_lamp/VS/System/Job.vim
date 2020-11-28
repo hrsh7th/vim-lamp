@@ -36,13 +36,15 @@ let s:Job = {}
 " new
 "
 function! s:Job.new(args) abort
-  return extend(deepcopy(s:Job), {
+  let l:job = extend(deepcopy(s:Job), {
   \   'command': a:args.command,
   \   'events': s:Emitter.new(),
   \   'write_buffer': '',
   \   'write_timer': -1,
   \   'job': v:null,
   \ })
+  let l:job.write = function(l:job.write, [], l:job)
+  return l:job
 endfunction
 
 "
@@ -101,17 +103,15 @@ endfunction
 "
 " write
 "
-function! s:Job.write() abort
+function! s:Job.write(...) abort
   let self.write_timer = -1
-  let l:buffer_len = strlen(self.write_buffer)
-  if l:buffer_len == 0
+  if self.write_buffer ==# ''
     return
   endif
-
   call self.job.send(strpart(self.write_buffer, 0, s:chunk_size))
   let self.write_buffer = strpart(self.write_buffer, s:chunk_size)
-  if l:buffer_len > s:chunk_size
-    let self.write_timer = timer_start(0, function(self.write, [], self))
+  if self.write_buffer !=# ''
+    let self.write_timer = timer_start(0, self.write)
   endif
 endfunction
 
