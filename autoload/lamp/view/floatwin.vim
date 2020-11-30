@@ -74,7 +74,10 @@ function! lamp#view#floatwin#show(name, pos, contents, ...) abort
 
   let l:target = s:floatwins[a:name]
   for [l:name, l:win] in items(s:floatwins)
-    if !l:win.is_keep() && l:win.is_showing() && l:target.get_priority() < l:win.get_priority()
+    if l:name ==# a:name
+      continue
+    endif
+    if l:win.is_keep() && l:win.is_showing() && l:target.get_priority() < l:win.get_priority()
       return
     endif
   endfor
@@ -179,7 +182,7 @@ function! s:Floatwin.show(screenpos, contents) abort
   endif
 
   let l:contents = self.fix_contents(a:contents)
-  if self.screenpos == a:screenpos && self.contents == l:contents
+  if self.is_showing() && self.screenpos == a:screenpos && self.contents == l:contents
     return
   endif
 
