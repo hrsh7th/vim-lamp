@@ -14,7 +14,9 @@ endfunction
 "
 function! lamp#view#floatwin#vim#hide(floatwin) abort
   try
-    call popup_hide(a:floatwin.vim_winid)
+    if lamp#view#floatwin#vim#is_showing(a:floatwin)
+      call popup_hide(a:floatwin.vim_winid)
+    endif
   catch /.*/
   endtry
   let a:floatwin.vim_winid = v:null
@@ -25,10 +27,7 @@ endfunction
 "
 function! lamp#view#floatwin#vim#write(floatwin, lines) abort
   call deletebufline(a:floatwin.bufnr, '^', '$')
-  for l:line in reverse(a:lines)
-    call appendbufline(a:floatwin.bufnr, 0, l:line)
-  endfor
-  call deletebufline(a:floatwin.bufnr, '$')
+  call setbufline(a:floatwin.bufnr, 1, a:lines)
 endfunction
 
 "

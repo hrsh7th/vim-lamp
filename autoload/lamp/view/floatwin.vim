@@ -74,9 +74,6 @@ function! lamp#view#floatwin#show(name, pos, contents, ...) abort
 
   let l:target = s:floatwins[a:name]
   for [l:name, l:win] in items(s:floatwins)
-    if l:name ==# a:name
-      continue
-    endif
     if l:win.is_keep() && l:win.is_showing() && l:target.get_priority() < l:win.get_priority()
       return
     endif
@@ -204,7 +201,7 @@ function! s:Floatwin.show(screenpos, contents) abort
   " show or move
   call lamp#view#floatwin#{s:namespace}#show(self)
   call setwinvar(self.winid(), '&wrap', 1)
-  call setwinvar(self.winid(), '&conceallevel', 3)
+  call setwinvar(self.winid(), '&conceallevel', 2)
 
   " write lines
   call lamp#view#floatwin#{s:namespace}#write(self, l:lines)

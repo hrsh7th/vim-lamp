@@ -12,6 +12,17 @@ function! lamp#view#window#do(winid, fn) abort
     return
   endif
 
+  if exists('*win_execute')
+    let s:Do = a:fn
+    try
+      noautocmd keepalt keepjumps call win_execute(a:winid, 'noautocmd keepalt keepjumps call s:Do()')
+    catch /.*/
+      echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+    endtry
+    unlet s:Do
+    return
+  endif
+
   noautocmd keepalt keepjumps call win_gotoid(a:winid)
   try
     call a:fn()
