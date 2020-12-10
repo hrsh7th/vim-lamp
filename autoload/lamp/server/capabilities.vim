@@ -62,6 +62,9 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'willSaveWaitUntil': v:true,
   \       'didSave': v:true
   \     },
+  \     'linkedEditingRange': {
+  \       'dynamicRegistration': v:true,
+  \     },
   \     'rename': {
   \       'prepareSupport': v:true
   \     },

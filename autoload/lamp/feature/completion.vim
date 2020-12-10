@@ -76,8 +76,8 @@ function! s:convert(params, server_name, complete_position, completion_items) ab
       let l:abbr = l:label
 
       let l:expandable = v:false
-      if has_key(l:completion_item, 'textEdit') && has_key(l:completion_item.textEdit, 'newText')
-        let l:expandable = l:word !=# l:completion_item.textEdit.newText
+      if has_key(l:completion_item, 'textEdit')
+        let l:expandable = l:word !=# get(l:completion_item.textEdit, 'newText', '')
       elseif has_key(l:completion_item, 'insertText')
         let l:expandable = l:word !=# l:completion_item.insertText
       endif
@@ -101,9 +101,6 @@ function! s:convert(params, server_name, complete_position, completion_items) ab
 
     " create item
     let l:kind = get(l:kind_map, get(l:completion_item, 'kind', -1), '')
-    if type(get(l:completion_item, 'detail', v:null)) == type('')
-      let l:kind = matchstr(trim(l:completion_item.detail), "^[^\n]\\+")
-    endif
     call add(l:completed_items, {
     \   'word': l:word,
     \   'abbr': l:abbr,
@@ -143,7 +140,7 @@ function lamp_feature_completion_convert(params, server_name, complete_position,
       abbr = label
 
       local expandable = false
-      if completion_item.textEdit ~= nil and completion_item.textEdit.newText ~= nil then
+      if completion_item.textEdit ~= nil then
         expandable = word ~= completion_item.textEdit.newText
       elseif completion_item.insertText ~= nil then
         expandable = word ~= completion_item.insertText
@@ -157,14 +154,7 @@ function lamp_feature_completion_convert(params, server_name, complete_position,
       abbr = label
     end
 
-    local kind = kind_map[completion_item.kind] or ''
-    if type(completion_item.detail) == 'string' then
-      local match = string.match(string.gsub(completion_item.detail, "^%s*(.-)%s*$", "%1"), '^[^\n]+')
-      if match ~= nil then
-        kind = match
-      end
-    end
-
+    local kind = kind_map['' .. (completion_item.kind or '')] or ''
     table.insert(complete_items, {
       word = word;
       abbr = abbr;
@@ -343,7 +333,7 @@ function! s:on_complete_done_after() abort
     if type(get(l:completion_item, 'textEdit', v:null)) == type({})
       let l:overflow_before = l:complete_start_character - l:completion_item.textEdit.range.start.character
       let l:overflow_after = l:completion_item.textEdit.range.end.character - l:complete_position.character
-      let l:text = l:completion_item.textEdit.newText
+      let l:text = get(l:completion_item.textEdit, 'newText', l:completed_item.word)
     else
       let l:overflow_before = 0
       let l:overflow_after = 0
@@ -411,12 +401,14 @@ function! s:is_expandable(done_line, done_position, complete_position, completio
     endif
 
     " compute if textEdit will change text.
+    let l:new_text = get(a:completion_item.textEdit, 'newText', '')
     let l:completed_before = strcharpart(a:done_line, 0, a:complete_position.character)
     let l:completed_after = strcharpart(a:done_line, a:done_position.character, strchars(a:done_line) - a:done_position.character)
     let l:completed_line = l:completed_before . l:completed_after
     let l:text_edit_before = strcharpart(l:completed_line, 0, a:completion_item.textEdit.range.start.character)
-    let l:text_edit_after = strcharpart(l:completed_line, a:completion_item.textEdit.range.end.character, strchars(l:completed_line) - a:completion_item.textEdit.range.end.character)
-    return a:done_line !=# l:text_edit_before . s:trim_unmeaning_tabstop(a:completion_item.textEdit.newText) . l:text_edit_after
+    let l:text_edit_after = strcharpart(l:completed_line, a:completion_item.textEdit.range.end.character)
+
+    return a:done_line !=# l:text_edit_before . s:trim_unmeaning_tabstop(l:new_text) . l:text_edit_after
   endif
   return get(a:completion_item, 'insertText', a:completed_item.word) !=# s:trim_unmeaning_tabstop(a:completed_item.word)
 endfunction

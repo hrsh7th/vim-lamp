@@ -42,7 +42,7 @@ endfunction
 " lamp#view#floatwin#nvim#is_showing
 "
 function! lamp#view#floatwin#nvim#is_showing(floatwin) abort
-  if !has_key(a:floatwin,'nvim_window') || a:floatwin.nvim_window is v:null
+  if !has_key(a:floatwin,'nvim_window') || a:floatwin.nvim_window is v:null || !nvim_win_is_valid(a:floatwin.nvim_window)
     return v:false
   endif
 
