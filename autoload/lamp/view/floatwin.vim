@@ -1,3 +1,6 @@
+let s:Window = vital#lamp#import('VS.Vim.Window')
+let s:Markdown = vital#lamp#import('VS.Vim.Syntax.Markdown')
+
 let s:floatwin_id = 0
 let s:floatwins = {}
 
@@ -138,10 +141,9 @@ let s:Floatwin = {}
 "
 function! s:Floatwin.new(option) abort
   let s:floatwin_id += 1
-  let l:bufname = printf('lamp-floatwin-%s.lamp_floatwin', s:floatwin_id)
+  let l:bufname = printf('lamp-floatwin-%s', s:floatwin_id)
   let l:bufnr = bufnr(l:bufname, v:true)
   call setbufvar(l:bufnr, '&buflisted', 0)
-  call setbufvar(l:bufnr, '&filetype', 'lamp_floatwin')
   call setbufvar(l:bufnr, '&buftype', 'nofile')
   return extend(deepcopy(s:Floatwin), {
   \   'bufnr': l:bufnr,
@@ -195,9 +197,6 @@ function! s:Floatwin.show(screenpos, contents) abort
     endif
   endfor
 
-  " @see ftplugin/lamp_floatwin.vim
-  call setbufvar(self.bufnr, 'lamp_floatwin_lines', l:lines)
-
   " show or move
   call lamp#view#floatwin#{s:namespace}#show(self)
   call setwinvar(self.winid(), '&wrap', 1)
@@ -207,10 +206,7 @@ function! s:Floatwin.show(screenpos, contents) abort
   call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
 
   " update syntax highlight for nvim.
-  " NOTE: if vim, use autocmd to apply syntax in ftplugin/lamp_floatwin.vim.
-  if has('nvim') && LampFloatwinSyntaxShouldUpdate(self.bufnr)
-    call lamp#view#window#do(self.winid(), { -> LampFloatwinSyntaxUpdate() })
-  endif
+  call s:Window.do(self.winid(), { -> s:Markdown.apply(join(l:lines, "\n")) })
 endfunction
 
 "

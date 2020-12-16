@@ -7,3 +7,5 @@ VS.LSP.TextEdit
 VS.RPC.JSON
 VS.Text.Diff
 VS.System.Job
+VS.Vim.Syntax.Markdown
+VS.Vim.Window

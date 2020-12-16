@@ -128,6 +128,7 @@ function! s:Server.initialize(bufnr) abort
   function! l:ctx.callback(bufnr, response) abort dict
     call self.capabilities.merge(a:response)
     call self.notify_raw('initialized', {})
+
     call self.notify_raw('workspace/didChangeConfiguration', {
     \   'settings': lamp#feature#workspace#get_config()
     \ })

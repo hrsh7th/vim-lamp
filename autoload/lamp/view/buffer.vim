@@ -71,7 +71,7 @@ function! lamp#view#buffer#reset() abort
 
   let l:bufnr = bufnr('$')
   while l:bufnr >= 0
-    if bufloaded(l:bufnr) && l:bufnr != bufnr('%') && getbufvar(l:bufnr, '&filetype') !=# 'lamp_floatwin'
+    if bufloaded(l:bufnr) && l:bufnr != bufnr('%')
       call lamp#view#buffer#do(l:bufnr, { -> execute('bdelete!') })
     endif
     let l:bufnr -= 1

@@ -1,7 +1,6 @@
+let s:Window = vital#lamp#import('VS.Vim.Window')
 let s:Floatwin = lamp#view#floatwin#import()
 let s:expect = themis#helper('expect')
-
-execute printf('source %s/ftplugin/lamp_floatwin.vim', lamp#config('global.root'))
 
 Describe lamp#view#floatwin
 
@@ -40,7 +39,7 @@ Describe lamp#view#floatwin
     if has('nvim')
       " force close (no use `s:floatwin.hide()`).
       call s:floatwin.show([1, 1], [{ 'lines': ['test'] }])
-      call lamp#view#window#do(s:floatwin.winid(), { -> execute('close') })
+      call s:Window.do(s:floatwin.winid(), { -> execute('close') })
       call s:expect(s:floatwin.is_showing()).to_equal(v:false)
     endif
   End
