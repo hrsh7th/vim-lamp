@@ -26,8 +26,8 @@ endfunction
 "
 " new
 "
-function! s:new(args) abort
-  return s:Connection.new(a:args)
+function! s:new() abort
+  return s:Connection.new()
 endfunction
 
 "
@@ -38,9 +38,9 @@ let s:Connection = {}
 "
 " new
 "
-function! s:Connection.new(args) abort
+function! s:Connection.new() abort
   return extend(deepcopy(s:Connection), {
-  \   'job': s:Job.new({ 'command': a:args.command }),
+  \   'job': s:Job.new(),
   \   'events': s:Emitter.new(),
   \   'buffer':  '',
   \   'request_map': {},
@@ -50,12 +50,12 @@ endfunction
 "
 " start
 "
-function! s:Connection.start(...) abort
+function! s:Connection.start(args) abort
   if !self.job.is_running()
     call self.job.events.on('stdout', self.on_stdout)
     call self.job.events.on('stderr', self.on_stderr)
     call self.job.events.on('exit', self.on_exit)
-    call call(self.job.start, a:000, self.job)
+    call self.job.start(a:args)
   endif
 endfunction
 

@@ -18,9 +18,8 @@ let s:Server = {}
 function! s:Server.new(name, option) abort
   let l:server = extend(deepcopy(s:Server), {
   \   'name': a:name,
-  \   'rpc': s:JSON.new({
-  \     'command': a:option.command,
-  \   }),
+  \   'cmd': a:option.command,
+  \   'rpc': s:JSON.new(),
   \   'filetypes': a:option.filetypes,
   \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
   \   'root_uri_cache': {},
@@ -60,6 +59,7 @@ function! s:Server.start() abort
   if !self.state.started && !self.state.exited
     let self.state.started = v:true
     call self.rpc.start({
+    \   'cmd': self.cmd,
     \   'cwd': self.get_root_uri(bufnr('%'))
     \ })
   endif

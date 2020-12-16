@@ -24,8 +24,8 @@ endfunction
 "
 " new
 "
-function! s:new(args) abort
-  return s:Job.new(a:args)
+function! s:new() abort
+  return s:Job.new()
 endfunction
 
 let s:chunk_size = 2048
@@ -35,9 +35,8 @@ let s:Job = {}
 "
 " new
 "
-function! s:Job.new(args) abort
+function! s:Job.new() abort
   let l:job = extend(deepcopy(s:Job), {
-  \   'command': a:args.command,
   \   'events': s:Emitter.new(),
   \   'write_buffer': '',
   \   'write_timer': -1,
@@ -50,18 +49,21 @@ endfunction
 "
 " start
 "
-function! s:Job.start(...) abort
+function! s:Job.start(args) abort
   if self.is_running()
     return
   endif
 
-  let l:args = extend(get(a:000, 0, {}), { 'cwd': getcwd() }, 'keep')
-  if !isdirectory(l:args.cwd) || l:args.cwd !~# '/'
-    unlet l:args.cwd
-  endif
+  let l:option = {}
+  for l:key in ['cwd', 'env', '']
+    if has_key(a:args, l:key)
+      let l:option[l:key] = a:args[l:key]
+    endif
+  endfor
+
   let self.job = s:_create(
-  \   self.command,
-  \   l:args,
+  \   a:args.cmd,
+  \   l:option,
   \   function(self.on_stdout, [], self),
   \   function(self.on_stderr, [], self),
   \   function(self.on_exit, [], self)
@@ -140,29 +142,29 @@ endfunction
 " create job instance
 "
 if has('nvim')
-  function! s:_create(command, args, out, err, exit) abort
-    let a:args.on_stdout = { id, data, event -> a:out(join(data, "\n")) }
-    let a:args.on_stderr = { id, data, event -> a:err(join(data, "\n")) }
-    let a:args.on_exit = { id, data, code -> a:exit(code) }
-    let l:job = jobstart(a:command, a:args)
+  function! s:_create(cmd, option, out, err, exit) abort
+    let a:option.on_stdout = { id, data, event -> a:out(join(data, "\n")) }
+    let a:option.on_stderr = { id, data, event -> a:err(join(data, "\n")) }
+    let a:option.on_exit = { id, data, code -> a:exit(code) }
+    let l:job = jobstart(a:cmd, a:option)
     return {
     \   'stop': { -> jobstop(l:job) },
     \   'send': { data -> jobsend(l:job, data) }
     \ }
   endfunction
 else
-  function! s:_create(command, args, out, err, exit) abort
-    let a:args.noblock = v:true
-    let a:args.in_io = 'pipe'
-    let a:args.in_mode = 'raw'
-    let a:args.out_io = 'pipe'
-    let a:args.out_mode = 'raw'
-    let a:args.err_io = 'pipe'
-    let a:args.err_mode = 'raw'
-    let a:args.out_cb = { job, data -> a:out(data) }
-    let a:args.err_cb = { job, data -> a:err(data) }
-    let a:args.exit_cb = { job, code -> a:exit(code) }
-    let l:job = job_start(a:command, a:args)
+  function! s:_create(cmd, option, out, err, exit) abort
+    let a:option.noblock = v:true
+    let a:option.in_io = 'pipe'
+    let a:option.in_mode = 'raw'
+    let a:option.out_io = 'pipe'
+    let a:option.out_mode = 'raw'
+    let a:option.err_io = 'pipe'
+    let a:option.err_mode = 'raw'
+    let a:option.out_cb = { job, data -> a:out(data) }
+    let a:option.err_cb = { job, data -> a:err(data) }
+    let a:option.exit_cb = { job, code -> a:exit(code) }
+    let l:job = job_start(a:cmd, a:option)
     return {
     \   'stop': { ->  ch_close(l:job) },
     \   'send': { data -> ch_sendraw(l:job, data) }
