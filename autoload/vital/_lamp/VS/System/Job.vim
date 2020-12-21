@@ -55,7 +55,7 @@ function! s:Job.start(args) abort
   endif
 
   let l:option = {}
-  for l:key in ['cwd', 'env', '']
+  for l:key in ['cwd', 'env']
     if has_key(a:args, l:key)
       let l:option[l:key] = a:args[l:key]
     endif

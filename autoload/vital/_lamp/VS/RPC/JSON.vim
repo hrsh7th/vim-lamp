@@ -43,6 +43,8 @@ function! s:Connection.new() abort
   \   'job': s:Job.new(),
   \   'events': s:Emitter.new(),
   \   'buffer':  '',
+  \   'header_state': 0,
+  \   'content_length': 0,
   \   'request_map': {},
   \ })
 endfunction

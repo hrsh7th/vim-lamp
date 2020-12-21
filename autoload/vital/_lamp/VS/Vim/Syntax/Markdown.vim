@@ -15,20 +15,23 @@ function! s:apply(text, ...) abort
 
   try
     for [l:mark, l:filetype] in items(s:_get_filetype_map(a:text, get(a:000, 0, {})))
-      let l:group = substitute(toupper(l:filetype), '\.', '_', 'g')
+      let l:group = substitute(toupper(l:mark), '\.', '_', 'g')
       if has_key(b:___VS_Vim_Syntax_Markdown, l:group)
         continue
       endif
       let b:___VS_Vim_Syntax_Markdown[l:group] = v:true
 
-      unlet b:current_syntax
-      execute printf('syntax include @%s syntax/%s.vim', l:group, l:filetype)
-      execute printf('syntax region %s matchgroup=Conceal start=/%s/rs=e matchgroup=Conceal end=/%s/re=s contains=@%s containedin=ALL keepend concealends',
-      \   l:group,
-      \   printf('^\s*```\s*%s\s*', l:mark),
-      \   '\s*```\s*$',
-      \   l:group
-      \ )
+      try
+        unlet b:current_syntax
+        execute printf('syntax include @%s syntax/%s.vim', l:group, l:filetype)
+        execute printf('syntax region %s matchgroup=Conceal start=/%s/rs=e matchgroup=Conceal end=/%s/re=s contains=@%s containedin=ALL keepend concealends',
+        \   l:group,
+        \   printf('^\s*```\s*%s\s*', l:mark),
+        \   '\s*```\s*$',
+        \   l:group
+        \ )
+      catch /.*/
+      endtry
     endfor
   catch /.*/
     echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
