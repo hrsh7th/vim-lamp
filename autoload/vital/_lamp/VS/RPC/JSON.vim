@@ -43,8 +43,8 @@ function! s:Connection.new() abort
   \   'job': s:Job.new(),
   \   'events': s:Emitter.new(),
   \   'buffer':  '',
-  \   'header_state': 0,
-  \   'content_length': 0,
+  \   'header_length': -1,
+  \   'message_length': -1,
   \   'request_map': {},
   \ })
 endfunction
@@ -83,17 +83,17 @@ endfunction
 "
 " request
 "
-function! s:Connection.request(id, method, ...) abort
+function! s:Connection.request(id, method, params) abort
   let l:ctx = {}
   function! l:ctx.callback(id, method, params, resolve, reject) abort
-    let self.request_map[a:id] = {}
-    let self.request_map[a:id].resolve = a:resolve
-    let self.request_map[a:id].reject = a:reject
+    let self.request_map[a:id] = { 'resolve': a:resolve, 'reject': a:reject }
     let l:message = { 'id': a:id, 'method': a:method }
-    let l:message = extend(l:message, type(a:params) == type({}) ? { 'params': a:params } : {})
+    if a:params isnot# v:null
+      let l:message.params = a:params
+    endif
     call self.job.send(self.to_message(l:message))
   endfunction
-  return s:Promise.new(function(l:ctx.callback, [a:id, a:method, get(a:000, 0, v:null)], self))
+  return s:Promise.new(function(l:ctx.callback, [a:id, a:method, a:params], self))
 endfunction
 
 "
@@ -108,9 +108,11 @@ endfunction
 "
 " notify
 "
-function! s:Connection.notify(method, ...) abort
+function! s:Connection.notify(method, params) abort
   let l:message = { 'method': a:method }
-  let l:message = extend(l:message, len(a:000) > 0 ? { 'params': a:000[0] } : {})
+  if a:params isnot# v:null
+    let l:message.params = a:params
+  endif
   call self.job.send(self.to_message(l:message))
 endfunction
 
@@ -127,7 +129,8 @@ endfunction
 " to_message
 "
 function! s:Connection.to_message(message) abort
-  let l:message = json_encode(extend({ 'jsonrpc': '2.0' }, a:message))
+  let a:message.jsonrpc = '2.0'
+  let l:message = json_encode(a:message)
   return 'Content-Length: ' . strlen(l:message) . "\r\n\r\n" . l:message
 endfunction
 
@@ -164,37 +167,30 @@ endfunction
 function! s:Connection.flush(data) abort
   let self.buffer .= a:data
 
-  while 1
+  while self.buffer !=# ''
     " header check.
-    let l:header_length = stridx(self.buffer, "\r\n\r\n") + 4
-    if l:header_length < 4
-      return
+    if self.header_length == -1
+      let l:header_length = stridx(self.buffer, "\r\n\r\n") + 4
+      if l:header_length < 4
+        return
+      endif
+      let self.header_length = l:header_length
+      let self.message_length = self.header_length + str2nr(get(matchlist(self.buffer, '\ccontent-length:\s*\(\d\+\)'), 1, '-1'))
     endif
-
-    " content length check.
-    let l:content_length = stridx(self.buffer, 'Content-Length:') + 15
-    if l:content_length < 15
-      return
-    endif
-    let l:content_length = str2nr(self.buffer[l:content_length : l:header_length])
-    let l:message_length = l:header_length + l:content_length
 
     " content check.
     let l:buffer_len = strlen(self.buffer)
-    if l:buffer_len < l:message_length
+    if l:buffer_len < self.message_length
       return
     endif
 
-    let l:content = strpart(self.buffer, l:header_length, l:message_length - l:header_length)
-    let self.buffer = self.buffer[l:message_length : ]
+    let l:content = strpart(self.buffer, self.header_length, self.message_length - self.header_length)
     try
       call self.on_message(json_decode(l:content))
     catch /.*/
     endtry
-
-    if l:buffer_len <= l:message_length
-      break
-    endif
+    let self.buffer = strpart(self.buffer, self.message_length)
+    let self.header_length = -1
   endwhile
 endfunction
 

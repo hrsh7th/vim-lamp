@@ -31,6 +31,8 @@ function! s:apply(text, ...) abort
         \   l:group
         \ )
       catch /.*/
+        echomsg printf("[VS.Vim.Syntax.Markdown] `%s` isn't valid filetype.")
+        echomsg printf('[VS.Vim.Syntax.Markdown] You can add `%s` to g:markdown_fenced_languages.')
       endtry
     endfor
   catch /.*/
