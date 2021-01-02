@@ -360,6 +360,7 @@ function! s:on_complete_done_after() abort
       \ })
     else
       call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': l:text }])
+      call cursor(s:Position.lsp_to_vim('%', l:range.end))
     endif
   endif
 
