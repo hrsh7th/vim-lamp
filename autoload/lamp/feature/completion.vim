@@ -1,4 +1,5 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
+let s:Text = vital#lamp#import('VS.LSP.Text')
 let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
@@ -360,7 +361,11 @@ function! s:on_complete_done_after() abort
       \ })
     else
       call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': l:text }])
-      call cursor(s:Position.lsp_to_vim('%', l:range.end))
+      let l:lines = s:Text.split_by_eol(l:text)
+      let l:start = l:range.start
+      let l:start.line += len(l:lines) - 1
+      let l:start.character += strchars(l:lines[-1])
+      call cursor(s:Position.lsp_to_vim('%', l:start))
     endif
   endif
 
