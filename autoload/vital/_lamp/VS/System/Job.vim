@@ -61,6 +61,10 @@ function! s:Job.start(args) abort
     endif
   endfor
 
+  if has_key(l:option, 'cwd') && !isdirectory(l:option.cwd)
+    unlet! l:option.cwd
+  endif
+
   let self.job = s:_create(
   \   a:args.cmd,
   \   l:option,
