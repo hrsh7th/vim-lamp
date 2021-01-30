@@ -1,3 +1,5 @@
+let s:ServerCapabilities = vital#lamp#import('VS.LSP.ServerCapabilities')
+
 let g:lamp#server#capabilities#symbol_kinds = {
 \   'File': 1,
 \   'Module': 2,
@@ -38,109 +40,225 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'documentChanges': v:true,
   \       'resourceOperations': [],
   \       'failureHandling': 'abort',
+  \       'normalizesLineEndings': v:true,
+  \       'changeAnnotationSupport': {
+  \         'groupsOnLabel': v:false,
+  \       },
   \     },
   \     'didChangeConfiguration': {
-  \       'dynamicRegistration': v:false
+  \       'dynamicRegistration': v:true
   \     },
   \     'didChangeWatchedFiles': {
-  \       'dynamicRegistration': v:false
+  \       'dynamicRegistration': v:true
   \     },
   \     'symbol': {
-  \       'dynamicRegistration': v:false,
-  \       'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
+  \       'dynamicRegistration': v:true,
+  \       'symbolKind': {
+  \         'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
+  \       },
+  \       'tagSupport': {
+  \         'valueSet': [],
+  \       }
   \     },
   \     'executeCommand': {
-  \       'dynamicRegistration': v:false,
+  \       'dynamicRegistration': v:true,
   \     },
   \     'workspaceFolders': v:true,
   \     'configuration': v:true,
+  \     'semanticTokens': {
+  \       'refreshSupport': v:false,
+  \     },
+  \     'codeLens': {
+  \       'refreshSupport': v:false,
+  \     },
+  \     'fileOperations': {
+  \       'dynamicRegistration': v:true,
+  \       'didCreate': v:false,
+  \       'willCreate': v:false,
+  \       'didRename': v:false,
+  \       'willRename': v:false,
+  \       'didDelete': v:false,
+  \       'willDelete': v:false,
+  \     }
   \   },
   \   'textDocument': {
   \     'synchronization': {
-  \       'dynamicRegistration': v:false,
+  \       'dynamicRegistration': v:true,
   \       'willSave': v:true,
   \       'willSaveWaitUntil': v:true,
   \       'didSave': v:true
   \     },
-  \     'linkedEditingRange': {
-  \       'dynamicRegistration': v:true,
-  \     },
-  \     'rename': {
-  \       'prepareSupport': v:true
-  \     },
   \     'completion': {
-  \       'dynamicRegistration': v:false,
+  \       'dynamicRegistration': v:true,
   \       'completionItem': {
   \         'snippetSupport': !empty(lamp#config('feature.completion.snippet.expand')) ? v:true : v:false,
   \         'commitCharactersSupport': v:true,
   \         'documentationFormat': ['markdown'],
   \         'deprecatedSupport': v:true,
   \         'preselectSupport': v:true,
+  \         'tagSupport': {
+  \           'valueSet': [],
+  \         },
+  \         'insertReplaceSupport': v:false,
+  \         'resolveSupport': {
+  \           'properties': ['documentation', 'details', 'additionalTextEdits']
+  \         },
+  \         'insertTextModeSupport': {
+  \           'valueSet': [],
+  \         }
   \       },
   \       'completionItemKind': {
   \         'valueSet': map(keys(lamp#protocol#completion#get_kind_map()), { k, v -> str2nr(v) })
   \       },
   \       'contextSupport': v:true
   \     },
+  \     'hover': {
+  \       'dynamicRegistration': v:true,
+  \       'contentFormat': ['markdown'],
+  \     },
+  \     'signatureHelp': {
+  \       'dynamicRegistration': v:true,
+  \       'signatureInformation': {
+  \         'documentationFormat': ['markdown'],
+  \         'parameterInformation': {
+  \           'labelOffsetSupport': v:true
+  \         },
+  \         'activeParameterSupport': v:true,
+  \       },
+  \       'contextSupport': v:true,
+  \     },
+  \     'declaration': {
+  \       'dynamicRegistration': v:true,
+  \       'linkSupport': v:true,
+  \     },
+  \     'definition': {
+  \       'dynamicRegistration': v:true,
+  \       'linkSupport': v:true,
+  \     },
+  \     'typeDefinition': {
+  \       'dynamicRegistration': v:true,
+  \       'linkSupport': v:true,
+  \     },
+  \     'implementation': {
+  \       'dynamicRegistration': v:true,
+  \       'linkSupport': v:true,
+  \     },
+  \     'references': {
+  \       'dynamicRegistration': v:true,
+  \     },
+  \     'documentHighlight': {
+  \       'dynamicRegistration': v:true,
+  \     },
+  \     'documentSymbol': {
+  \       'dynamicRegistration': v:true,
+  \       'symbolKind': {
+  \         'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
+  \       },
+  \       'hierarchicalDocumentSymbolSupport': v:true,
+  \       'tagSupport': {
+  \         'valueSet': [],
+  \       },
+  \       'labelSupport': v:false,
+  \     },
   \     'codeAction': {
-  \       'dynamicRegistration': v:false,
+  \       'dynamicRegistration': v:true,
   \       'codeActionLiteralSupport': {
   \         'codeActionKind': {
   \           'valueSet': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
   \         }
-  \       }
-  \     },
-  \     'signatureHelp': {
-  \       'dynamicRegistration': v:false,
-  \       'signatureInformation': {
-  \         'contextSupport': v:true,
-  \         'documentationFormat': ['markdown'],
-  \         'parameterInformation': {
-  \           'labelOffsetSupport': v:true
-  \         }
   \       },
-  \     },
-  \     'hover': {
-  \       'dynamicRegistration': v:false,
-  \       'contentFormat': ['markdown'],
-  \     },
-  \     'documentSymbol': {
-  \       'dynamicRegistration': v:false,
-  \       'symbolKind': {
-  \         'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
+  \       'isPreferredSupport': v:true,
+  \       'disabledSupport': v:true,
+  \       'dataSupport': v:true,
+  \       'resolveSupport': {
+  \         'properties': [],
   \       },
-  \       'hierarchicalDocumentSymbolSupport': v:true
+  \       'honorsChangeAnnotations': v:true
   \     },
-  \     'documentHighlight': {
-  \       'dynamicRegistration': v:false,
+  \     'codeLens': {
+  \       'dynamicRegistration': v:true,
   \     },
-  \     'declaration': {
-  \       'dynamicRegistration': v:false,
-  \       'linkSupport': v:true,
+  \     'documentLink': {
+  \       'dynamicRegistration': v:true,
+  \       'tooltipSupport': v:false,
   \     },
-  \     'definition': {
-  \       'dynamicRegistration': v:false,
-  \       'linkSupport': v:true,
-  \     },
-  \     'typeDefinition': {
-  \       'dynamicRegistration': v:false,
-  \       'linkSupport': v:true,
-  \     },
-  \     'implementation': {
-  \       'dynamicRegistration': v:false,
-  \       'linkSupport': v:true,
+  \     'colorProvider': {
+  \       'dynamicRegistration': v:true,
   \     },
   \     'formatting': {
-  \       'dynamicRegistration': v:false,
+  \       'dynamicRegistration': v:true,
   \     },
   \     'rangeFormatting': {
-  \       'dynamicRegistration': v:false,
+  \       'dynamicRegistration': v:true,
   \     },
   \     'onTypeFormatting': {
-  \       'dynamicRegistration': v:false,
-  \     }
+  \       'dynamicRegistration': v:true,
+  \     },
+  \     'rename': {
+  \       'prepareSupport': v:true,
+  \       'prepareSupportDefaultBehavior': v:true,
+  \       'honorsChangeAnnotations': v:true,
+  \     },
+  \     'publishDiagnostics': {
+  \       'relatedInformation': v:true,
+  \       'tagSupport': {
+  \         'valueSet': [],
+  \       },
+  \       'versionSupport': v:true,
+  \       'codeDescriptionSupport': v:true,
+  \       'dataSupport': v:true,
+  \     },
+  \     'foldingRange': {
+  \       'dynamicRegistration': v:true,
+  \       'rangeLimit': 100,
+  \       'lineFoldingOnly': v:true,
+  \     },
+  \     'selectionRange': {
+  \       'dynamicRegistration': v:true,
+  \     },
+  \     'linkedEditingRange': {
+  \       'dynamicRegistration': v:true,
+  \     },
+  \     'callHierarchy': {
+  \       'dynamicRegistration': v:true,
+  \     },
+  \     'semanticTokens': {
+  \       'dynamicRegistration': v:true,
+  \       'requests': {
+  \         'range': v:true,
+  \         'full': v:true,
+  \       },
+  \       'tokenTypes': [],
+  \       'tokenModifiers': [],
+  \       'formats': [],
+  \       'overlappingTokenSupport': v:true,
+  \       'multilineTokenSupport': v:true,
+  \     },
+  \     'moniker': {
+  \       'dynamicRegistration': v:true,
+  \     },
   \   },
-  \   'experimental': {},
+  \   'window': {
+  \     'workDoneProgress': v:false,
+  \     'showMessage': {
+  \       'messageActionItem': {
+  \         'additionalPropertiesSupport': v:false,
+  \       }
+  \     },
+  \     'showDocument': {
+  \       'support': v:false,
+  \     },
+  \   },
+  \   'general': {
+  \     'regularExpressions': {
+  \       'engine': 'vim',
+  \       'version': '0'
+  \     },
+  \     'markdown': {
+  \       'parser': 'vim',
+  \       'version': '0'
+  \     },
+  \   },
   \ }
 endfunction
 
@@ -156,10 +274,9 @@ let s:Capabilities = {}
 "
 " new
 "
-function! s:Capabilities.new() abort
+function! s:Capabilities.new(capabilities) abort
   return extend(deepcopy(s:Capabilities), {
-  \   'capabilities': {},
-  \   'dynamics': {}
+  \   'capabilities': s:ServerCapabilities.new({}),
   \ })
 endfunction
 
@@ -167,20 +284,28 @@ endfunction
 " merge
 "
 function! s:Capabilities.merge(capabilities) abort
-  let self.capabilities = a:capabilities
+  let self.capabilities = s:ServerCapabilities.new(a:capabilities.capabilities)
 endfunction
 
 "
 " register
 "
 function! s:Capabilities.register(capability) abort
-  echomsg string(['dynamic registration', a:capability])
+  call self.capabilities.register(
+  \   a:capability.method,
+  \   a:capability.id,
+  \   a:capability.registerOptions
+  \ )
 endfunction
 
 "
 " unregister
 "
 function! s:Capabilities.unregister(capability) abort
+  call self.capabilities.unregister(
+  \   a:capability.method,
+  \   a:capability.id,
+  \ )
 endfunction
 
 "
@@ -194,14 +319,14 @@ endfunction
 " get_completion_commit_characters
 "
 function! s:Capabilities.get_completion_all_commit_characters() abort
-  return lamp#get(self.capabilities, 'capabilities.completionProvider.allCommitCharacters', [])
+  return lamp#get(self.capabilities, 'completionProvider.allCommitCharacters', [])
 endfunction
 
 "
 " get_completion_trigger_characters
 "
 function! s:Capabilities.get_completion_trigger_characters() abort
-  return lamp#get(self.capabilities, 'capabilities.completionProvider.triggerCharacters', [])
+  return lamp#get(self.capabilities, 'completionProvider.triggerCharacters', [])
 endfunction
 
 "
@@ -209,32 +334,32 @@ endfunction
 "
 function! s:Capabilities.get_on_type_formatting_trigger_characters() abort
   let l:chars = []
-  let l:first = lamp#get(self.capabilities, 'capabilities.documentOnTypeFormattingProvider.firstTriggerCharacter', v:null)
+  let l:first = lamp#get(self.capabilities, 'documentOnTypeFormattingProvider.firstTriggerCharacter', v:null)
   if l:first isnot# v:null
     let l:chars += [l:first]
   endif
-  return l:chars + lamp#get(self.capabilities, 'capabilities.documentOnTypeFormattingProvider.moreTriggerCharacter', [])
+  return l:chars + lamp#get(self.capabilities, 'documentOnTypeFormattingProvider.moreTriggerCharacter', [])
 endfunction
 
 "
 " get_signature_help_trigger_characters
 "
 function! s:Capabilities.get_signature_help_trigger_characters() abort
-  return lamp#get(self.capabilities, 'capabilities.signatureHelpProvider.triggerCharacters', [])
+  return lamp#get(self.capabilities, 'signatureHelpProvider.triggerCharacters', [])
 endfunction
 
 "
 " get_code_action_kinds
 "
 function! s:Capabilities.get_code_action_kinds() abort
-  return lamp#get(self.capabilities, 'capabilities.codeActionProvider.codeActionKinds', [])
+  return lamp#get(self.capabilities, 'codeActionProvider.codeActionKinds', [])
 endfunction
 
 "
 " get_text_document_sync_kind
 "
 function! s:Capabilities.get_text_document_sync_kind() abort
-  let l:kind_or_option = lamp#get(self.capabilities, 'capabilities.textDocumentSync', 0)
+  let l:kind_or_option = lamp#get(self.capabilities, 'textDocumentSync', 0)
   if type(l:kind_or_option) == type(0)
     return l:kind_or_option
   endif
@@ -245,39 +370,39 @@ endfunction
 " get_text_document_sync_will_save
 "
 function! s:Capabilities.get_text_document_sync_will_save() abort
-  return lamp#get(self.capabilities, 'capabilities.textDocumentSync.willSave', v:false)
+  return lamp#get(self.capabilities, 'textDocumentSync.willSave', v:false)
 endfunction
 
 "
 " get_text_document_sync_will_save_wait_until
 "
 function! s:Capabilities.get_text_document_sync_will_save_wait_until() abort
-  return lamp#get(self.capabilities, 'capabilities.textDocumentSync.willSaveWaitUntil', v:false)
+  return lamp#get(self.capabilities, 'textDocumentSync.willSaveWaitUntil', v:false)
 endfunction
 
 "
 " get_text_document_sync_save
 "
 function! s:Capabilities.get_text_document_sync_save() abort
-  return lamp#get(self.capabilities, 'capabilities.textDocumentSync.save', v:null) isnot# v:null
+  return lamp#get(self.capabilities, 'textDocumentSync.save', v:null) isnot# v:null
 endfunction
 
 "
 " get_text_document_sync_save_include_text
 "
 function! s:Capabilities.get_text_document_sync_save_include_text() abort
-  return lamp#get(self.capabilities, 'capabilities.textDocumentSync.save.includeText', v:false)
+  return lamp#get(self.capabilities, 'textDocumentSync.save.includeText', v:false)
 endfunction
 
 "
 " is_workspace_folder_supported
 "
 function! s:Capabilities.is_workspace_folder_supported() abort
-  let l:is_supported = lamp#get(self.capabilities, 'capabilities.workspace.workspaceFolders.supported', v:false)
+  let l:is_supported = lamp#get(self.capabilities, 'workspace.workspaceFolders.supported', v:false)
   if !l:is_supported
     return v:false
   endif
-  let l:change_notifications = lamp#get(self.capabilities, 'capabilities.workspace.workspaceFolders.changeNotifications', v:true)
+  let l:change_notifications = lamp#get(self.capabilities, 'workspace.workspaceFolders.changeNotifications', v:true)
   return type(l:change_notifications) == type(v:true) || strlen(l:change_notifications) > 0
 endfunction
 

@@ -14,7 +14,8 @@ endfunction
 "
 function! lamp#view#floatwin#nvim#hide(floatwin) abort
   if lamp#view#floatwin#nvim#is_showing(a:floatwin)
-    call nvim_win_close(a:floatwin.nvim_window, v:true)
+    let l:nvim_window = a:floatwin.nvim_window
+    call timer_start(0, { -> nvim_win_close(l:nvim_window, v:true) })
     let a:floatwin.nvim_window = v:null
   endif
 endfunction

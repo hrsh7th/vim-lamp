@@ -1,50 +1,11 @@
-let s:ns = has('nvim') ? 'nvim' : 'vim'
-
-let s:colors = reverse([
-      \   'DarkBlue',
-      \   'DarkGreen',
-      \   'DarkCyan',
-      \   'DarkRed',
-      \   'DarkMagenta',
-      \   'DarkYellow',
-      \   'LightGray',
-      \   'DarkGray',
-      \   'Blue',
-      \   'Green',
-      \   'Cyan',
-      \   'Red',
-      \   'Magenta',
-      \   'Yellow',
-      \ ])
-
-"
-" lamp#view#highlight#nr2color
-"
-function! lamp#view#highlight#nr2color(nr) abort
-  return s:colors[a:nr % len(s:colors)]
-endfunction
-
-"
-" lamp#view#highlight#get_by_position
-"
-" Returns buf_highlights that related current bufnr.
-"
-function! lamp#view#highlight#get(position) abort
-  return lamp#view#highlight#{s:ns}#get(a:position)
-endfunction
+let s:Position = vital#lamp#import('VS.LSP.Position')
+let s:TextMark = vital#lamp#import('VS.Vim.Buffer.TextMark')
 
 "
 " lamp#view#highlight#remove
 "
 function! lamp#view#highlight#remove(namespace, bufnr) abort
-  call lamp#view#highlight#{s:ns}#remove(a:namespace, a:bufnr)
-endfunction
-
-"
-" lamp#view#highlight#color
-"
-function! lamp#view#highlight#color(namespace, bufnr, range, color) abort
-  call s:add_highlight(a:namespace, a:bufnr, a:range, 'Lamp' . a:color)
+  call s:TextMark.clear(a:bufnr, a:namespace)
 endfunction
 
 "
@@ -90,8 +51,11 @@ function! s:add_highlight(namespace, bufnr, range, highlight) abort
     endif
   endif
 
-  " add highlight.
-  call lamp#view#highlight#{s:ns}#add(a:namespace, a:bufnr, a:range, a:highlight)
+  call s:TextMark.set(a:bufnr, a:namespace, [{
+  \   'start_pos': s:Position.lsp_to_vim(a:bufnr, a:range.start),
+  \   'end_pos': s:Position.lsp_to_vim(a:bufnr, a:range.end),
+  \   'highlight': a:highlight
+  \ }])
 endfunction
 
 "
@@ -113,23 +77,6 @@ function! s:initialize() abort
   \ }]
     execute printf('highlight! default Lamp%s gui=undercurl cterm=undercurl guisp=%s', l:definition.kind, l:definition.guifg)
   endfor
-
-  for l:color in s:colors
-    execute printf('highlight! Lamp%s guibg=%s', l:color, l:color)
-  endfor
-
-  if exists('*prop_add')
-    call prop_type_add('LampError', { 'highlight': 'LampError' })
-    call prop_type_add('LampWarning', { 'highlight': 'LampWarning' })
-    call prop_type_add('LampInformation', { 'highlight': 'LampInformation' })
-    call prop_type_add('LampHint', { 'highlight': 'LampHint' })
-    for l:color in s:colors
-      let l:highlight = printf('Lamp%s', l:color)
-      call prop_type_add(l:highlight, {
-            \   'highlight': l:highlight
-            \ })
-    endfor
-  endif
 endfunction
 call s:initialize()
 

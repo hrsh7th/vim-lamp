@@ -1,7 +1,8 @@
 let s:Promise = vital#lamp#import('Async.Promise')
-let s:JSON = vital#lamp#import('VS.RPC.JSON')
+let s:Connection = vital#lamp#import('VS.RPC.JSON.Connection')
 let s:Document = lamp#server#document#import()
 let s:Capabilities = lamp#server#capabilities#import()
+let s:Diagnostics = lamp#server#diagnostics#import()
 
 "
 " lamp#server#import
@@ -19,16 +20,15 @@ function! s:Server.new(name, option) abort
   let l:server = extend(deepcopy(s:Server), {
   \   'name': a:name,
   \   'cmd': a:option.command,
-  \   'rpc': s:JSON.new(),
+  \   'rpc': s:Connection.new(),
   \   'filetypes': a:option.filetypes,
   \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
   \   'root_uri_cache': {},
   \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
   \   'trace': get(a:option, 'trace', 'off'),
-  \   'request_id': 0,
   \   'documents': {},
   \   'diagnostics': {},
-  \   'capabilities': s:Capabilities.new(),
+  \   'capabilities': s:Capabilities.new(get(a:option, 'capabilities', {})),
   \   'initialized': v:false,
   \   'state': {
   \     'started': v:false,
@@ -36,20 +36,7 @@ function! s:Server.new(name, option) abort
   \     'exited': v:false,
   \   },
   \ })
-  call l:server.rpc.events.on('stderr', function(l:server.on_stderr, [], l:server))
-  call l:server.rpc.events.on('exit', function(l:server.on_exit, [], l:server))
-  call l:server.rpc.events.on('request', function(l:server.on_request, [], l:server))
-  call l:server.rpc.events.on('notify', function(l:server.on_notify, [], l:server))
   return l:server
-endfunction
-
-"
-" create_request_id
-"
-function! s:Server.create_request_id() abort
-  let l:request_id = self.request_id
-  let self.request_id += 1
-  return l:request_id
 endfunction
 
 "
@@ -58,9 +45,25 @@ endfunction
 function! s:Server.start() abort
   if !self.state.started && !self.state.exited
     let self.state.started = v:true
+    for [l:method, l:Callback] in items({
+    \   'workspace/workspaceFolders': self.on_workspace_folders,
+    \   'workspace/configuration': self.on_configuration,
+    \   'workspace/applyEdit': self.on_apply_edit,
+    \   'window/showMessageRequest': self.on_show_message_request,
+    \   'client/registerCapability': self.on_register_capability,
+    \   'client/unregisterCapability': self.on_unregister_capability,
+    \ })
+      call self.rpc.on_request(l:method, function(l:Callback, [], self))
+    endfor
+    for [l:method, l:Callback] in items({
+    \   'textDocument/publishDiagnostics': self.on_publish_diagnostics,
+    \   'window/showMessage': self.on_show_message,
+    \ })
+      call self.rpc.on_notification(l:method, function(l:Callback, [], self))
+    endfor
     call self.rpc.start({
     \   'cmd': self.cmd,
-    \   'cwd': self.get_root_uri(bufnr('%'))
+    \   'cwd': self.root_uri(bufnr('%'))
     \ })
   endif
   return s:Promise.resolve()
@@ -73,8 +76,8 @@ function! s:Server.stop() abort
   let l:p = s:Promise.resolve()
   if self.state.started
     if !empty(self.state.initialized)
-      let l:p = l:p.then({ -> self.request_raw(self.create_request_id(), 'shutdown', v:null) })
-      let l:p = l:p.then({ -> self.notify_raw('exit') })
+      let l:p = l:p.then({ -> self.rpc.request('shutdown', v:null) })
+      let l:p = l:p.then({ -> self.rpc.notify('exit') })
       let l:p = l:p.then({ -> execute('doautocmd <nomodeline> User lamp#server#exited') })
     endif
     let l:p = l:p.then({ -> self.rpc.stop() })
@@ -117,6 +120,7 @@ function! s:Server.initialize(bufnr) abort
   try
     call self.start()
   catch /.*/
+    echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
     return s:Promise.resolve()
   endtry
 
@@ -127,12 +131,12 @@ function! s:Server.initialize(bufnr) abort
   let l:ctx = {}
   function! l:ctx.callback(bufnr, response) abort dict
     call self.capabilities.merge(a:response)
-    call self.notify_raw('initialized', {})
+    call self.rpc.notify('initialized', {})
 
-    call self.notify_raw('workspace/didChangeConfiguration', {
+    call self.rpc.notify('workspace/didChangeConfiguration', {
     \   'settings': lamp#feature#workspace#get_config()
     \ })
-    call self.notify_raw('workspace/didChangeWorkspaceFolders', {
+    call self.rpc.notify('workspace/didChangeWorkspaceFolders', {
     \   'event': {
     \     'added': lamp#feature#workspace#get_folders(),
     \     'removed': [],
@@ -153,13 +157,18 @@ function! s:Server.initialize(bufnr) abort
   endif
 
   call lamp#feature#workspace#update(self, a:bufnr)
-  let self.state.initialized = self.request_raw(self.create_request_id(), 'initialize', {
+  let self.state.initialized = self.rpc.request('initialize', {
   \   'processId': getpid(),
+  \   'clientInfo': {
+  \     'name': 'lamp',
+  \     'version': '0.1'
+  \   },
   \   'rootPath': l:root_uri,
   \   'rootUri': lamp#protocol#document#encode_uri(l:root_uri),
   \   'initializationOptions': self.initialization_options(),
-  \   'trace': self.trace,
   \   'capabilities': lamp#server#capabilities#get_default_capabilities(),
+  \   'trace': self.trace,
+  \   'locale': 'en',
   \   'workspaceFolders': lamp#feature#workspace#get_folders(),
   \ }).then(function(l:ctx.callback, [a:bufnr], self))
   return self.state.initialized
@@ -169,34 +178,14 @@ endfunction
 " request.
 "
 function! s:Server.request(method, params, ...) abort
-  let l:request_id = self.create_request_id()
-
-  let l:option = get(a:000, 0, {})
-  if has_key(l:option, 'cancellation_token')
-    call l:option.cancellation_token.attach({ -> self.rpc.cancel(l:request_id) })
-  endif
-
-  let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> self.request_raw(l:request_id, a:method, a:params) })
-  return l:p
-endfunction
-
-"
-" response.
-"
-function! s:Server.response(id, data) abort
-  return self.response_raw(a:id, a:data)
+  return self.ensure_document_from_params(a:params).then({ -> self.rpc.request(a:method, a:params) })
 endfunction
 
 "
 " notify.
 "
 function! s:Server.notify(method, params) abort
-  let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> self.notify_raw(a:method, a:params) })
-  return l:p
+  call self.ensure_document_from_params(a:params).then({ -> self.rpc.notify(a:method, a:params) })
 endfunction
 
 "
@@ -213,6 +202,7 @@ function! s:Server.ensure_document_from_params(params) abort
   if has_key(a:params, 'textDocument') && has_key(a:params.textDocument, 'uri')
     return self.ensure_document(bufnr(lamp#protocol#document#decode_uri(a:params.textDocument.uri)))
   endif
+  return s:Promise.resolve()
 endfunction
 
 "
@@ -245,7 +235,7 @@ function! s:Server.open_document(bufnr) abort
   " create document.
   let self.documents[l:uri] = s:Document.new(a:bufnr)
   call self.detect_workspace(a:bufnr)
-  call self.notify_raw('textDocument/didOpen', {
+  call self.rpc.notify('textDocument/didOpen', {
   \   'textDocument': lamp#protocol#document#item(a:bufnr),
   \ })
 endfunction
@@ -270,7 +260,7 @@ function! s:Server.sync_document(bufnr) abort
   if l:sync_kind == 1
     call l:doc.sync()
     call self.detect_workspace(a:bufnr)
-    call self.notify_raw('textDocument/didChange', {
+    call self.rpc.notify('textDocument/didChange', {
     \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
     \   'contentChanges': [{ 'text': join(lamp#view#buffer#get_lines(a:bufnr), "\n") }]
     \ })
@@ -281,7 +271,7 @@ function! s:Server.sync_document(bufnr) abort
     if l:diff.rangeLength != 0 || l:diff.text !=# ''
       call l:doc.sync()
       call self.detect_workspace(a:bufnr)
-      call self.notify_raw('textDocument/didChange', {
+      call self.rpc.notify('textDocument/didChange', {
       \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
       \   'contentChanges': [l:diff]
       \ })
@@ -308,7 +298,7 @@ function! s:Server.close_document(bufnr) abort
     call remove(self.diagnostics, l:document.uri)
   endif
 
-  call self.notify_raw('textDocument/didClose', {
+  call self.rpc.notify('textDocument/didClose', {
   \   'textDocument': {
   \     'uri': l:document.uri
   \   }
@@ -355,66 +345,111 @@ function! s:Server.did_save_document(bufnr) abort
 endfunction
 
 "
-" request_raw
+" on_workspace_folders
 "
-function! s:Server.request_raw(id, method, params) abort
-  call self.log('-> REQUEST', a:id, a:method, a:params)
-  return self.rpc.request(a:id, a:method, a:params).then(function(self.on_response, [a:id], self))
+function! s:Server.on_workspace_folders(params) abort
+  return lamp#feature#workspace#get_folders()
 endfunction
 
 "
-" notify_raw
+" on_configuration
 "
-function! s:Server.notify_raw(method, ...) abort
-  let l:params = get(a:000, 0, v:null)
-  call self.log('-> NOTIFY', a:method, l:params)
-  return self.rpc.notify(a:method, l:params)
+function! s:Server.on_configuration(params) abort
+  let l:config = lamp#feature#workspace#get_config()
+  return map(copy(a:params.items), { _, item ->
+  \   lamp#get(l:config, item.section, v:null)
+  \ })
 endfunction
 
 "
-" response_raw
+" on_apply_edit
 "
-function! s:Server.response_raw(id, result) abort
-  call self.log('-> RESPONSE', a:id, a:result)
-  return self.rpc.response(a:id, a:result)
+function! s:Server.on_apply_edit(params) abort
+  try
+    let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(a:params.edit)
+    call lamp#view#edit#apply_workspace(l:workspace_edit)
+    return { 'applied': v:true }
+  catch /.*/
+    return { 'applied': v:false }
+  endtry
 endfunction
 
 "
-" on_request.
+" on_register_capability
 "
-function! s:Server.on_request(request) abort
-  call self.log('<- ON_REQUEST', a:request.id, a:request.method, a:request.params)
-  call timer_start(0, { -> lamp#server#on_request#on(self, a:request) })
+function! s:Server.on_register_capability(params) abort
+  for l:registration in a:params.registrations
+    call self.capabilities.register(l:registration)
+  endfor
+  return v:null
 endfunction
 
 "
-" on_notification.
+" on_unregister_capability
 "
-function! s:Server.on_notify(notification) abort
-  call self.log('<- ON_NOTIFY', a:notification.method, a:notification.params)
-  call timer_start(0, { -> lamp#server#on_notify#on(self, a:notification) })
+function! s:Server.on_unregister_capability(params) abort
+  for l:registration in a:params.registrations
+    call self.capabilities.unregister(l:registration)
+  endfor
+  return v:null
 endfunction
 
 "
-" on_response
+" on_show_message_request
 "
-function! s:Server.on_response(id, response) abort
-  call self.log('<- ON_RESPONSE', a:id, a:response)
-  return a:response
+function! s:Server.on_show_message_request(params) abort
+  if has_key(a:params, 'actions') && type(a:params.actions) == type([])
+    let l:index = lamp#view#input#select(
+    \   a:params.message,
+    \   map(copy(a:params.actions), { _, action -> action.title })
+    \ )
+    if l:index >= 0
+      return a:params.actions[l:index]
+    endif
+  else
+    if a:params.type == 1
+      echohl ErrorMsg
+    elseif a:params.type == 2
+      echohl WarningMsg
+    elseif a:params.type == 4
+      echohl NonText
+    endif
+    echomsg join([self.name, a:params.message], "\t")
+    echohl None
+  endif
+  return v:null
 endfunction
 
 "
-" on_stderr
+" on_publish_diagnostics
 "
-function! s:Server.on_stderr(data) abort
-  call self.log('[STDERR]', a:data)
+function! s:Server.on_publish_diagnostics(params) abort
+  let l:document = get(self.documents, a:params.uri, {})
+  if !has_key(self.diagnostics, a:params.uri)
+    let self.diagnostics[a:params.uri] = s:Diagnostics.new({
+    \   'uri': a:params.uri,
+    \   'diagnostics': a:params.diagnostics,
+    \   'document_version': get(l:document, 'version', -1),
+    \ })
+  endif
+  call self.diagnostics[a:params.uri].set(a:params.diagnostics, get(l:document, 'version', -1))
+
+  call lamp#feature#diagnostic#update(self, self.diagnostics[a:params.uri])
 endfunction
 
 "
-" on_exit
+" on_show_message
 "
-function! s:Server.on_exit(code) abort
-  call self.log('[EXIT]', a:code)
+function! s:Server.on_show_message(params) abort
+  if a:params.type == 1
+    echohl ErrorMsg
+  elseif a:params.type == 2
+    echohl WarningMsg
+  elseif a:params.type == 4
+    echohl NonText
+  endif
+  echomsg join([self.name, a:params.message], "\t")
+  echohl None
 endfunction
 
 "

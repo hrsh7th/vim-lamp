@@ -4,7 +4,7 @@
 function! s:_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze__SID$')
 endfunction
-execute join(['function! vital#_lamp#VS#LSP#TextEdit#import() abort', printf("return map({'_vital_depends': '', 'fixeol': '', 'apply': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
+execute join(['function! vital#_lamp#VS#LSP#TextEdit#import() abort', printf("return map({'_vital_depends': '', 'apply': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
 delfunction s:_SID
 " ___vital___
 "
@@ -13,21 +13,15 @@ delfunction s:_SID
 function! s:_vital_loaded(V) abort
   let s:Text = a:V.import('VS.LSP.Text')
   let s:Position = a:V.import('VS.LSP.Position')
+  let s:Buffer = a:V.import('VS.Vim.Buffer')
+  let s:Option = a:V.import('VS.Vim.Option')
 endfunction
 
 "
 " _vital_depends
 "
 function! s:_vital_depends() abort
-  return ['VS.LSP.Text']
-endfunction
-
-"
-" fixeol
-"
-let s:_fixeol = v:false
-function! s:fixeol(bool) abort
-  let s:_fixeol = a:bool
+  return ['VS.LSP.Text', 'VS.LSP.Position', 'VS.Vim.Buffer', 'VS.Vim.Option']
 endfunction
 
 "
@@ -35,111 +29,105 @@ endfunction
 "
 function! s:apply(path, text_edits) abort
   let l:current_bufname = bufname('%')
-  let l:target_bufname = a:path
-  let l:cursor_position = s:Position.cursor()
+  let l:current_position = s:Position.cursor()
 
-  let l:old_foldenable = &foldenable
-  let l:old_virtualedit = &virtualedit
-  let l:old_whichwrap = &whichwrap
-  let l:old_winview = winsaveview()
-  let l:old_reg = getreg('x')
+  let l:target_bufnr = s:_switch(a:path)
+  call s:_substitute(l:target_bufnr, a:text_edits, l:current_position)
+  let l:current_bufnr = s:_switch(l:current_bufname)
 
-  let &foldenable = 0
-  let &virtualedit = 'onemore'
-  let &whichwrap = 'h'
-
-  let l:fix_cursor = v:false
-  call s:_switch(l:target_bufname)
-  for l:text_edit in s:_normalize(a:text_edits)
-    let l:fix_cursor = s:_apply(bufnr(l:target_bufname), l:text_edit, l:cursor_position) || l:fix_cursor
-  endfor
-  call s:_switch(l:current_bufname)
-
-  let &foldenable = l:old_foldenable
-  let &virtualedit = l:old_virtualedit
-  let &whichwrap = l:old_whichwrap
-  call winrestview(l:old_winview)
-  call setreg('x', l:old_reg)
-
-  if l:fix_cursor && bufnr(l:current_bufname) == bufnr(l:target_bufname)
-    call cursor(s:Position.lsp_to_vim('%', l:cursor_position))
+  if l:current_bufnr == l:target_bufnr
+    call cursor(s:Position.lsp_to_vim('%', l:current_position))
   endif
 endfunction
 
 "
-" _apply
+" _substitute
 "
-function! s:_apply(bufnr, text_edit, cursor_position) abort
-  " prepare.
-  let l:start = s:Position.lsp_to_vim(a:bufnr, a:text_edit.range.start)
-  let l:end = s:Position.lsp_to_vim(a:bufnr, a:text_edit.range.end)
-  let l:lines = s:Text.split_by_eol(a:text_edit.newText)
-  let l:lines_len = len(l:lines)
-  let l:range_len = (l:end[0] - l:start[0]) + 1
+function! s:_substitute(bufnr, text_edits, current_position) abort
+  try
+    " Save state.
+    let l:Restore = s:Option.define({
+    \   'foldenable': '0',
+    \ })
+    let l:view = winsaveview()
 
-  " apply edit.
-  call setreg('x', a:text_edit.newText, 'c')
-  if l:start[0] == l:end[0] && l:start[1] == l:end[1]
-    execute printf("keepjumps noautocmd silent! normal! %sG%s|\"xP", l:start[0], l:start[1])
-  else
-    execute printf("keepjumps noautocmd silent! normal! %sG%s|v%sG%s|h\"_d\"xP", l:start[0], l:start[1], l:end[0], l:end[1])
-  endif
+    " Apply substitute.
+    let [l:fixeol, l:text_edits] = s:_normalize(a:bufnr, a:text_edits)
+    for l:text_edit in l:text_edits
+      let l:start = s:Position.lsp_to_vim(a:bufnr, l:text_edit.range.start)
+      let l:end = s:Position.lsp_to_vim(a:bufnr, l:text_edit.range.end)
+      let l:text = s:Text.normalize_eol(l:text_edit.newText)
+      execute printf('noautocmd keeppatterns keepjumps silent %ssubstitute/\%%%sl\%%%sc\_.\{-}\%%%sl\%%%sc/\=l:text/%se',
+      \   l:start[0],
+      \   l:start[0],
+      \   l:start[1],
+      \   l:end[0],
+      \   l:end[1],
+      \   &gdefault ? 'g' : ''
+      \ )
+      call s:_fix_cursor_position(a:current_position, l:text_edit, s:Text.split_by_eol(l:text))
+    endfor
 
-  " fix cursor.
-  if a:text_edit.range.end.line < a:cursor_position.line
-    let a:cursor_position.line += l:lines_len - l:range_len
-    return v:true
-  elseif a:text_edit.range.end.line == a:cursor_position.line && a:text_edit.range.end.character <= a:cursor_position.character
-    let a:cursor_position.line += l:lines_len - l:range_len
-    let a:cursor_position.character += strchars(l:lines[-1]) - a:text_edit.range.end.character
-    return v:true
+    " Remove last empty line if fixeol enabled.
+    if l:fixeol && getline('$') ==# ''
+      noautocmd keeppatterns keepjumps silent $delete _
+    endif
+  catch /.*/
+    echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+  finally
+    " Restore state.
+    call l:Restore()
+    call winrestview(l:view)
+  endtry
+endfunction
+
+"
+" _fix_cursor_position
+"
+function! s:_fix_cursor_position(position, text_edit, lines) abort
+  let l:lines_len = len(a:lines)
+  let l:range_len = (a:text_edit.range.end.line - a:text_edit.range.start.line) + 1
+
+  if a:text_edit.range.end.line < a:position.line
+    let a:position.line += l:lines_len - l:range_len
+  elseif a:text_edit.range.end.line == a:position.line && a:text_edit.range.end.character <= a:position.character
+    let a:position.line += l:lines_len - l:range_len
+    let a:position.character = strchars(a:lines[-1]) + (a:position.character - a:text_edit.range.end.character)
+    if l:lines_len == 1
+      let a:position.character += a:text_edit.range.start.character
+    endif
   endif
-  return v:false
 endfunction
 
 "
 " _normalize
 "
-function! s:_normalize(text_edits) abort
+function! s:_normalize(bufnr, text_edits) abort
   let l:text_edits = type(a:text_edits) == type([]) ? a:text_edits : [a:text_edits]
   let l:text_edits = s:_range(l:text_edits)
-  let l:text_edits = sort(copy(l:text_edits), function('s:_compare', [], {}))
-  let l:text_edits = s:_check(l:text_edits)
-  return reverse(l:text_edits)
+  let l:text_edits = sort(l:text_edits, function('s:_compare'))
+  let l:text_edits = reverse(l:text_edits)
+  return s:_fix_text_edits(a:bufnr, l:text_edits)
 endfunction
 
 "
 " _range
 "
 function! s:_range(text_edits) abort
+  let l:text_edits = []
   for l:text_edit in a:text_edits
+    if type(l:text_edit) != type({})
+      continue
+    endif
     if l:text_edit.range.start.line > l:text_edit.range.end.line || (
     \   l:text_edit.range.start.line == l:text_edit.range.end.line &&
     \   l:text_edit.range.start.character > l:text_edit.range.end.character
     \ )
       let l:text_edit.range = { 'start': l:text_edit.range.end, 'end': l:text_edit.range.start }
     endif
+    let l:text_edits += [l:text_edit]
   endfor
-  return a:text_edits
-endfunction
-
-"
-" _check
-"
-function! s:_check(text_edits) abort
-  if len(a:text_edits) > 1
-    let l:range = a:text_edits[0].range
-    for l:text_edit in a:text_edits[1 : -1]
-      if l:range.end.line > l:text_edit.range.start.line || (
-      \   l:range.end.line == l:text_edit.range.start.line &&
-      \   l:range.end.character > l:text_edit.range.start.character
-      \ )
-        throw 'VS.LSP.TextEdit: range overlapped.'
-      endif
-      let l:range = l:text_edit.range
-    endfor
-  endif
-  return a:text_edits
+  return l:text_edits
 endfunction
 
 "
@@ -154,13 +142,44 @@ function! s:_compare(text_edit1, text_edit2) abort
 endfunction
 
 "
+" _fix_text_edits
+"
+function! s:_fix_text_edits(bufnr, text_edits) abort
+  let l:max = s:Buffer.get_line_count(a:bufnr)
+
+  let l:fixeol = v:false
+  let l:text_edits = []
+  for l:text_edit in a:text_edits
+    if l:max <= l:text_edit.range.start.line
+      let l:text_edit.range.start.line = l:max - 1
+      let l:text_edit.range.start.character = strchars(get(getbufline(a:bufnr, '$'), 0, ''))
+      let l:text_edit.newText = "\n" . l:text_edit.newText
+      let l:fixeol = &fixendofline && !&binary
+    endif
+    if l:max <= l:text_edit.range.end.line
+      let l:text_edit.range.end.line = l:max - 1
+      let l:text_edit.range.end.character = strchars(get(getbufline(a:bufnr, '$'), 0, ''))
+      let l:fixeol = &fixendofline && !&binary
+    endif
+    call add(l:text_edits, l:text_edit)
+  endfor
+
+  return [l:fixeol, l:text_edits]
+endfunction
+
+"
 " _switch
 "
 function! s:_switch(path) abort
-  if bufnr(a:path) >= 0
-    execute printf('keepalt keepjumps %sbuffer!', bufnr(a:path))
+  let l:curr = bufnr('%')
+  let l:next = bufnr(a:path)
+  if l:next >= 0
+    if l:curr != l:next
+      execute printf('noautocmd keepalt keepjumps %sbuffer!', bufnr(a:path))
+    endif
   else
-    execute printf('keepalt keepjumps edit! %s', fnameescape(a:path))
+    execute printf('noautocmd keepalt keepjumps edit! %s', fnameescape(a:path))
   endif
+  return bufnr('%')
 endfunction
 

@@ -181,7 +181,7 @@ function! lamp#builtin#gopls() abort
   \   'filetypes': ['go', 'gomod'],
   \   'root_uri': { bufnr -> lamp#findup(['go.mod', 'main.go'], bufname(bufnr)) },
   \   'initialization_options': { -> {
-  \     'usePlaceholders': v:true,
+  \     'usePlaceholders': v:false,
   \     'completeUnimported': v:true,
   \     'hoverKind': 'FullDocumentation',
   \   } },

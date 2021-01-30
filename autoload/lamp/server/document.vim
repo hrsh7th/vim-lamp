@@ -1,4 +1,4 @@
-let s:Diff = vital#lamp#import('VS.Text.Diff')
+let s:Diff = vital#lamp#import('VS.LSP.Diff')
 
 "
 " lamp#server#document#import

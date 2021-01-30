@@ -4,6 +4,7 @@ endif
 let g:loaded_lamp = v:true
 
 let s:Promise = vital#lamp#import('Async.Promise')
+let s:Window = vital#lamp#import('VS.Vim.Window')
 
 augroup lamp#silent
   autocmd!
@@ -37,6 +38,12 @@ command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
       \  LampCodeAction                   call lamp#feature#code_action#do({ 'range': <range> != 0, 'query': '<args>', 'sync': v:false })
 command! -range -nargs=* -complete=customlist,lamp#feature#code_action#complete
       \  LampCodeActionSync               call lamp#feature#code_action#do({ 'range': <range> != 0, 'query': '<args>', 'sync': v:true })
+command! LampDebug call s:lamp_debug()
+function! s:lamp_debug() abort
+  for l:server in lamp#server#registry#find_by_filetype(&filetype)
+    echomsg string(l:server.capabilities)
+  endfor
+endfunction
 
 "
 " events
@@ -48,7 +55,7 @@ augroup lamp
   autocmd BufWritePre * call <SID>on_text_document_will_save()
   autocmd BufWritePost * call <SID>on_text_document_did_save()
   autocmd BufWipeout,BufDelete,BufUnload * call <SID>on_text_document_did_close()
-  autocmd VimLeave * call <SID>on_vim_leave_pre()
+  autocmd VimLeavePre * call <SID>on_vim_leave_pre()
 augroup END
 
 "
@@ -56,17 +63,22 @@ augroup END
 "
 function! s:on_text_document_did_open() abort
   let l:bufnr = bufnr('%')
-
-  let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
-  if !empty(l:servers)
-    call s:initialize_buffer()
+  if !s:is_valid_buffer(l:bufnr)
+    return
   endif
 
+  let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
   let l:ctx = {}
   function! l:ctx.callback(bufnr, servers) abort
+    if !s:is_valid_buffer(a:bufnr)
+      return
+    endif
     call map(copy(a:servers), { _, server ->
     \   server.initialize(a:bufnr).then({ -> server.open_document(a:bufnr) })
     \ })
+    if !empty(a:servers)
+      call s:initialize_buffer()
+    endif
   endfunction
   call lamp#debounce('s:on_text_document_did_open:' . l:bufnr, { -> l:ctx.callback(l:bufnr, l:servers) }, 20)
 endfunction
@@ -147,6 +159,20 @@ function! s:on_vim_leave_pre() abort
 endfunction
 
 "
+" is_valid_buffer
+"
+function! s:is_valid_buffer(bufnr) abort
+  if !empty(filter(win_findbuf(a:bufnr), 's:Window.is_floating(v:val)'))
+    return v:false
+  endif
+  if bufwinnr(a:bufnr) == -1
+    return v:false
+  endif
+
+  return v:true
+endfunction
+
+"
 " initialize_buffer
 "
 function! s:initialize_buffer() abort
@@ -158,6 +184,7 @@ function! s:initialize_buffer() abort
   call lamp#log('[LOG]', 's:initialize_buffer', bufnr('%'))
 
   for s:feature in glob(lamp#config('global.root') . '/autoload/lamp/feature/*.vim', v:false, v:true)
+    call lamp#log('[LOG]', 's:initialize_buffer', fnamemodify(s:feature, ':t:r'))
     try
       call lamp#feature#{fnamemodify(s:feature, ':t:r')}#init()
     catch /.*/

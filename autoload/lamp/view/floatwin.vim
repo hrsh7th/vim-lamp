@@ -77,7 +77,7 @@ function! lamp#view#floatwin#show(name, pos, contents, ...) abort
 
   let l:target = s:floatwins[a:name]
   for [l:name, l:win] in items(s:floatwins)
-    if l:win.is_keep() && l:win.is_showing() && l:target.get_priority() < l:win.get_priority()
+    if !l:win.is_keep() && l:win.is_showing() && l:target.get_priority() < l:win.get_priority()
       return
     endif
   endfor
@@ -206,7 +206,7 @@ function! s:Floatwin.show(screenpos, contents) abort
   call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
 
   " update syntax highlight for nvim.
-  call s:Window.do(self.winid(), { -> s:Markdown.apply(join(l:lines, "\n")) })
+  call s:Window.do(self.winid(), { -> s:Markdown.apply() })
 endfunction
 
 "

@@ -1,10 +1,7 @@
 let s:Promise = vital#lamp#import('Async.Promise')
-let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Server = lamp#server#import()
 let s:CancellationToken = lamp#server#cancellation_token#import()
-
-call s:TextEdit.fixeol(v:true)
 
 let s:debounce_ids = {}
 
@@ -43,8 +40,8 @@ let s:config = {
 \ }
 
 function! s:on_unhandled_rejection(err) abort
+  echoerr string(a:err)
   if strlen(lamp#config('global.debug')) > 0
-    echoerr string(a:err)
     call lamp#log('[ERROR]', a:err)
   endif
 endfunction
@@ -195,7 +192,7 @@ function! lamp#sync(promise_or_fn, ...) abort
       if l:timeout != -1 && reltimefloat(reltime(l:reltime)) * 1000 > l:timeout
         throw 'lamp#sync: timeout'
       endif
-      sleep 1m
+      sleep 10ms
     endwhile
   elseif type(a:promise_or_fn) == type({}) && has_key(a:promise_or_fn, '_vital_promise')
     while v:true
@@ -209,7 +206,7 @@ function! lamp#sync(promise_or_fn, ...) abort
         throw 'lamp#sync: timeout'
       endif
 
-      sleep 1m
+      sleep 10ms
     endwhile
   endif
 endfunction
@@ -227,22 +224,13 @@ endfunction
 function! lamp#get(dict, path, default) abort
   let l:keys = split(a:path, '\.')
 
-  let l:target = a:dict
-  for l:key in l:keys
-    if index([v:t_dict, v:t_list], type(l:target)) == -1
-      return a:default
-    endif
-
-    if !has_key(l:target, l:key)
-      return a:default
-    endif
-
-    let l:value = l:target[l:key]
-    unlet! l:target
-    let l:target = l:value
-  endfor
-
-  return l:target
+  let l:V = a:dict
+  try
+		 for l:key in l:keys | let l:V = l:V[l:key] | endfor
+  catch /.*/
+    return a:default
+  endtry
+  return l:V
 endfunction
 
 "
