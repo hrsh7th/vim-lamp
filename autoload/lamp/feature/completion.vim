@@ -23,12 +23,12 @@ function! lamp#feature#completion#init() abort
   call lamp#view#floatwin#configure('completion', {
   \   'max_height': &lines / 3,
   \ })
-  execute printf('augroup lamp#feature#completion_%d', bufnr('%'))
-    autocmd!
-    autocmd InsertLeave <buffer> call s:on_insert_leave()
-    autocmd CompleteChanged <buffer> call s:on_complete_changed()
-    autocmd CompleteDone <buffer> call s:on_complete_done()
-  augroup END
+  " execute printf('augroup lamp#feature#completion_%d', bufnr('%'))
+  "   autocmd!
+  "   autocmd InsertLeave <buffer> call s:on_insert_leave()
+  "   autocmd CompleteChanged <buffer> call s:on_complete_changed()
+  "   autocmd CompleteDone <buffer> call s:on_complete_done()
+  " augroup END
 endfunction
 
 "

@@ -4,6 +4,7 @@ lamp
 Async.Promise
 VS.LSP.Position
 VS.LSP.TextEdit
+VS.LSP.MarkupContent
 VS.RPC.JSON
 VS.Text.Diff
 VS.System.Job

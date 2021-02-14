@@ -38,6 +38,7 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'documentChanges': v:true,
   \       'resourceOperations': [],
   \       'failureHandling': 'abort',
+  \       'changeAnnotationSupport': v:true,
   \     },
   \     'didChangeConfiguration': {
   \       'dynamicRegistration': v:false
@@ -63,10 +64,11 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'didSave': v:true
   \     },
   \     'linkedEditingRange': {
-  \       'dynamicRegistration': v:true,
+  \       'dynamicRegistration': v:false,
   \     },
   \     'rename': {
-  \       'prepareSupport': v:true
+  \       'prepareSupport': v:true,
+  \       'prepareSupportDefaultBehavior': v:true,
   \     },
   \     'completion': {
   \       'dynamicRegistration': v:false,
