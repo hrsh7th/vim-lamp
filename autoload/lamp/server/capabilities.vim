@@ -38,7 +38,10 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'documentChanges': v:true,
   \       'resourceOperations': [],
   \       'failureHandling': 'abort',
-  \       'changeAnnotationSupport': v:true,
+  \       'normalizesLineEndings': v:true,
+  \       'changeAnnotationSupport': {
+  \         'groupsOnLabel': v:false,
+  \       },
   \     },
   \     'didChangeConfiguration': {
   \       'dynamicRegistration': v:false
@@ -48,13 +51,33 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \     },
   \     'symbol': {
   \       'dynamicRegistration': v:false,
-  \       'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
+  \       'symbolKind': {
+  \         'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
+  \       },
+  \       'tagSupport': {
+  \         'valueSet': [],
+  \       }
   \     },
   \     'executeCommand': {
   \       'dynamicRegistration': v:false,
   \     },
   \     'workspaceFolders': v:true,
   \     'configuration': v:true,
+  \     'semanticTokens': {
+  \       'refreshSupport': v:false,
+  \     },
+  \     'codeLens': {
+  \       'refreshSupport': v:false,
+  \     },
+  \     'fileOperations': {
+  \       'dynamicRegistration': v:false,
+  \       'didCreate': v:false,
+  \       'willCreate': v:false,
+  \       'didRename': v:false,
+  \       'willRename': v:false,
+  \       'didDelete': v:false,
+  \       'willDelete': v:false,
+  \     }
   \   },
   \   'textDocument': {
   \     'synchronization': {
@@ -62,13 +85,6 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'willSave': v:true,
   \       'willSaveWaitUntil': v:true,
   \       'didSave': v:true
-  \     },
-  \     'linkedEditingRange': {
-  \       'dynamicRegistration': v:false,
-  \     },
-  \     'rename': {
-  \       'prepareSupport': v:true,
-  \       'prepareSupportDefaultBehavior': v:true,
   \     },
   \     'completion': {
   \       'dynamicRegistration': v:false,
@@ -78,43 +94,36 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \         'documentationFormat': ['markdown'],
   \         'deprecatedSupport': v:true,
   \         'preselectSupport': v:true,
+  \         'tagSupport': {
+  \           'valueSet': [],
+  \         },
+  \         'insertReplaceSupport': v:false,
+  \         'resolveSupport': {
+  \           'properties': ['documentation', 'details', 'additionalTextEdits']
+  \         },
+  \         'insertTextModeSupport': {
+  \           'valueSet': [],
+  \         }
   \       },
   \       'completionItemKind': {
   \         'valueSet': map(keys(lamp#protocol#completion#get_kind_map()), { k, v -> str2nr(v) })
   \       },
   \       'contextSupport': v:true
   \     },
-  \     'codeAction': {
-  \       'dynamicRegistration': v:false,
-  \       'codeActionLiteralSupport': {
-  \         'codeActionKind': {
-  \           'valueSet': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
-  \         }
-  \       }
-  \     },
-  \     'signatureHelp': {
-  \       'dynamicRegistration': v:false,
-  \       'signatureInformation': {
-  \         'contextSupport': v:true,
-  \         'documentationFormat': ['markdown'],
-  \         'parameterInformation': {
-  \           'labelOffsetSupport': v:true
-  \         }
-  \       },
-  \     },
   \     'hover': {
   \       'dynamicRegistration': v:false,
   \       'contentFormat': ['markdown'],
   \     },
-  \     'documentSymbol': {
+  \     'signatureHelp': {
   \       'dynamicRegistration': v:false,
-  \       'symbolKind': {
-  \         'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
+  \       'signatureInformation': {
+  \         'documentationFormat': ['markdown'],
+  \         'parameterInformation': {
+  \           'labelOffsetSupport': v:true
+  \         },
+  \         'activeParameterSupport': v:true,
   \       },
-  \       'hierarchicalDocumentSymbolSupport': v:true
-  \     },
-  \     'documentHighlight': {
-  \       'dynamicRegistration': v:false,
+  \       'contextSupport': v:true,
   \     },
   \     'declaration': {
   \       'dynamicRegistration': v:false,
@@ -132,6 +141,48 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \       'dynamicRegistration': v:false,
   \       'linkSupport': v:true,
   \     },
+  \     'references': {
+  \       'dynamicRegistration': v:false,
+  \     },
+  \     'documentHighlight': {
+  \       'dynamicRegistration': v:false,
+  \     },
+  \     'documentSymbol': {
+  \       'dynamicRegistration': v:false,
+  \       'symbolKind': {
+  \         'valueSet': values(g:lamp#server#capabilities#symbol_kinds)
+  \       },
+  \       'hierarchicalDocumentSymbolSupport': v:true,
+  \       'tagSupport': {
+  \         'valueSet': [],
+  \       },
+  \       'labelSupport': v:false,
+  \     },
+  \     'codeAction': {
+  \       'dynamicRegistration': v:false,
+  \       'codeActionLiteralSupport': {
+  \         'codeActionKind': {
+  \           'valueSet': ['', 'quickfix', 'refactor', 'refactor.extract', 'refactor.inline', 'refactor.rewrite', 'source', 'source.organizeImports']
+  \         }
+  \       },
+  \       'isPreferredSupport': v:true,
+  \       'disabledSupport': v:true,
+  \       'dataSupport': v:true,
+  \       'resolveSupport': {
+  \         'properties': [],
+  \       },
+  \       'honorsChangeAnnotations': v:true
+  \     },
+  \     'codeLens': {
+  \       'dynamicRegistration': v:false,
+  \     },
+  \     'documentLink': {
+  \       'dynamicRegistration': v:false,
+  \       'tooltipSupport': v:false,
+  \     },
+  \     'colorProvider': {
+  \       'dynamicRegistration': v:false,
+  \     },
   \     'formatting': {
   \       'dynamicRegistration': v:false,
   \     },
@@ -140,9 +191,72 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \     },
   \     'onTypeFormatting': {
   \       'dynamicRegistration': v:false,
-  \     }
+  \     },
+  \     'rename': {
+  \       'prepareSupport': v:true,
+  \       'prepareSupportDefaultBehavior': 1,
+  \       'honorsChangeAnnotations': v:true,
+  \     },
+  \     'publishDiagnostics': {
+  \       'relatedInformation': v:true,
+  \       'tagSupport': {
+  \         'valueSet': [],
+  \       },
+  \       'versionSupport': v:true,
+  \       'codeDescriptionSupport': v:true,
+  \       'dataSupport': v:true,
+  \     },
+  \     'foldingRange': {
+  \       'dynamicRegistration': v:false,
+  \       'rangeLimit': 100,
+  \       'lineFoldingOnly': v:true,
+  \     },
+  \     'selectionRange': {
+  \       'dynamicRegistration': v:false,
+  \     },
+  \     'linkedEditingRange': {
+  \       'dynamicRegistration': v:false,
+  \     },
+  \     'callHierarchy': {
+  \       'dynamicRegistration': v:false,
+  \     },
+  \     'semanticTokens': {
+  \       'dynamicRegistration': v:false,
+  \       'requests': {
+  \         'range': v:true,
+  \         'full': v:true,
+  \       },
+  \       'tokenTypes': [],
+  \       'tokenModifiers': [],
+  \       'formats': [],
+  \       'overlappingTokenSupport': v:true,
+  \       'multilineTokenSupport': v:true,
+  \     },
+  \     'moniker': {
+  \       'dynamicRegistration': v:false,
+  \     },
   \   },
-  \   'experimental': {},
+  \   'window': {
+  \     'workDoneProgress': v:false,
+  \     'showMessage': {
+  \       'messageActionItem': {
+  \         'additionalPropertiesSupport': v:false,
+  \       }
+  \     },
+  \     'showDocument': {
+  \       'support': v:false,
+  \     },
+  \   },
+  \   'general': {
+  \     'regularExpressions': {
+  \       'engine': 'vim',
+  \       'version': '0'
+  \     },
+  \     'markdown': {
+  \       'parser': 'vim',
+  \       'version': '0'
+  \     },
+  \   },
   \ }
 endfunction
 
@@ -275,11 +389,12 @@ endfunction
 " is_workspace_folder_supported
 "
 function! s:Capabilities.is_workspace_folder_supported() abort
-  let l:is_supported = lamp#get(self.capabilities, 'capabilities.workspace.workspaceFolders.supported', v:false)
+  let l:capabilities = get(self, 'capabilities', {})
+  let l:is_supported = lamp#get(l:capabilities, 'capabilities.workspace.workspaceFolders.supported', v:false)
   if !l:is_supported
     return v:false
   endif
-  let l:change_notifications = lamp#get(self.capabilities, 'capabilities.workspace.workspaceFolders.changeNotifications', v:true)
+  let l:change_notifications = lamp#get(l:capabilities, 'capabilities.workspace.workspaceFolders.changeNotifications', v:true)
   return type(l:change_notifications) == type(v:true) || strlen(l:change_notifications) > 0
 endfunction
 

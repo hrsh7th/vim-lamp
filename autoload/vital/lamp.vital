@@ -11,3 +11,4 @@ VS.System.Job
 VS.Vim.Syntax.Markdown
 VS.Vim.Window
 VS.Vim.Buffer.TextMark
+VS.VimL.Dict

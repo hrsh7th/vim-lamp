@@ -132,12 +132,14 @@ function! s:Server.initialize(bufnr) abort
     call self.notify_raw('workspace/didChangeConfiguration', {
     \   'settings': lamp#feature#workspace#get_config()
     \ })
-    call self.notify_raw('workspace/didChangeWorkspaceFolders', {
-    \   'event': {
-    \     'added': lamp#feature#workspace#get_folders(),
-    \     'removed': [],
-    \   }
-    \ })
+    if self.capabilities.is_workspace_folder_supported()
+      call self.notify_raw('workspace/didChangeWorkspaceFolders', {
+      \   'event': {
+      \     'added': lamp#feature#workspace#get_folders(),
+      \     'removed': [],
+      \   }
+      \ })
+    endif
 
     let self.initialized = v:true
     doautocmd <nomodeline> User lamp#server#initialized
