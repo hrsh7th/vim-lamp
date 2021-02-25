@@ -99,7 +99,7 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \         },
   \         'insertReplaceSupport': v:false,
   \         'resolveSupport': {
-  \           'properties': ['documentation', 'details', 'additionalTextEdits']
+  \           'properties': ['documentation', 'detail', 'additionalTextEdits']
   \         },
   \         'insertTextModeSupport': {
   \           'valueSet': [],
