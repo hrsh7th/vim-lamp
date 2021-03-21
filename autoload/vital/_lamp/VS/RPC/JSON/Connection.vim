@@ -196,61 +196,72 @@ endfunction
 "
 function! s:Connection._on_message(message) abort
   if has_key(a:message, 'id')
-    " Request from server.
     if has_key(a:message, 'method')
-      if has_key(self._on_request_map, a:message.method)
-        let l:p = s:Promise.resolve()
-        let l:p = l:p.then({ -> self._on_request_map[a:message.method](a:message.params) })
-        let l:p = l:p.then({ result ->
-        \   self._send({
-        \     'id': a:message.id,
-        \     'result': result
-        \   })
-        \ })
-        let l:p = l:p.catch({ error ->
-        \   has_key(error, 'code') && has_key(error, 'message')
-        \     ? (
-        \       self._send({
-        \         'id': a:message.id,
-        \         'error': error
-        \       })
-        \     ) : (
-        \       self._send({
-        \         'id': a:message.id,
-        \         'error': {
-        \           'code': -32603,
-        \           'message': 'Internal error',
-        \           'data': error,
-        \         }
-        \       })
-        \     )
-        \ })
-      else
-        call self._send({
-        \   'error': {
-        \     'code': -32601,
-        \     'message': 'Method not found',
-        \   }
-        \ })
-      endif
-
-    " Response from server.
+      call self._handle_request(a:message)
     else
-      if has_key(self._request_map, a:message.id)
-        let l:request = remove(self._request_map, a:message.id)
-        if has_key(a:message, 'error')
-          call l:request.reject(a:message.error)
-        else
-          call l:request.resolve(get(a:message, 'result', v:null))
-        endif
-      endif
+      call self._handle_response(a:message)
     endif
-
-  " Notify from server.
   elseif has_key(a:message, 'method')
-    if has_key(self._on_notification_map, a:message.method)
-      call self._on_notification_map[a:message.method](a:message.params)
+    call self._handle_notification(a:message)
+  endif
+endfunction
+
+"
+" _handle_request
+"
+function! s:Connection._handle_request(request) abort
+  if !has_key(self._on_request_map, a:request.method)
+    call self._send({ 'error': { 'code': -32601, 'message': 'Method not found', } })
+  endif
+
+  let l:p = s:Promise.resolve()
+  let l:p = l:p.then({ -> self._on_request_map[a:request.method](a:request.params) })
+  let l:p = l:p.then({ result ->
+  \   self._send({
+  \     'id': a:request.id,
+  \     'result': result
+  \   })
+  \ })
+  let l:p = l:p.catch({ error ->
+  \   has_key(error, 'code') && has_key(error, 'message')
+  \     ? (
+  \       self._send({
+  \         'id': a:request.id,
+  \         'error': error
+  \       })
+  \     ) : (
+  \       self._send({
+  \         'id': a:request.id,
+  \         'error': {
+  \           'code': -32603,
+  \           'message': 'Internal error',
+  \           'data': error,
+  \         }
+  \       })
+  \     )
+  \ })
+endfunction
+
+"
+" _handle_response
+"
+function! s:Connection._handle_response(response) abort
+  if has_key(self._request_map, a:response.id)
+    let l:request = remove(self._request_map, a:response.id)
+    if has_key(a:response, 'error')
+      call l:request.reject(a:response.error)
+    else
+      call l:request.resolve(get(a:response, 'result', v:null))
     endif
+  endif
+endfunction
+
+"
+" _handle_notification
+"
+function! s:Connection._handle_notification(notification) abort
+  if has_key(self._on_notification_map, a:notification.method)
+    call self._on_notification_map[a:notification.method](a:notification.params)
   endif
 endfunction
 

@@ -430,6 +430,7 @@ endfunction
 "
 function! s:Server.request_raw(method, params, ...) abort
   let l:option = get(a:000, 0, {})
+
   call self.log('-> REQUEST', a:method, a:params)
   let l:p = self.rpc.request(a:method, a:params)
   if has_key(l:option, 'cancellation_token')
