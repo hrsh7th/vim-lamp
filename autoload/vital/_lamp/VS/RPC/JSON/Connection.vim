@@ -145,27 +145,16 @@ endfunction
 function! s:Connection._on_stdout(data) abort
   let l:data = join(a:data, "\n")
 
-  " Handle headers.
   if self._content_length == -1
-    let l:header_offset = stridx(l:data, "\r\n\r\n") + 4
-    if l:header_offset < 4
-      call add(self._headers, l:data)
+    if !self._on_header(l:data)
       return
-    else
-      call add(self._headers, strpart(l:data, 0, l:header_offset))
-      call add(self._contents, strpart(l:data, l:header_offset))
-      let self._current_content_length += strlen(self._contents[-1])
     endif
-    let l:header = join(self._headers, '')
-    let self._content_length = str2nr(get(matchlist(l:header, '\ccontent-length:\s*\(\d\+\)'), 1, '-1'))
   else
     call add(self._contents, l:data)
     let self._current_content_length += strlen(l:data)
-  endif
-
-  " Handle contents
-  if self._current_content_length < self._content_length
-    return
+    if self._current_content_length < self._content_length
+      return
+    endif
   endif
 
   let l:buffer = join(self._contents, '')
@@ -186,6 +175,23 @@ function! s:Connection._on_stdout(data) abort
 endfunction
 
 "
+" _on_header
+"
+function! s:Connection._on_header(data) abort
+  let l:header_offset = stridx(a:data, "\r\n\r\n") + 4
+  if l:header_offset < 4
+    call add(self._headers, a:data)
+    return v:false
+  else
+    call add(self._headers, strpart(a:data, 0, l:header_offset))
+    call add(self._contents, strpart(a:data, l:header_offset))
+    let self._current_content_length += strlen(self._contents[-1])
+  endif
+  let self._content_length = str2nr(get(matchlist(join(self._headers, ''), '\ccontent-length:\s*\(\d\+\)'), 1, '-1'))
+  return self._current_content_length >= self._content_length
+endfunction
+
+"
 " _on_message
 "
 function! s:Connection._on_message(message) abort
@@ -194,7 +200,7 @@ function! s:Connection._on_message(message) abort
     if has_key(a:message, 'method')
       if has_key(self._on_request_map, a:message.method)
         let l:p = s:Promise.resolve()
-        let l:p = l:p.then({ -> self._on_request_map[a:message.method](get(a:message, 'params', v:null)) })
+        let l:p = l:p.then({ -> self._on_request_map[a:message.method](a:message.params) })
         let l:p = l:p.then({ result ->
         \   self._send({
         \     'id': a:message.id,
@@ -243,7 +249,7 @@ function! s:Connection._on_message(message) abort
   " Notify from server.
   elseif has_key(a:message, 'method')
     if has_key(self._on_notification_map, a:message.method)
-      call self._on_notification_map[a:message.method](get(a:message, 'params', v:null))
+      call self._on_notification_map[a:message.method](a:message.params)
     endif
   endif
 endfunction

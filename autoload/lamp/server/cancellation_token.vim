@@ -14,7 +14,8 @@ let s:CancellationToken = {}
 "
 function! s:CancellationToken.new() abort
   return extend(deepcopy(s:CancellationToken), {
-  \   'listeners': []
+  \   '_canceled': v:false,
+  \   '_listeners': []
   \ })
 endfunction
 
@@ -22,15 +23,23 @@ endfunction
 " attach
 "
 function! s:CancellationToken.attach(listener) abort
-  call add(self.listeners, a:listener)
+  if self._canceled
+    call a:listener()
+    return
+  endif
+  call add(self._listeners, a:listener)
 endfunction
 
 "
 " cancel
 "
 function! s:CancellationToken.cancel() abort
-  for l:i in range(0, len(self.listeners) - 1)
-    call self.listeners[l:i]()
+  if self._canceled
+    return
+  endif
+  let self._canceled = v:true
+  for l:i in range(0, len(self._listeners) - 1)
+    call self._listeners[l:i]()
   endfor
 endfunction
 

@@ -1,6 +1,7 @@
 let s:Promise = vital#lamp#import('Async.Promise')
-let s:JSON = vital#lamp#import('VS.RPC.JSON')
+let s:Connection = vital#lamp#import('VS.RPC.JSON.Connection')
 let s:Document = lamp#server#document#import()
+let s:Diagnostics = lamp#server#diagnostics#import()
 let s:Capabilities = lamp#server#capabilities#import()
 
 "
@@ -19,13 +20,12 @@ function! s:Server.new(name, option) abort
   let l:server = extend(deepcopy(s:Server), {
   \   'name': a:name,
   \   'cmd': a:option.command,
-  \   'rpc': s:JSON.new(),
+  \   'rpc': s:Connection.new({}),
   \   'filetypes': a:option.filetypes,
   \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
   \   'root_uri_cache': {},
   \   'initialization_options': get(a:option, 'initialization_options', { -> {} }),
   \   'trace': get(a:option, 'trace', 'off'),
-  \   'request_id': 0,
   \   'documents': {},
   \   'diagnostics': {},
   \   'capabilities': s:Capabilities.new(),
@@ -36,20 +36,102 @@ function! s:Server.new(name, option) abort
   \     'exited': v:false,
   \   },
   \ })
-  call l:server.rpc.events.on('stderr', function(l:server.on_stderr, [], l:server))
-  call l:server.rpc.events.on('exit', function(l:server.on_exit, [], l:server))
-  call l:server.rpc.events.on('request', function(l:server.on_request, [], l:server))
-  call l:server.rpc.events.on('notify', function(l:server.on_notify, [], l:server))
+
+  " request
+  call l:server.rpc.on_request('workspace/workspaceFolders', function(l:server.on_workspace_folders, [], l:server))
+  call l:server.rpc.on_request('workspace/configuration', function(l:server.on_workspace_configuration, [], l:server))
+  call l:server.rpc.on_request('workspace/applyEdit', function(l:server.on_workspace_apply_edit, [], l:server))
+  call l:server.rpc.on_request('window/showMessageRequest', function(l:server.on_show_message_request, [], l:server))
+  call l:server.rpc.on_request('client/registerCapability', function(l:server.on_register_capability, [], l:server))
+  call l:server.rpc.on_request('client/unregisterCapability', function(l:server.on_unregister_capability, [], l:server))
+
+  " notification
+  call l:server.rpc.on_notification('textDocument/publishDiagnostics', function(l:server.on_publish_diagnostics, [], l:server))
+  call l:server.rpc.on_notification('window/showMessage', function(l:server.on_show_message, [], l:server))
+  call l:server.rpc.on_notification('window/logMessage', function(l:server.on_log_message, [], l:server))
+  call l:server.rpc.on_notification('telemetry/event', function(l:server.on_telemetly_event, [], l:server))
+
   return l:server
 endfunction
 
-"
-" create_request_id
-"
-function! s:Server.create_request_id() abort
-  let l:request_id = self.request_id
-  let self.request_id += 1
-  return l:request_id
+function! s:Server.on_workspace_folders(params) abort
+  return lamp#feature#workspace#get_folders()
+endfunction
+
+function! s:Server.on_workspace_configuration(params) abort
+  let l:config = lamp#feature#workspace#get_config()
+  return map(copy(a:params.items), { _, item ->
+  \   lamp#get(l:config, item.section, v:null)
+  \ })
+endfunction
+
+function! s:Server.on_workspace_apply_edit(params) abort
+  let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(a:params.edit)
+  call lamp#view#edit#apply_workspace(l:workspace_edit)
+  return v:true
+endfunction
+
+function! s:Server.on_show_message_request(params) abort
+  if has_key(a:params, 'actions') && type(a:params.actions) == type([])
+    let l:index = lamp#view#input#select(a:params.message, map(copy(a:params.actions), { _, action -> action.title }))
+    if l:index >= 0
+      return a:params.actions[l:index]
+    endif
+  else
+    if a:params.type == 1
+      echohl ErrorMsg
+    elseif a:params.type == 2
+      echohl WarningMsg
+    elseif a:params.type == 4
+      echohl NonText
+    endif
+    echomsg join([self.name, a:params.message], "\t")
+    echohl None
+  endif
+endfunction
+
+function! s:Server.on_register_capability(params) abort
+  call self.capabilities.register(a:params)
+  return v:true
+endfunction
+
+function! s:Server.on_unregister_capability(params) abort
+  call self.capabilities.unregister(a:params)
+  return v:true
+endfunction
+
+function! s:Server.on_publish_diagnostics(params) abort
+  let l:document = get(self.documents, a:params.uri, {})
+  if !has_key(self.diagnostics, a:params.uri)
+    let self.diagnostics[a:params.uri] = s:Diagnostics.new({
+    \   'uri': a:params.uri,
+    \   'diagnostics': a:params.diagnostics,
+    \   'document_version': get(l:document, 'version', -1),
+    \ })
+  endif
+  call self.diagnostics[a:params.uri].set(a:params.diagnostics, get(l:document, 'version', -1))
+
+  call lamp#feature#diagnostic#update(self, self.diagnostics[a:params.uri])
+endfunction
+
+function! s:Server.on_show_message(params) abort
+  if a:params.type == 1
+    echohl ErrorMsg
+  elseif a:params.type == 2
+    echohl WarningMsg
+  elseif a:params.type == 4
+    echohl NonText
+  endif
+  echomsg join([self.name, a:params.message], "\t")
+  echohl None
+endfunction
+
+function! s:Server.on_log_message(params) abort
+  " call lamp#log('[window/logMessage]', self.name, a:params)
+endfunction
+
+function! s:Server.on_telemetly_event(params) abort
+  call lamp#log('[telemetry/event]', self.name, a:params)
 endfunction
 
 "
@@ -73,7 +155,7 @@ function! s:Server.stop() abort
   let l:p = s:Promise.resolve()
   if self.state.started
     if !empty(self.state.initialized)
-      let l:p = l:p.then({ -> self.request_raw(self.create_request_id(), 'shutdown', v:null) })
+      let l:p = l:p.then({ -> self.request_raw('shutdown', v:null) })
       let l:p = l:p.then({ -> self.notify_raw('exit') })
       let l:p = l:p.then({ -> execute('doautocmd <nomodeline> User lamp#server#exited') })
     endif
@@ -155,7 +237,7 @@ function! s:Server.initialize(bufnr) abort
   endif
 
   call lamp#feature#workspace#update(self, a:bufnr)
-  let self.state.initialized = self.request_raw(self.create_request_id(), 'initialize', {
+  let self.state.initialized = self.request_raw('initialize', {
   \   'processId': getpid(),
   \   'rootPath': l:root_uri,
   \   'rootUri': lamp#protocol#document#encode_uri(l:root_uri),
@@ -171,24 +253,11 @@ endfunction
 " request.
 "
 function! s:Server.request(method, params, ...) abort
-  let l:request_id = self.create_request_id()
-
   let l:option = get(a:000, 0, {})
-  if has_key(l:option, 'cancellation_token')
-    call l:option.cancellation_token.attach({ -> self.rpc.cancel(l:request_id) })
-  endif
-
   let l:p = s:Promise.resolve()
   let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> self.request_raw(l:request_id, a:method, a:params) })
+  let l:p = l:p.then({ -> self.request_raw(a:method, a:params, l:option) })
   return l:p
-endfunction
-
-"
-" response.
-"
-function! s:Server.response(id, data) abort
-  return self.response_raw(a:id, a:data)
 endfunction
 
 "
@@ -359,9 +428,17 @@ endfunction
 "
 " request_raw
 "
-function! s:Server.request_raw(id, method, params) abort
-  call self.log('-> REQUEST', a:id, a:method, a:params)
-  return self.rpc.request(a:id, a:method, a:params).then(function(self.on_response, [a:id], self))
+function! s:Server.request_raw(method, params, ...) abort
+  let l:option = get(a:000, 0, {})
+  call self.log('-> REQUEST', a:method, a:params)
+  let l:p = self.rpc.request(a:method, a:params)
+  if has_key(l:option, 'cancellation_token')
+    call l:option.cancellation_token.attach({ -> [
+    \   self.notify_raw('$/cancel', { 'id': l:p._request.id }),
+    \   l:p._request.cancel()
+    \ ] })
+  endif
+  return l:p
 endfunction
 
 "
@@ -371,38 +448,6 @@ function! s:Server.notify_raw(method, ...) abort
   let l:params = get(a:000, 0, v:null)
   call self.log('-> NOTIFY', a:method, l:params)
   return self.rpc.notify(a:method, l:params)
-endfunction
-
-"
-" response_raw
-"
-function! s:Server.response_raw(id, result) abort
-  call self.log('-> RESPONSE', a:id, a:result)
-  return self.rpc.response(a:id, a:result)
-endfunction
-
-"
-" on_request.
-"
-function! s:Server.on_request(request) abort
-  call self.log('<- ON_REQUEST', a:request.id, a:request.method, get(a:request, 'params', v:null))
-  call timer_start(0, { -> lamp#server#on_request#on(self, a:request) })
-endfunction
-
-"
-" on_notification.
-"
-function! s:Server.on_notify(notification) abort
-  call self.log('<- ON_NOTIFY', a:notification.method, get(a:notification, 'params', v:null))
-  call timer_start(0, { -> lamp#server#on_notify#on(self, a:notification) })
-endfunction
-
-"
-" on_response
-"
-function! s:Server.on_response(id, response) abort
-  call self.log('<- ON_RESPONSE', a:id, a:response)
-  return a:response
 endfunction
 
 "
