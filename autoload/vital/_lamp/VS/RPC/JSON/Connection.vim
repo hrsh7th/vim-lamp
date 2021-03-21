@@ -40,6 +40,7 @@ let s:Connection = {}
 function! s:Connection.new(args) abort
   return extend(deepcopy(s:Connection), {
   \   '_job': s:Job.new(),
+  \   '_hook': get(a:args, 'hook', {}),
   \   '_headers': [],
   \   '_contents': [],
   \   '_content_length': -1,
@@ -90,6 +91,11 @@ function! s:Connection.request(method, params) abort
     if a:params isnot# v:null
       let l:message.params = a:params
     endif
+
+    if has_key(self._hook, 'request')
+      call self._hook.request(l:message)
+    endif
+
     call self._send(l:message)
   endfunction
   function! l:ctx.cancel(id) abort
@@ -113,6 +119,11 @@ function! s:Connection.notify(method, params) abort
   if a:params isnot# v:null
     let l:message.params = a:params
   endif
+
+  if has_key(self._hook, 'notification')
+    call self._hook.notification(l:message)
+  endif
+
   call self._send(l:message)
 endfunction
 
@@ -203,6 +214,10 @@ function! s:Connection._on_message(message) abort
     endif
   elseif has_key(a:message, 'method')
     call self._handle_notification(a:message)
+  else
+    if has_key(self._hook, 'on_unknown')
+      call self._hook.on_unknown(a:message)
+    endif
   endif
 endfunction
 
@@ -211,17 +226,22 @@ endfunction
 "
 function! s:Connection._handle_request(request) abort
   if !has_key(self._on_request_map, a:request.method)
-    call self._send({ 'error': { 'code': -32601, 'message': 'Method not found', } })
+    return self._send({ 'error': { 'code': -32601, 'message': 'Method not found', } })
+  endif
+
+  if has_key(self._hook, 'on_request')
+    call self._hook.on_request(a:request)
   endif
 
   let l:p = s:Promise.resolve()
   let l:p = l:p.then({ -> self._on_request_map[a:request.method](a:request.params) })
-  let l:p = l:p.then({ result ->
-  \   self._send({
-  \     'id': a:request.id,
-  \     'result': result
-  \   })
-  \ })
+  let l:p = l:p.then({ result -> [
+  \     has_key(self._hook, 'response') ? self._hook.response(result) : v:null,
+  \     self._send({
+  \       'id': a:request.id,
+  \       'result': result
+  \     })
+  \ ] })
   let l:p = l:p.catch({ error ->
   \   has_key(error, 'code') && has_key(error, 'message')
   \     ? (
@@ -247,6 +267,10 @@ endfunction
 "
 function! s:Connection._handle_response(response) abort
   if has_key(self._request_map, a:response.id)
+    if has_key(self._hook, 'on_response')
+      call self._hook.on_response(a:response)
+    endif
+
     let l:request = remove(self._request_map, a:response.id)
     if has_key(a:response, 'error')
       call l:request.reject(a:response.error)
@@ -261,6 +285,10 @@ endfunction
 "
 function! s:Connection._handle_notification(notification) abort
   if has_key(self._on_notification_map, a:notification.method)
+    if has_key(self._hook, 'on_notification')
+      call self._hook.on_notification(a:notification)
+    endif
+
     call self._on_notification_map[a:notification.method](a:notification.params)
   endif
 endfunction

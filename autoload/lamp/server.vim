@@ -20,7 +20,17 @@ function! s:Server.new(name, option) abort
   let l:server = extend(deepcopy(s:Server), {
   \   'name': a:name,
   \   'cmd': a:option.command,
-  \   'rpc': s:Connection.new({}),
+  \   'rpc': s:Connection.new({
+  \     'hook': {
+  \       'request': function('s:log', [a:name, '-> REQUEST']),
+  \       'notification': function('s:log', [a:name, '-> NOTIFY']),
+  \       'response': function('s:log', [a:name, '-> RESPONSE']),
+  \       'on_request': function('s:log', [a:name, '<- REQUEST']),
+  \       'on_notification': function('s:log', [a:name, '<- NOTIFY']),
+  \       'on_response': function('s:log', [a:name, '<- RESPONSE']),
+  \       'on_unknown': function('s:log', [a:name, '<- UNKNOWN']),
+  \     }
+  \    }),
   \   'filetypes': a:option.filetypes,
   \   'root_uri': get(a:option, 'root_uri', { bufnr -> '' }),
   \   'root_uri_cache': {},
@@ -155,8 +165,8 @@ function! s:Server.stop() abort
   let l:p = s:Promise.resolve()
   if self.state.started
     if !empty(self.state.initialized)
-      let l:p = l:p.then({ -> self.request_raw('shutdown', v:null) })
-      let l:p = l:p.then({ -> self.notify_raw('exit') })
+      let l:p = l:p.then({ -> self.request_with_cancellation('shutdown', v:null, {}) })
+      let l:p = l:p.then({ -> self.rpc.notify('exit') })
       let l:p = l:p.then({ -> execute('doautocmd <nomodeline> User lamp#server#exited') })
     endif
     let l:p = l:p.then({ -> self.rpc.stop() })
@@ -209,13 +219,13 @@ function! s:Server.initialize(bufnr) abort
   let l:ctx = {}
   function! l:ctx.callback(bufnr, response) abort dict
     call self.capabilities.merge(a:response)
-    call self.notify_raw('initialized', {})
+    call self.rpc.notify('initialized', {})
 
-    call self.notify_raw('workspace/didChangeConfiguration', {
+    call self.rpc.notify('workspace/didChangeConfiguration', {
     \   'settings': lamp#feature#workspace#get_config()
     \ })
     if self.capabilities.is_workspace_folder_supported()
-      call self.notify_raw('workspace/didChangeWorkspaceFolders', {
+      call self.rpc.notify('workspace/didChangeWorkspaceFolders', {
       \   'event': {
       \     'added': lamp#feature#workspace#get_folders(),
       \     'removed': [],
@@ -237,7 +247,7 @@ function! s:Server.initialize(bufnr) abort
   endif
 
   call lamp#feature#workspace#update(self, a:bufnr)
-  let self.state.initialized = self.request_raw('initialize', {
+  let self.state.initialized = self.request_with_cancellation('initialize', {
   \   'processId': getpid(),
   \   'rootPath': l:root_uri,
   \   'rootUri': lamp#protocol#document#encode_uri(l:root_uri),
@@ -245,7 +255,7 @@ function! s:Server.initialize(bufnr) abort
   \   'trace': self.trace,
   \   'capabilities': lamp#server#capabilities#get_default_capabilities(),
   \   'workspaceFolders': lamp#feature#workspace#get_folders(),
-  \ }).then(function(l:ctx.callback, [a:bufnr], self))
+  \ }, {}).then(function(l:ctx.callback, [a:bufnr], self))
   return self.state.initialized
 endfunction
 
@@ -256,7 +266,7 @@ function! s:Server.request(method, params, ...) abort
   let l:option = get(a:000, 0, {})
   let l:p = s:Promise.resolve()
   let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> self.request_raw(a:method, a:params, l:option) })
+  let l:p = l:p.then({ -> self.request_with_cancellation(a:method, a:params, l:option) })
   return l:p
 endfunction
 
@@ -266,7 +276,7 @@ endfunction
 function! s:Server.notify(method, params) abort
   let l:p = s:Promise.resolve()
   let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> self.notify_raw(a:method, a:params) })
+  let l:p = l:p.then({ -> self.rpc.notify(a:method, a:params) })
   return l:p
 endfunction
 
@@ -316,7 +326,7 @@ function! s:Server.open_document(bufnr) abort
   " create document.
   let self.documents[l:uri] = s:Document.new(a:bufnr)
   call self.detect_workspace(a:bufnr)
-  call self.notify_raw('textDocument/didOpen', {
+  call self.rpc.notify('textDocument/didOpen', {
   \   'textDocument': lamp#protocol#document#item(a:bufnr),
   \ })
 endfunction
@@ -341,7 +351,7 @@ function! s:Server.sync_document(bufnr) abort
   if l:sync_kind == 1
     call l:doc.sync()
     call self.detect_workspace(a:bufnr)
-    call self.notify_raw('textDocument/didChange', {
+    call self.rpc.notify('textDocument/didChange', {
     \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
     \   'contentChanges': [{ 'text': join(lamp#view#buffer#get_lines(a:bufnr), "\n") }]
     \ })
@@ -352,7 +362,7 @@ function! s:Server.sync_document(bufnr) abort
     if l:diff.rangeLength != 0 || l:diff.text !=# ''
       call l:doc.sync()
       call self.detect_workspace(a:bufnr)
-      call self.notify_raw('textDocument/didChange', {
+      call self.rpc.notify('textDocument/didChange', {
       \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
       \   'contentChanges': [l:diff]
       \ })
@@ -379,7 +389,7 @@ function! s:Server.close_document(bufnr) abort
     call remove(self.diagnostics, l:document.uri)
   endif
 
-  call self.notify_raw('textDocument/didClose', {
+  call self.rpc.notify('textDocument/didClose', {
   \   'textDocument': {
   \     'uri': l:document.uri
   \   }
@@ -426,29 +436,17 @@ function! s:Server.did_save_document(bufnr) abort
 endfunction
 
 "
-" request_raw
+" request_with_cancellation
 "
-function! s:Server.request_raw(method, params, ...) abort
-  let l:option = get(a:000, 0, {})
-
-  call self.log('-> REQUEST', a:method, a:params)
+function! s:Server.request_with_cancellation(method, params, option) abort
   let l:p = self.rpc.request(a:method, a:params)
-  if has_key(l:option, 'cancellation_token')
-    call l:option.cancellation_token.attach({ -> [
-    \   self.notify_raw('$/cancel', { 'id': l:p._request.id }),
+  if has_key(a:option, 'cancellation_token')
+    call a:option.cancellation_token.attach({ -> [
+    \   self.rpc.notify('$/cancel', { 'id': l:p._request.id }),
     \   l:p._request.cancel()
     \ ] })
   endif
   return l:p
-endfunction
-
-"
-" notify_raw
-"
-function! s:Server.notify_raw(method, ...) abort
-  let l:params = get(a:000, 0, v:null)
-  call self.log('-> NOTIFY', a:method, l:params)
-  return self.rpc.notify(a:method, l:params)
 endfunction
 
 "
@@ -468,11 +466,12 @@ endfunction
 "
 " log
 "
-function! s:Server.log(...) abort
+function! s:log(name, mark, value) abort
   if strlen(lamp#config('global.debug')) > 0
-    let l:name = strcharpart(self.name, 0, 12)
-    let l:name = l:name . repeat(' ', 12 - strlen(l:name))
-    call call('lamp#log', [l:name] + a:000)
+    let l:name = strcharpart(a:name . repeat(' ', 12), 0, 12)
+    let l:mark = strcharpart(a:mark . repeat(' ', 12), 0, 12)
+    call call('lamp#log', [l:name, l:mark, a:value])
   endif
+  return a:value
 endfunction
 
