@@ -88,12 +88,14 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \     },
   \     'completion': {
   \       'dynamicRegistration': v:false,
+  \       'editsNearCursor': v:true,
   \       'completionItem': {
   \         'snippetSupport': !empty(lamp#config('feature.completion.snippet.expand')) ? v:true : v:false,
   \         'commitCharactersSupport': v:true,
   \         'documentationFormat': ['markdown'],
   \         'deprecatedSupport': v:true,
   \         'preselectSupport': v:true,
+  \         'labelDetailsSupport': v:true,
   \         'tagSupport': {
   \           'valueSet': [],
   \         },

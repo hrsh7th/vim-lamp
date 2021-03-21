@@ -385,7 +385,7 @@ endfunction
 " on_request.
 "
 function! s:Server.on_request(request) abort
-  call self.log('<- ON_REQUEST', a:request.id, a:request.method, a:request.params)
+  call self.log('<- ON_REQUEST', a:request.id, a:request.method, get(a:request, 'params', v:null))
   call timer_start(0, { -> lamp#server#on_request#on(self, a:request) })
 endfunction
 
@@ -393,7 +393,7 @@ endfunction
 " on_notification.
 "
 function! s:Server.on_notify(notification) abort
-  call self.log('<- ON_NOTIFY', a:notification.method, a:notification.params)
+  call self.log('<- ON_NOTIFY', a:notification.method, get(a:notification, 'params', v:null))
   call timer_start(0, { -> lamp#server#on_notify#on(self, a:notification) })
 endfunction
 

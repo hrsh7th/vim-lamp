@@ -202,11 +202,6 @@ endfunction
 " apply
 "
 function! s:apply(server_name, diagnostics) abort
-  if !a:diagnostics.is_shown()
-    call lamp#log('[LOG]', 'diagnostics skipped: it does not shown', a:server_name)
-    return
-  endif
-
   if len(a:diagnostics.applied_diagnostics) == 0 && len(a:diagnostics.diagnostics) == 0
     call lamp#log('[LOG]', 'diagnostics skipped: 0 to 0', a:server_name)
     return

@@ -42,9 +42,10 @@ function! s:Connection.new() abort
   return extend(deepcopy(s:Connection), {
   \   'job': s:Job.new(),
   \   'events': s:Emitter.new(),
-  \   'buffer':  '',
-  \   'header_length': -1,
-  \   'message_length': -1,
+  \   '_headers': [],
+  \   '_contents': [],
+  \   '_content_length': -1,
+  \   '_current_content_length': 0,
   \   'request_map': {},
   \ })
 endfunction
@@ -165,33 +166,49 @@ endfunction
 " flush
 "
 function! s:Connection.flush(data) abort
-  let self.buffer .= a:data
+  let l:data = a:data
 
-  while self.buffer !=# ''
-    " header check.
-    if self.header_length == -1
-      let l:header_length = stridx(self.buffer, "\r\n\r\n") + 4
-      if l:header_length < 4
-        return
-      endif
-      let self.header_length = l:header_length
-      let self.message_length = self.header_length + str2nr(get(matchlist(self.buffer, '\ccontent-length:\s*\(\d\+\)'), 1, '-1'))
-    endif
-
-    " content check.
-    let l:buffer_len = strlen(self.buffer)
-    if l:buffer_len < self.message_length
+  " Handle headers.
+  if self._content_length == -1
+    let l:header_offset = stridx(l:data, "\r\n\r\n") + 4
+    if l:header_offset < 4
+      call add(self._headers, l:data)
       return
+    else
+      call add(self._headers, strpart(l:data, 0, l:header_offset))
+      let l:remain = strpart(l:data, l:header_offset)
+      if l:remain !=# ''
+        call add(self._contents, l:remain)
+        let self._current_content_length += strlen(self._contents[-1])
+      endif
     endif
+    let l:header = join(self._headers, '')
+    let self._content_length = str2nr(get(matchlist(l:header, '\ccontent-length:\s*\(\d\+\)'), 1, '-1'))
+  else
+    call add(self._contents, l:data)
+    let self._current_content_length += strlen(l:data)
+  endif
 
-    let l:content = strpart(self.buffer, self.header_length, self.message_length - self.header_length)
-    try
-      call self.on_message(json_decode(l:content))
-    catch /.*/
-    endtry
-    let self.buffer = strpart(self.buffer, self.message_length)
-    let self.header_length = -1
-  endwhile
+  " Handle contents
+  if self._current_content_length < self._content_length
+    return
+  endif
+
+  let l:buffer = join(self._contents, '')
+  let l:content = strpart(l:buffer, 0, self._content_length)
+  let l:remain = strpart(l:buffer, self._content_length)
+  try
+    call self.on_message(json_decode(l:content))
+  catch /.*/
+    echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+  endtry
+  let self._headers = []
+  let self._contents = []
+  let self._content_length = -1
+  let self._current_content_length = 0
+  if l:remain !=# ''
+    call self.flush(l:remain)
+  endif
 endfunction
 
 "

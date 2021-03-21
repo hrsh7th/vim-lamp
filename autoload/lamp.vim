@@ -4,8 +4,6 @@ let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Server = lamp#server#import()
 let s:CancellationToken = lamp#server#cancellation_token#import()
 
-call s:TextEdit.fixeol(v:true)
-
 let s:debounce_ids = {}
 
 let s:profiles = {}

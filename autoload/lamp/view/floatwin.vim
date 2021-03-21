@@ -206,7 +206,7 @@ function! s:Floatwin.show(screenpos, contents) abort
   call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
 
   " update syntax highlight for nvim.
-  call s:Window.do(self.winid(), { -> s:Markdown.apply(join(l:lines, "\n")) })
+  call s:Window.do(self.winid(), { -> s:Markdown.apply({ 'text': join(l:lines, "\n") }) })
 endfunction
 
 "
