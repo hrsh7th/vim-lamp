@@ -64,86 +64,6 @@ function! s:Server.new(name, option) abort
   return l:server
 endfunction
 
-function! s:Server.on_workspace_folders(params) abort
-  return lamp#feature#workspace#get_folders()
-endfunction
-
-function! s:Server.on_workspace_configuration(params) abort
-  let l:config = lamp#feature#workspace#get_config()
-  return map(copy(a:params.items), { _, item ->
-  \   lamp#get(l:config, item.section, v:null)
-  \ })
-endfunction
-
-function! s:Server.on_workspace_apply_edit(params) abort
-  let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(a:params.edit)
-  call lamp#view#edit#apply_workspace(l:workspace_edit)
-  return v:true
-endfunction
-
-function! s:Server.on_show_message_request(params) abort
-  if has_key(a:params, 'actions') && type(a:params.actions) == type([])
-    let l:index = lamp#view#input#select(a:params.message, map(copy(a:params.actions), { _, action -> action.title }))
-    if l:index >= 0
-      return a:params.actions[l:index]
-    endif
-  else
-    if a:params.type == 1
-      echohl ErrorMsg
-    elseif a:params.type == 2
-      echohl WarningMsg
-    elseif a:params.type == 4
-      echohl NonText
-    endif
-    echomsg join([self.name, a:params.message], "\t")
-    echohl None
-  endif
-endfunction
-
-function! s:Server.on_register_capability(params) abort
-  call self.capabilities.register(a:params)
-  return v:true
-endfunction
-
-function! s:Server.on_unregister_capability(params) abort
-  call self.capabilities.unregister(a:params)
-  return v:true
-endfunction
-
-function! s:Server.on_publish_diagnostics(params) abort
-  let l:document = get(self.documents, a:params.uri, {})
-  if !has_key(self.diagnostics, a:params.uri)
-    let self.diagnostics[a:params.uri] = s:Diagnostics.new({
-    \   'uri': a:params.uri,
-    \   'diagnostics': a:params.diagnostics,
-    \   'document_version': get(l:document, 'version', -1),
-    \ })
-  endif
-  call self.diagnostics[a:params.uri].set(a:params.diagnostics, get(l:document, 'version', -1))
-
-  call lamp#feature#diagnostic#update(self, self.diagnostics[a:params.uri])
-endfunction
-
-function! s:Server.on_show_message(params) abort
-  if a:params.type == 1
-    echohl ErrorMsg
-  elseif a:params.type == 2
-    echohl WarningMsg
-  elseif a:params.type == 4
-    echohl NonText
-  endif
-  echomsg join([self.name, a:params.message], "\t")
-  echohl None
-endfunction
-
-function! s:Server.on_log_message(params) abort
-  " call lamp#log('[window/logMessage]', self.name, a:params)
-endfunction
-
-function! s:Server.on_telemetly_event(params) abort
-  call lamp#log('[telemetry/event]', self.name, a:params)
-endfunction
-
 "
 " start
 "
@@ -264,20 +184,14 @@ endfunction
 "
 function! s:Server.request(method, params, ...) abort
   let l:option = get(a:000, 0, {})
-  let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> self.request_with_cancellation(a:method, a:params, l:option) })
-  return l:p
+  return self.ensure_document_from_params(a:params).then({ -> self.request_with_cancellation(a:method, a:params, l:option) })
 endfunction
 
 "
 " notify.
 "
 function! s:Server.notify(method, params) abort
-  let l:p = s:Promise.resolve()
-  let l:p = l:p.then({ -> self.ensure_document_from_params(a:params) })
-  let l:p = l:p.then({ -> self.rpc.notify(a:method, a:params) })
-  return l:p
+  return self.ensure_document_from_params(a:params).then({ -> self.rpc.notify(a:method, a:params) })
 endfunction
 
 "
@@ -294,6 +208,7 @@ function! s:Server.ensure_document_from_params(params) abort
   if has_key(a:params, 'textDocument') && has_key(a:params.textDocument, 'uri')
     return self.ensure_document(bufnr(lamp#protocol#document#decode_uri(a:params.textDocument.uri)))
   endif
+  return s:Promise.resolve()
 endfunction
 
 "
@@ -353,7 +268,7 @@ function! s:Server.sync_document(bufnr) abort
     call self.detect_workspace(a:bufnr)
     call self.rpc.notify('textDocument/didChange', {
     \   'textDocument': lamp#protocol#document#versioned_identifier(a:bufnr),
-    \   'contentChanges': [{ 'text': join(lamp#view#buffer#get_lines(a:bufnr), "\n") }]
+    \   'contentChanges': [{ 'text': join(l:doc.lines, "\n") }]
     \ })
 
     " incremental sync.
@@ -427,9 +342,17 @@ endfunction
 "
 function! s:Server.did_save_document(bufnr) abort
   if self.capabilities.get_text_document_sync_save()
+    let l:uri = lamp#protocol#document#encode_uri(bufname(a:bufnr))
+    if !has_key(self.documents, l:uri)
+      return
+    endif
+
+    let l:doc = self.documents[l:uri]
+    call l:doc.sync()
+
     let l:message = { 'textDocument': lamp#protocol#document#identifier(a:bufnr) }
     if self.capabilities.get_text_document_sync_save_include_text() 
-      let l:message.text = join(lamp#view#buffer#get_lines(a:bufnr), "\n")
+      let l:message.text = join(l:doc.lines, "\n")
     endif
     call self.notify('textDocument/didSave', l:message)
   endif
@@ -450,17 +373,113 @@ function! s:Server.request_with_cancellation(method, params, option) abort
 endfunction
 
 "
-" on_stderr
+" on_workspace_folders
 "
-function! s:Server.on_stderr(data) abort
-  call self.log('[STDERR]', a:data)
+function! s:Server.on_workspace_folders(params) abort
+  return lamp#feature#workspace#get_folders()
 endfunction
 
 "
-" on_exit
+" on_workspace_configuration
 "
-function! s:Server.on_exit(code) abort
-  call self.log('[EXIT]', a:code)
+function! s:Server.on_workspace_configuration(params) abort
+  let l:config = lamp#feature#workspace#get_config()
+  return map(copy(a:params.items), { _, item ->
+  \   lamp#get(l:config, item.section, v:null)
+  \ })
+endfunction
+
+"
+" on_workspace_apply_edit
+"
+function! s:Server.on_workspace_apply_edit(params) abort
+  let l:workspace_edit = lamp#view#edit#normalize_workspace_edit(a:params.edit)
+  call lamp#view#edit#apply_workspace(l:workspace_edit)
+  return v:true
+endfunction
+
+"
+" on_show_message_request
+"
+function! s:Server.on_show_message_request(params) abort
+  if has_key(a:params, 'actions') && type(a:params.actions) == type([])
+    let l:index = lamp#view#input#select(a:params.message, map(copy(a:params.actions), { _, action -> action.title }))
+    if l:index >= 0
+      return a:params.actions[l:index]
+    endif
+  else
+    if a:params.type == 1
+      echohl ErrorMsg
+    elseif a:params.type == 2
+      echohl WarningMsg
+    elseif a:params.type == 4
+      echohl NonText
+    endif
+    echomsg join([self.name, a:params.message], "\t")
+    echohl None
+  endif
+endfunction
+
+"
+" on_register_capability
+"
+function! s:Server.on_register_capability(params) abort
+  call self.capabilities.register(a:params)
+  return v:true
+endfunction
+
+"
+" on_unregister_capability
+"
+function! s:Server.on_unregister_capability(params) abort
+  call self.capabilities.unregister(a:params)
+  return v:true
+endfunction
+
+"
+" on_publish_diagnostics
+"
+function! s:Server.on_publish_diagnostics(params) abort
+  let l:document = get(self.documents, a:params.uri, {})
+  if !has_key(self.diagnostics, a:params.uri)
+    let self.diagnostics[a:params.uri] = s:Diagnostics.new({
+    \   'uri': a:params.uri,
+    \   'diagnostics': a:params.diagnostics,
+    \   'document_version': get(l:document, 'version', -1),
+    \ })
+  endif
+  call self.diagnostics[a:params.uri].set(a:params.diagnostics, get(l:document, 'version', -1))
+
+  call lamp#feature#diagnostic#update(self, self.diagnostics[a:params.uri])
+endfunction
+
+"
+" on_show_message
+"
+function! s:Server.on_show_message(params) abort
+  if a:params.type == 1
+    echohl ErrorMsg
+  elseif a:params.type == 2
+    echohl WarningMsg
+  elseif a:params.type == 4
+    echohl NonText
+  endif
+  echomsg join([self.name, a:params.message], "\t")
+  echohl None
+endfunction
+
+"
+" on_log_message
+"
+function! s:Server.on_log_message(params) abort
+  " call lamp#log('[window/logMessage]', self.name, a:params)
+endfunction
+
+"
+" on_telemetly_event
+"
+function! s:Server.on_telemetly_event(params) abort
+  call lamp#log('[telemetry/event]', self.name, a:params)
 endfunction
 
 "

@@ -206,14 +206,12 @@ endfunction
 " _on_message
 "
 function! s:Connection._on_message(message) abort
-  if has_key(a:message, 'id')
-    if has_key(a:message, 'method')
-      call self._handle_request(a:message)
-    else
-      call self._handle_response(a:message)
-    endif
-  elseif has_key(a:message, 'method')
+  if !has_key(a:message, 'id') && has_key(a:message, 'method')
     call self._handle_notification(a:message)
+  elseif has_key(a:message, 'id') && has_key(a:message, 'method') 
+    call self._handle_request(a:message)
+  elseif has_key(a:message, 'id')
+    call self._handle_response(a:message)
   else
     if has_key(self._hook, 'on_unknown')
       call self._hook.on_unknown(a:message)
