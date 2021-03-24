@@ -142,6 +142,20 @@ function! s:Connection.on_notification(method, callback) abort
 endfunction
 
 "
+" on_stderr
+"
+function! s:Connection.on_stderr(callback) abort
+  call self._job.on_stderr(a:callback)
+endfunction
+
+"
+" on_stderr
+"
+function! s:Connection.on_exit(callback) abort
+  call self._job.on_exit(a:callback)
+endfunction
+
+"
 " _send
 "
 function! s:Connection._send(message) abort
@@ -154,15 +168,13 @@ endfunction
 " _on_stdout
 "
 function! s:Connection._on_stdout(data) abort
-  let l:data = join(a:data, "\n")
-
   if self._content_length == -1
-    if !self._on_header(l:data)
+    if !self._on_header(a:data)
       return
     endif
   else
-    call add(self._contents, l:data)
-    let self._current_content_length += strlen(l:data)
+    call add(self._contents, a:data)
+    let self._current_content_length += strlen(a:data)
     if self._current_content_length < self._content_length
       return
     endif
@@ -181,7 +193,7 @@ function! s:Connection._on_stdout(data) abort
   let self._content_length = -1
   let self._current_content_length = 0
   if l:remain !=# ''
-    call self._on_stdout([l:remain])
+    call self._on_stdout(l:remain)
   endif
 endfunction
 

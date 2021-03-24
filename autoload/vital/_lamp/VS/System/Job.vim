@@ -127,8 +127,8 @@ endfunction
 "
 if has('nvim')
   function! s:_create(cmd, option, self) abort
-    let a:option.on_stdout = { id, data, event -> a:self._on_stdout(data) }
-    let a:option.on_stderr = { id, data, event -> a:self._on_stderr(data) }
+    let a:option.on_stdout = { id, data, event -> a:self._on_stdout(join(data, "\n")) }
+    let a:option.on_stderr = { id, data, event -> a:self._on_stderr(join(data, "\n")) }
     let a:option.on_exit = { id, code, event -> a:self._on_exit(code) }
     let l:job = jobstart(a:cmd, a:option)
     return {
@@ -145,8 +145,8 @@ else
     let a:option.out_mode = 'raw'
     let a:option.err_io = 'pipe'
     let a:option.err_mode = 'raw'
-    let a:option.out_cb = { job, data -> a:self._on_stdout(split(data, "\n")) }
-    let a:option.err_cb = { job, data -> a:self._on_stderr(split(data, "\n")) }
+    let a:option.out_cb = { job, data -> a:self._on_stdout(data) }
+    let a:option.err_cb = { job, data -> a:self._on_stderr(data) }
     let a:option.exit_cb = { job, code -> a:self._on_exit(code) }
     let l:job = job_start(a:cmd, a:option)
     return {

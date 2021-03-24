@@ -61,6 +61,10 @@ function! s:Server.new(name, option) abort
   call l:server.rpc.on_notification('window/logMessage', function(l:server.on_log_message, [], l:server))
   call l:server.rpc.on_notification('telemetry/event', function(l:server.on_telemetly_event, [], l:server))
 
+  " job
+  call l:server.rpc.on_stderr(function(l:server.on_stderr, [], l:server))
+  call l:server.rpc.on_exit(function(l:server.on_exit, [], l:server))
+
   return l:server
 endfunction
 
@@ -86,7 +90,7 @@ function! s:Server.stop() abort
   if self.state.started
     if !empty(self.state.initialized)
       let l:p = l:p.then({ -> self.request_with_cancellation('shutdown', v:null, {}) })
-      let l:p = l:p.then({ -> self.rpc.notify('exit') })
+      let l:p = l:p.then({ -> self.rpc.notify('exit', v:null) })
       let l:p = l:p.then({ -> execute('doautocmd <nomodeline> User lamp#server#exited') })
     endif
     let l:p = l:p.then({ -> self.rpc.stop() })
@@ -126,15 +130,15 @@ endfunction
 " initialize
 "
 function! s:Server.initialize(bufnr) abort
+  if !empty(self.state.initialized)
+    return self.state.initialized
+  endif
+
   try
     call self.start()
   catch /.*/
     return s:Promise.resolve()
   endtry
-
-  if !empty(self.state.initialized)
-    return self.state.initialized
-  endif
 
   let l:ctx = {}
   function! l:ctx.callback(bufnr, response) abort dict
@@ -348,13 +352,21 @@ function! s:Server.did_save_document(bufnr) abort
     endif
 
     let l:doc = self.documents[l:uri]
-    call l:doc.sync()
-
-    let l:message = { 'textDocument': lamp#protocol#document#identifier(a:bufnr) }
-    if self.capabilities.get_text_document_sync_save_include_text() 
-      let l:message.text = join(l:doc.lines, "\n")
-    endif
-    call self.notify('textDocument/didSave', l:message)
+    call self.ensure_document(a:bufnr).then({ ->
+    \   self.notify(
+    \     'textDocument/didSave',
+    \     self.capabilities.get_text_document_sync_save_include_text() ? (
+    \       {
+    \         'textDocument': lamp#protocol#document#identifier(a:bufnr),
+    \         'text': join(l:doc.lines, "\n"),
+    \       }
+    \     ) : (
+    \       {
+    \         'textDocument': lamp#protocol#document#identifier(a:bufnr),
+    \       }
+    \     )
+    \   )
+    \ })
   endif
 endfunction
 
@@ -480,6 +492,20 @@ endfunction
 "
 function! s:Server.on_telemetly_event(params) abort
   call lamp#log('[telemetry/event]', self.name, a:params)
+endfunction
+
+"
+" on_stderr
+"
+function! s:Server.on_stderr(data) abort
+  call s:log(self.name, 'STDERR', a:data)
+endfunction
+
+"
+" on_exit
+"
+function! s:Server.on_exit(code) abort
+  call s:log(self.name, 'EXIT', a:code)
 endfunction
 
 "
