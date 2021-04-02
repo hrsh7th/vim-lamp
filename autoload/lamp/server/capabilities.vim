@@ -99,7 +99,7 @@ function! lamp#server#capabilities#get_default_capabilities() abort
   \         'tagSupport': {
   \           'valueSet': [],
   \         },
-  \         'insertReplaceSupport': v:false,
+  \         'insertReplaceSupport': v:true,
   \         'resolveSupport': {
   \           'properties': ['documentation', 'detail', 'additionalTextEdits']
   \         },
