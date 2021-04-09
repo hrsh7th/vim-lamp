@@ -39,11 +39,12 @@ let s:Connection = {}
 "
 function! s:Connection.new(args) abort
   return extend(deepcopy(s:Connection), {
-  \   '_hook': get(a:args, 'hook', { -> {} }),
   \   '_job': s:Job.new(),
-  \   '_buffer':  '',
-  \   '_header_length': -1,
-  \   '_message_length': -1,
+  \   '_hook': get(a:args, 'hook', {}),
+  \   '_headers': [],
+  \   '_contents': [],
+  \   '_content_length': -1,
+  \   '_current_content_length': 0,
   \   '_request_id': 0,
   \   '_request_map': {},
   \   '_on_request_map': {},
@@ -90,6 +91,11 @@ function! s:Connection.request(method, params) abort
     if a:params isnot# v:null
       let l:message.params = a:params
     endif
+
+    if has_key(self._hook, 'request')
+      call self._hook.request(l:message)
+    endif
+
     call self._send(l:message)
   endfunction
   function! l:ctx.cancel(id) abort
@@ -101,7 +107,7 @@ function! s:Connection.request(method, params) abort
   let l:p = s:Promise.new(function(l:ctx.callback, [self._request_id, a:method, a:params], self))
   let l:p._request = {}
   let l:p._request.id = self._request_id
-  let l:p._request.cancle = function(l:ctx.cancel, [self._request_id], self)
+  let l:p._request.cancel = function(l:ctx.cancel, [self._request_id], self)
   return l:p
 endfunction
 
@@ -113,6 +119,11 @@ function! s:Connection.notify(method, params) abort
   if a:params isnot# v:null
     let l:message.params = a:params
   endif
+
+  if has_key(self._hook, 'notification')
+    call self._hook.notification(l:message)
+  endif
+
   call self._send(l:message)
 endfunction
 
@@ -131,6 +142,20 @@ function! s:Connection.on_notification(method, callback) abort
 endfunction
 
 "
+" on_stderr
+"
+function! s:Connection.on_stderr(callback) abort
+  call self._job.on_stderr(a:callback)
+endfunction
+
+"
+" on_stderr
+"
+function! s:Connection.on_exit(callback) abort
+  call self._job.on_exit(a:callback)
+endfunction
+
+"
 " _send
 "
 function! s:Connection._send(message) abort
@@ -143,96 +168,138 @@ endfunction
 " _on_stdout
 "
 function! s:Connection._on_stdout(data) abort
-  let self._buffer .= join(a:data, "\n")
-
-  while self._buffer !=# ''
-    " header check.
-    if self._header_length == -1
-      let l:header_length = stridx(self._buffer, "\r\n\r\n") + 4
-      if l:header_length < 4
-        return
-      endif
-      let self._header_length = l:header_length
-      let self._message_length = self._header_length + str2nr(get(matchlist(self._buffer, '\ccontent-length:\s*\(\d\+\)'), 1, '-1'))
-    endif
-
-    " content check.
-    let l:buffer_len = strlen(self._buffer)
-    if l:buffer_len < self._message_length
+  if self._content_length == -1
+    if !self._on_header(a:data)
       return
     endif
+  else
+    call add(self._contents, a:data)
+    let self._current_content_length += strlen(a:data)
+    if self._current_content_length < self._content_length
+      return
+    endif
+  endif
 
-    let l:content = strpart(self._buffer, self._header_length, self._message_length - self._header_length)
-    try
-      call self._on_message(json_decode(l:content))
-    catch /.*/
-      echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
-    endtry
-    let self._buffer = strpart(self._buffer, self._message_length)
-    let self._header_length = -1
-  endwhile
+  let l:buffer = join(self._contents, '')
+  let l:content = strpart(l:buffer, 0, self._content_length)
+  let l:remain = strpart(l:buffer, self._content_length)
+  try
+    call self._on_message(json_decode(l:content))
+  catch /.*/
+    echomsg string({ 'exception': v:exception, 'throwpoint': v:throwpoint })
+  endtry
+  let self._headers = []
+  let self._contents = []
+  let self._content_length = -1
+  let self._current_content_length = 0
+  if l:remain !=# ''
+    call self._on_stdout(l:remain)
+  endif
+endfunction
+
+"
+" _on_header
+"
+function! s:Connection._on_header(data) abort
+  let l:header_offset = stridx(a:data, "\r\n\r\n") + 4
+  if l:header_offset < 4
+    call add(self._headers, a:data)
+    return v:false
+  else
+    call add(self._headers, strpart(a:data, 0, l:header_offset))
+    call add(self._contents, strpart(a:data, l:header_offset))
+    let self._current_content_length += strlen(self._contents[-1])
+  endif
+  let self._content_length = str2nr(get(matchlist(join(self._headers, ''), '\ccontent-length:\s*\(\d\+\)'), 1, '-1'))
+  return self._current_content_length >= self._content_length
 endfunction
 
 "
 " _on_message
 "
 function! s:Connection._on_message(message) abort
-  if has_key(a:message, 'id')
-    " Request from server.
-    if has_key(a:message, 'method')
-      if has_key(self._on_request_map, a:message.method)
-        let l:p = s:Promise.resolve()
-        let l:p = l:p.then({ -> self._on_request_map[a:message.method](a:message.params) })
-        let l:p = l:p.then({ result ->
-        \   self._send({
-        \     'id': a:message.id,
-        \     'result': result
-        \   })
-        \ })
-        let l:p = l:p.catch({ error ->
-        \   has_key(error, 'code') && has_key(error, 'message')
-        \     ? (
-        \       self._send({
-        \         'id': a:message.id,
-        \         'error': error
-        \       })
-        \     ) : (
-        \       self._send({
-        \         'id': a:message.id,
-        \         'error': {
-        \           'code': -32603,
-        \           'message': 'Internal error',
-        \           'data': error,
-        \         }
-        \       })
-        \     )
-        \ })
-      else
-        call self._send({
-        \   'error': {
-        \     'code': -32601,
-        \     'message': 'Method not found',
-        \   }
-        \ })
-      endif
+  if !has_key(a:message, 'id') && has_key(a:message, 'method')
+    call self._handle_notification(a:message)
+  elseif has_key(a:message, 'id') && has_key(a:message, 'method') 
+    call self._handle_request(a:message)
+  elseif has_key(a:message, 'id')
+    call self._handle_response(a:message)
+  else
+    if has_key(self._hook, 'on_unknown')
+      call self._hook.on_unknown(a:message)
+    endif
+  endif
+endfunction
 
-    " Response from server.
+"
+" _handle_request
+"
+function! s:Connection._handle_request(request) abort
+  if !has_key(self._on_request_map, a:request.method)
+    return self._send({ 'error': { 'code': -32601, 'message': 'Method not found', } })
+  endif
+
+  if has_key(self._hook, 'on_request')
+    call self._hook.on_request(a:request)
+  endif
+
+  let l:p = s:Promise.resolve()
+  let l:p = l:p.then({ -> self._on_request_map[a:request.method](a:request.params) })
+  let l:p = l:p.then({ result -> [
+  \     has_key(self._hook, 'response') ? self._hook.response(result) : v:null,
+  \     self._send({
+  \       'id': a:request.id,
+  \       'result': result
+  \     })
+  \ ] })
+  let l:p = l:p.catch({ error ->
+  \   has_key(error, 'code') && has_key(error, 'message')
+  \     ? (
+  \       self._send({
+  \         'id': a:request.id,
+  \         'error': error
+  \       })
+  \     ) : (
+  \       self._send({
+  \         'id': a:request.id,
+  \         'error': {
+  \           'code': -32603,
+  \           'message': 'Internal error',
+  \           'data': error,
+  \         }
+  \       })
+  \     )
+  \ })
+endfunction
+
+"
+" _handle_response
+"
+function! s:Connection._handle_response(response) abort
+  if has_key(self._request_map, a:response.id)
+    if has_key(self._hook, 'on_response')
+      call self._hook.on_response(a:response)
+    endif
+
+    let l:request = remove(self._request_map, a:response.id)
+    if has_key(a:response, 'error')
+      call l:request.reject(a:response.error)
     else
-      if has_key(self._request_map, a:message.id)
-        let l:request = remove(self._request_map, a:message.id)
-        if has_key(a:message, 'error')
-          call l:request.reject(a:message.error)
-        else
-          call l:request.resolve(get(a:message, 'result', v:null))
-        endif
-      endif
+      call l:request.resolve(get(a:response, 'result', v:null))
+    endif
+  endif
+endfunction
+
+"
+" _handle_notification
+"
+function! s:Connection._handle_notification(notification) abort
+  if has_key(self._on_notification_map, a:notification.method)
+    if has_key(self._hook, 'on_notification')
+      call self._hook.on_notification(a:notification)
     endif
 
-  " Notify from server.
-  elseif has_key(a:message, 'method')
-    if has_key(self._on_notification_map, a:message.method)
-      call self._on_notification_map[a:message.method](a:message.params)
-    endif
+    call self._on_notification_map[a:notification.method](a:notification.params)
   endif
 endfunction
 

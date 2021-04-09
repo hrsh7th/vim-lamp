@@ -92,16 +92,19 @@ function! s:ServerCapabilities.new(capabilities) abort
 endfunction
 
 "
-" get
+" get_by_text_document
 "
-" @param {{ language?: string; uri: string; }}
+" @param {{ filetype?: string; language?: string; uri: string; }} doc
 "
-function! s:ServerCapabilities.get_text_document_capabilities(doc, keys) abort
+function! s:ServerCapabilities.get_by_text_document(doc, keys) abort
   for [l:id, l:register_options] in items(s:Dict.get(self._dynamics, a:keys, {}))
     for l:filter in get(l:register_options, 'documentSelector', [])
       let l:match = v:true
       if l:match && has_key(l:filter, 'language')
         let l:match = l:match && a:doc.language ==# l:filter.language
+      endif
+      if l:match && has_key(l:filter, 'filetype')
+        let l:match = l:match && s:LanguageId.from_filetype(a:doc.filetype) ==# l:filter.language
       endif
       if l:match && has_key(l:filter, 'pattern')
         let l:match = l:match && match(glob2regpat(l:filter.pattern), a:doc.uri) != -1
@@ -111,13 +114,17 @@ function! s:ServerCapabilities.get_text_document_capabilities(doc, keys) abort
       endif
     endfor
   endfor
-  return s:Dict.get(self._statics, a:keys, v:false)
+  return s:Dict.get(self._statics, a:keys, v:null)
 endfunction
 
 "
 " register
 "
 function! s:ServerCapabilities.register(method, id, register_options) abort
+  if !has_key(s:method_property_path_mapping, a:method)
+    echohl ErrorMsg | echo printf('[VS.LSP.ServerCapabilities] `%s` has no mapping to capabilities.', a:method) | echohl None
+    return
+  endif
   call s:Dict.set(self._dynamics, s:method_property_path_mapping[a:method] + [a:id], a:register_options)
 endfunction
 
@@ -125,6 +132,10 @@ endfunction
 " unregister
 "
 function! s:ServerCapabilities.unregister(method, id) abort
+  if !has_key(s:method_property_path_mapping, a:method)
+    echohl ErrorMsg | echo printf('[VS.LSP.ServerCapabilities] `%s` has no mapping to capabilities.', a:method) | echohl None
+    return
+  endif
   call s:Dict.remove(self._dynamics, s:method_property_path_mapping[a:method] + [a:id])
 endfunction
 
