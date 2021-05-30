@@ -1,9 +1,14 @@
 lamp
-69eca5ec64744e3545a5c1f9129fac3ed900cc3c
+5828301d6bae0858e9ea21012913544f5ef8e375
 
 Async.Promise
 VS.LSP.Position
 VS.LSP.TextEdit
-VS.RPC.JSON
-VS.Text.Diff
+VS.LSP.MarkupContent
+VS.LSP.Diff
+VS.RPC.JSON.Connection
 VS.System.Job
+VS.Vim.Syntax.Markdown
+VS.Vim.Window
+VS.Vim.Buffer.TextMark
+VS.VimL.Dict

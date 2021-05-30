@@ -32,7 +32,7 @@ function! s:update() abort
   endfor
 
   if s:timer_id == -1
-    let s:timer_id = timer_start(100, { -> s:update() }, { 'repeat': -1 })
+    let s:timer_id = timer_start(500, { -> s:update() }, { 'repeat': -1 })
   endif
 endfunction
 

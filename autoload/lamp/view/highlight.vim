@@ -80,17 +80,6 @@ endfunction
 " add_highlight
 "
 function! s:add_highlight(namespace, bufnr, range, highlight) abort
-  " correct empty range.
-  if !lamp#protocol#range#has_length(a:range)
-    let l:text = get(getbufline(a:bufnr, a:range.end.line), 0, '')
-    if a:range.end.character < strchars(l:text) - 1
-      let a:range.end.character += 1
-    else
-      return
-    endif
-  endif
-
-  " add highlight.
   call lamp#view#highlight#{s:ns}#add(a:namespace, a:bufnr, a:range, a:highlight)
 endfunction
 

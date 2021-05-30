@@ -2,7 +2,6 @@
 " lamp#view#sign#remove
 "
 function! lamp#view#sign#remove(namespace, bufnr) abort
-  call s:initialize()
   try
     call sign_unplace(a:namespace, {
     \   'buffer': a:bufnr
@@ -45,6 +44,9 @@ endfunction
 "
 function! s:sign_place(namespace, bufnr, lnum, highlight) abort
   try
+    if a:lnum <= 0
+      return
+    endif
     return sign_place(
           \   0,
           \   a:namespace,

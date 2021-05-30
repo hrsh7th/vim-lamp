@@ -4,28 +4,14 @@
 function! s:_SID() abort
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze__SID$')
 endfunction
-execute join(['function! vital#_lamp#VS#System#Job#import() abort', printf("return map({'_vital_depends': '', 'new': '', '_vital_loaded': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
+execute join(['function! vital#_lamp#VS#System#Job#import() abort', printf("return map({'new': ''}, \"vital#_lamp#function('<SNR>%s_' . v:key)\")", s:_SID()), 'endfunction'], "\n")
 delfunction s:_SID
 " ___vital___
 "
-" _vital_loaded
-"
-function! s:_vital_loaded(V) abort
-  let s:Emitter = a:V.import('VS.Event.Emitter')
-endfunction
-
-"
-" _vital_depends
-"
-function! s:_vital_depends() abort
-  return ['VS.Event.Emitter']
-endfunction
-
-"
 " new
 "
-function! s:new(args) abort
-  return s:Job.new(a:args)
+function! s:new() abort
+  return s:Job.new()
 endfunction
 
 let s:chunk_size = 2048
@@ -35,37 +21,37 @@ let s:Job = {}
 "
 " new
 "
-function! s:Job.new(args) abort
+function! s:Job.new() abort
   return extend(deepcopy(s:Job), {
-  \   'command': a:args.command,
-  \   'emitter': s:Emitter.new(),
-  \   'read_buffer': '',
-  \   'read_timer': -1,
-  \   'write_buffer': '',
-  \   'write_timer': -1,
-  \   'job': v:null,
+  \   '_on_stdout': { -> {} },
+  \   '_on_stderr': { -> {} },
+  \   '_on_exit': { -> {} },
+  \   '_write_buffer': '',
+  \   '_write_timer': -1,
+  \   '_job': v:null,
   \ })
 endfunction
 
 "
 " start
 "
-function! s:Job.start(...) abort
+function! s:Job.start(args) abort
   if self.is_running()
     return
   endif
 
-  let l:args = extend(get(a:000, 0, {}), { 'cwd': getcwd() }, 'keep')
-  if !isdirectory(l:args.cwd) || l:args.cwd !~# '/'
-    unlet l:args.cwd
+  let l:option = {}
+  for l:key in ['cwd', 'env']
+    if has_key(a:args, l:key)
+      let l:option[l:key] = a:args[l:key]
+    endif
+  endfor
+
+  if has_key(l:option, 'cwd') && !isdirectory(l:option.cwd)
+    unlet! l:option.cwd
   endif
-  let self.job = s:_create(
-  \   self.command,
-  \   l:args,
-  \   function(self.on_stdout, [], self),
-  \   function(self.on_stderr, [], self),
-  \   function(self.on_exit, [], self)
-  \ )
+
+  let self._job = s:_create(a:args.cmd, l:option, self)
 endfunction
 
 "
@@ -75,15 +61,15 @@ function! s:Job.stop() abort
   if !self.is_running()
     return
   endif
-  call self.job.stop()
-  let self.job = v:null
+  call self._job.stop()
+  let self._job = v:null
 endfunction
 
 "
 " is_running
 "
 function! s:Job.is_running() abort
-  return !empty(self.job)
+  return !empty(self._job)
 endfunction
 
 "
@@ -93,100 +79,79 @@ function! s:Job.send(data) abort
   if !self.is_running()
     return
   endif
-  let self.write_buffer .= a:data
-  if self.write_timer != -1
+  let self._write_buffer .= a:data
+  if self._write_timer != -1
     return
   endif
-  let self.write_timer = timer_start(0, function(self.write, [], self))
-endfunction
-
-"
-" write
-"
-function! s:Job.write(...) abort
-  let self.write_timer = -1
-  let l:buffer_len = strlen(self.write_buffer)
-  if l:buffer_len == 0
-    return
-  endif
-  call self.job.send(strpart(self.write_buffer, 0, s:chunk_size))
-  let self.write_buffer = strpart(self.write_buffer, s:chunk_size)
-  if l:buffer_len > s:chunk_size
-    let self.write_timer = timer_start(0, function(self.write, [], self))
-  endif
-endfunction
-
-"
-" read
-"
-function! s:Job.read(...) abort
-  let self.read_timer = -1
-  let l:buffer_len = strlen(self.read_buffer)
-  if l:buffer_len == 0
-    return
-  endif
-  call self.emitter.emit('stdout', strpart(self.read_buffer, 0, s:chunk_size))
-  let self.read_buffer = strpart(self.read_buffer, s:chunk_size)
-  if l:buffer_len > s:chunk_size
-    let self.read_timer = timer_start(0, function(self.read, [], self))
-  endif
+  call self._write(0)
 endfunction
 
 "
 " on_stdout
 "
-function! s:Job.on_stdout(data) abort
-  let self.read_buffer .= a:data
-  if self.read_timer != -1
-    return
-  endif
-  let self.read_timer = timer_start(0, function(self.read, [], self))
+function! s:Job.on_stdout(callback) abort
+  let self._on_stdout = a:callback
 endfunction
 
 "
 " on_stderr
 "
-function! s:Job.on_stderr(data) abort
-  call self.emitter.emit('stderr', a:data)
+function! s:Job.on_stderr(callback) abort
+  let self._on_stderr = a:callback
 endfunction
 
 "
 " on_exit
 "
-function! s:Job.on_exit(code) abort
-  call self.emitter.emit('exit', a:code)
+function! s:Job.on_exit(callback) abort
+  let self._on_exit = a:callback
+endfunction
+
+"
+" write
+"
+function! s:Job._write(timer) abort
+  let self._write_timer = -1
+  if self._write_buffer ==# ''
+    return
+  endif
+  call self._job.send(strpart(self._write_buffer, 0, s:chunk_size))
+  let self._write_buffer = strpart(self._write_buffer, s:chunk_size)
+  if self._write_buffer !=# ''
+    let self._write_timer = timer_start(0, function(self._write, [], self))
+  endif
 endfunction
 
 "
 " create job instance
 "
 if has('nvim')
-  function! s:_create(command, args, out, err, exit) abort
-    let a:args.on_stdout = { id, data, event -> a:out(join(data, "\n")) }
-    let a:args.on_stderr = { id, data, event -> a:err(join(data, "\n")) }
-    let a:args.on_exit = { id, data, code -> a:exit(code) }
-    let l:job = jobstart(a:command, a:args)
+  function! s:_create(cmd, option, self) abort
+    let a:option.on_stdout = { id, data, event -> a:self._on_stdout(join(data, "\n")) }
+    let a:option.on_stderr = { id, data, event -> a:self._on_stderr(join(data, "\n")) }
+    let a:option.on_exit = { id, code, event -> a:self._on_exit(code) }
+    let l:job = jobstart(a:cmd, a:option)
     return {
-    \   'stop': { -> jobstop(l:job) },
-    \   'send': { data -> jobsend(l:job, data) }
+    \   'stop': function('jobstop', [l:job]),
+    \   'send': function('jobsend', [l:job]),
     \ }
   endfunction
 else
-  function! s:_create(command, args, out, err, exit) abort
-    let a:args.noblock = v:true
-    let a:args.in_io = 'pipe'
-    let a:args.in_mode = 'raw'
-    let a:args.out_io = 'pipe'
-    let a:args.out_mode = 'raw'
-    let a:args.err_io = 'pipe'
-    let a:args.err_mode = 'raw'
-    let a:args.out_cb = { job, data -> a:out(data) }
-    let a:args.err_cb = { job, data -> a:err(data) }
-    let a:args.exit_cb = { job, code -> a:exit(code) }
-    let l:job = job_start(a:command, a:args)
+  function! s:_create(cmd, option, self) abort
+    let a:option.noblock = v:true
+    let a:option.in_io = 'pipe'
+    let a:option.in_mode = 'raw'
+    let a:option.out_io = 'pipe'
+    let a:option.out_mode = 'raw'
+    let a:option.err_io = 'pipe'
+    let a:option.err_mode = 'raw'
+    let a:option.out_cb = { job, data -> a:self._on_stdout(data) }
+    let a:option.err_cb = { job, data -> a:self._on_stderr(data) }
+    let a:option.exit_cb = { job, code -> a:self._on_exit(code) }
+    let l:job = job_start(a:cmd, a:option)
     return {
-    \   'stop': { ->  ch_close(l:job) },
-    \   'send': { data -> ch_sendraw(l:job, data) }
+    \   'stop': function('ch_close', [l:job]),
+    \   'send': function('ch_sendraw', [l:job]),
     \ }
   endfunction
 endif

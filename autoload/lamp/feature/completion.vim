@@ -1,4 +1,5 @@
 let s:Position = vital#lamp#import('VS.LSP.Position')
+let s:Text = vital#lamp#import('VS.LSP.Text')
 let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 let s:Promise = vital#lamp#import('Async.Promise')
 let s:Floatwin = lamp#view#floatwin#import()
@@ -22,12 +23,12 @@ function! lamp#feature#completion#init() abort
   call lamp#view#floatwin#configure('completion', {
   \   'max_height': &lines / 3,
   \ })
-  execute printf('augroup lamp#feature#completion_%d', bufnr('%'))
-    autocmd!
-    autocmd InsertLeave <buffer> call s:on_insert_leave()
-    autocmd CompleteChanged <buffer> call s:on_complete_changed()
-    autocmd CompleteDone <buffer> call s:on_complete_done()
-  augroup END
+  " execute printf('augroup lamp#feature#completion_%d', bufnr('%'))
+  "   autocmd!
+  "   autocmd InsertLeave <buffer> call s:on_insert_leave()
+  "   autocmd CompleteChanged <buffer> call s:on_complete_changed()
+  "   autocmd CompleteDone <buffer> call s:on_complete_done()
+  " augroup END
 endfunction
 
 "
@@ -76,8 +77,8 @@ function! s:convert(params, server_name, complete_position, completion_items) ab
       let l:abbr = l:label
 
       let l:expandable = v:false
-      if has_key(l:completion_item, 'textEdit') && has_key(l:completion_item.textEdit, 'newText')
-        let l:expandable = l:word !=# l:completion_item.textEdit.newText
+      if has_key(l:completion_item, 'textEdit')
+        let l:expandable = l:word !=# get(l:completion_item.textEdit, 'newText', '')
       elseif has_key(l:completion_item, 'insertText')
         let l:expandable = l:word !=# l:completion_item.insertText
       endif
@@ -101,9 +102,6 @@ function! s:convert(params, server_name, complete_position, completion_items) ab
 
     " create item
     let l:kind = get(l:kind_map, get(l:completion_item, 'kind', -1), '')
-    if type(get(l:completion_item, 'detail', v:null)) == type('')
-      let l:kind = matchstr(trim(l:completion_item.detail), "^[^\n]\\+")
-    endif
     call add(l:completed_items, {
     \   'word': l:word,
     \   'abbr': l:abbr,
@@ -143,7 +141,7 @@ function lamp_feature_completion_convert(params, server_name, complete_position,
       abbr = label
 
       local expandable = false
-      if completion_item.textEdit ~= nil and completion_item.textEdit.newText ~= nil then
+      if completion_item.textEdit ~= nil then
         expandable = word ~= completion_item.textEdit.newText
       elseif completion_item.insertText ~= nil then
         expandable = word ~= completion_item.insertText
@@ -157,14 +155,7 @@ function lamp_feature_completion_convert(params, server_name, complete_position,
       abbr = label
     end
 
-    local kind = kind_map[completion_item.kind] or ''
-    if type(completion_item.detail) == 'string' then
-      local match = string.match(string.gsub(completion_item.detail, "^%s*(.-)%s*$", "%1"), '^[^\n]+')
-      if match ~= nil then
-        kind = match
-      end
-    end
-
+    local kind = kind_map['' .. (completion_item.kind or '')] or ''
     table.insert(complete_items, {
       word = word;
       abbr = abbr;
@@ -237,6 +228,7 @@ endfunction
 "
 function! s:on_insert_leave() abort
   call lamp#view#floatwin#hide('completion')
+  call lamp#debounce('lamp#feature#completion:on_complete_changed', { -> {} }, 0)
   call s:clear_managed_user_data()
 endfunction
 
@@ -262,25 +254,29 @@ function! s:on_complete_changed() abort
     return
   endif
 
-  let l:completed_item = v:completed_item
-  call s:resolve_completion_item(l:user_data).then({ completion_item ->
-  \   s:show_documentation(l:event, l:completed_item, completion_item)
-  \ })
+  let l:ctx = {}
+  let l:ctx.user_data = l:user_data
+  let l:ctx.event = l:event
+  let l:ctx.completed_item = v:completed_item
+  function! l:ctx.callback() abort
+    call s:resolve_completion_item(self.user_data).then({ completion_item ->
+    \   s:show_documentation(self.event, self.completed_item, completion_item)
+    \ })
+  endfunction
+  call lamp#debounce('lamp#feature#completion:on_complete_changed', { -> l:ctx.callback() }, 80)
 endfunction
 
 "
 " on_complete_done
 "
 function! s:on_complete_done() abort
-  " clear.
-  call lamp#view#floatwin#hide('completion')
-
   let s:context.done_position = s:Position.cursor()
   let s:context.done_line = getline('.')
   let s:context.completed_item = v:completed_item
   let s:context.user_data = s:get_managed_user_data(v:completed_item)
 
   if !empty(v:completed_item) && strlen(get(v:completed_item, 'word', '')) > 0 && !empty(s:context.user_data)
+    call lamp#view#floatwin#hide('completion')
     noautocmd call feedkeys("\<Plug>(lamp-completion:on_complete_done_after)", '')
   endif
 endfunction
@@ -338,7 +334,7 @@ function! s:on_complete_done_after() abort
     if type(get(l:completion_item, 'textEdit', v:null)) == type({})
       let l:overflow_before = l:complete_start_character - l:completion_item.textEdit.range.start.character
       let l:overflow_after = l:completion_item.textEdit.range.end.character - l:complete_position.character
-      let l:text = l:completion_item.textEdit.newText
+      let l:text = get(l:completion_item.textEdit, 'newText', l:completed_item.word)
     else
       let l:overflow_before = 0
       let l:overflow_after = 0
@@ -365,6 +361,11 @@ function! s:on_complete_done_after() abort
       \ })
     else
       call s:TextEdit.apply('%', [{ 'range': l:range, 'newText': l:text }])
+      let l:lines = s:Text.split_by_eol(l:text)
+      let l:start = l:range.start
+      let l:start.line += len(l:lines) - 1
+      let l:start.character += strchars(l:lines[-1])
+      call cursor(s:Position.lsp_to_vim('%', l:start))
     endif
   endif
 
@@ -406,12 +407,14 @@ function! s:is_expandable(done_line, done_position, complete_position, completio
     endif
 
     " compute if textEdit will change text.
+    let l:new_text = get(a:completion_item.textEdit, 'newText', '')
     let l:completed_before = strcharpart(a:done_line, 0, a:complete_position.character)
     let l:completed_after = strcharpart(a:done_line, a:done_position.character, strchars(a:done_line) - a:done_position.character)
     let l:completed_line = l:completed_before . l:completed_after
     let l:text_edit_before = strcharpart(l:completed_line, 0, a:completion_item.textEdit.range.start.character)
-    let l:text_edit_after = strcharpart(l:completed_line, a:completion_item.textEdit.range.end.character, strchars(l:completed_line) - a:completion_item.textEdit.range.end.character)
-    return a:done_line !=# l:text_edit_before . s:trim_unmeaning_tabstop(a:completion_item.textEdit.newText) . l:text_edit_after
+    let l:text_edit_after = strcharpart(l:completed_line, a:completion_item.textEdit.range.end.character)
+
+    return a:done_line !=# l:text_edit_before . s:trim_unmeaning_tabstop(l:new_text) . l:text_edit_after
   endif
   return get(a:completion_item, 'insertText', a:completed_item.word) !=# s:trim_unmeaning_tabstop(a:completed_item.word)
 endfunction

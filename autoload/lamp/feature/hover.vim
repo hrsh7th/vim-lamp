@@ -9,9 +9,9 @@ function! lamp#feature#hover#init() abort
   \   'keep': v:false,
   \   'priority': 100
   \ })
-  execute printf('augroup lamp#feature#hover_%d', bufnr('%'))
+  augroup lamp#feature#hover
     autocmd!
-    autocmd InsertEnter,CursorMoved <buffer> call s:close()
+    autocmd InsertEnter,CursorMoved * call s:close()
   augroup END
 endfunction
 
@@ -38,13 +38,13 @@ function! lamp#feature#hover#do() abort
 
   let l:bufnr = bufnr('%')
   let l:promises = map(l:servers, { k, v ->
-        \   v.request('textDocument/hover', {
-        \     'textDocument': lamp#protocol#document#identifier(l:bufnr),
-        \     'position': s:Position.cursor()
-        \   }, {
-        \     'cancellation_token': s:cancellation_token,
-        \   }).catch(lamp#rescue(v:null))
-        \ })
+  \   v.request('textDocument/hover', {
+  \     'textDocument': lamp#protocol#document#identifier(l:bufnr),
+  \     'position': s:Position.cursor()
+  \   }, {
+  \     'cancellation_token': s:cancellation_token,
+  \   }).catch(lamp#rescue(v:null))
+  \ })
   let l:p = s:Promise.all(l:promises)
   let l:p = l:p.then({ res -> s:on_response(l:bufnr, res) })
   let l:p = l:p.catch(lamp#rescue())

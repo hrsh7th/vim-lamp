@@ -4,8 +4,6 @@ let s:Position = vital#lamp#import('VS.LSP.Position')
 let s:Server = lamp#server#import()
 let s:CancellationToken = lamp#server#cancellation_token#import()
 
-call s:TextEdit.fixeol(v:true)
-
 let s:debounce_ids = {}
 
 let s:profiles = {}
@@ -227,22 +225,15 @@ endfunction
 function! lamp#get(dict, path, default) abort
   let l:keys = split(a:path, '\.')
 
-  let l:target = a:dict
+  let l:V = a:dict
   for l:key in l:keys
-    if index([v:t_dict, v:t_list], type(l:target)) == -1
+    let l:type = type(l:V)
+    if !(l:type == v:t_dict && has_key(l:V, l:key))
       return a:default
     endif
-
-    if !has_key(l:target, l:key)
-      return a:default
-    endif
-
-    let l:value = l:target[l:key]
-    unlet! l:target
-    let l:target = l:value
+    let l:V = l:V[l:key]
   endfor
-
-  return l:target
+  return l:V
 endfunction
 
 "

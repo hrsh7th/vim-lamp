@@ -1,3 +1,6 @@
+let s:Window = vital#lamp#import('VS.Vim.Window')
+let s:Markdown = vital#lamp#import('VS.Vim.Syntax.Markdown')
+
 let s:floatwin_id = 0
 let s:floatwins = {}
 
@@ -74,7 +77,7 @@ function! lamp#view#floatwin#show(name, pos, contents, ...) abort
 
   let l:target = s:floatwins[a:name]
   for [l:name, l:win] in items(s:floatwins)
-    if !l:win.is_keep() && l:win.is_showing() && l:target.get_priority() < l:win.get_priority()
+    if l:win.is_keep() && l:win.is_showing() && l:target.get_priority() < l:win.get_priority()
       return
     endif
   endfor
@@ -138,10 +141,9 @@ let s:Floatwin = {}
 "
 function! s:Floatwin.new(option) abort
   let s:floatwin_id += 1
-  let l:bufname = printf('lamp-floatwin-%s.lamp_floatwin', s:floatwin_id)
+  let l:bufname = printf('lamp-floatwin-%s', s:floatwin_id)
   let l:bufnr = bufnr(l:bufname, v:true)
   call setbufvar(l:bufnr, '&buflisted', 0)
-  call setbufvar(l:bufnr, '&filetype', 'lamp_floatwin')
   call setbufvar(l:bufnr, '&buftype', 'nofile')
   return extend(deepcopy(s:Floatwin), {
   \   'bufnr': l:bufnr,
@@ -178,8 +180,13 @@ function! s:Floatwin.show(screenpos, contents) abort
     return
   endif
 
+  let l:contents = self.fix_contents(a:contents)
+  if self.is_showing() && self.screenpos == a:screenpos && self.contents == l:contents
+    return
+  endif
+
   let self.screenpos = a:screenpos
-  let self.contents = self.fix_contents(a:contents)
+  let self.contents = l:contents
 
   " create lines.
   let l:lines = []
@@ -190,22 +197,16 @@ function! s:Floatwin.show(screenpos, contents) abort
     endif
   endfor
 
-  " @see ftplugin/lamp_floatwin.vim
-  call setbufvar(self.bufnr, 'lamp_floatwin_lines', l:lines)
-
   " show or move
   call lamp#view#floatwin#{s:namespace}#show(self)
   call setwinvar(self.winid(), '&wrap', 1)
-  call setwinvar(self.winid(), '&conceallevel', 3)
+  call setwinvar(self.winid(), '&conceallevel', 2)
 
   " write lines
   call lamp#view#floatwin#{s:namespace}#write(self, l:lines)
 
   " update syntax highlight for nvim.
-  " NOTE: if vim, use autocmd to apply syntax in ftplugin/lamp_floatwin.vim.
-  if has('nvim') && LampFloatwinSyntaxShouldUpdate(self.bufnr)
-    call lamp#view#window#do(self.winid(), { -> LampFloatwinSyntaxUpdate() })
-  endif
+  call s:Window.do(self.winid(), { -> s:Markdown.apply({ 'text': join(l:lines, "\n") }) })
 endfunction
 
 "
@@ -257,15 +258,6 @@ endfunction
 " fix_contents
 "
 function! s:Floatwin.fix_contents(contents) abort
-  if self.fix
-    if a:contents[0].lines[0] != ''
-      call insert(a:contents[0].lines, '')
-    endif
-    if a:contents[-1].lines[-1] != ''
-      call add(a:contents[-1].lines, '')
-    endif
-  endif
-
   return a:contents
 endfunction
 

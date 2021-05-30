@@ -152,7 +152,7 @@ function! lamp#builtin#vim_language_server(...) abort
   \   'command': ['vim-language-server', '--stdio'],
   \   'filetypes': ['vim', 'vimspec'],
   \   'initialization_options': { -> {
-  \     'iskeyword': &iskeyword,
+  \     'iskeyword': &iskeyword . ',:,.',
   \    'vimruntime': $VIMRUNTIME,
   \    'runtimepath': &runtimepath,
   \    'diagnostic': {
@@ -181,10 +181,26 @@ function! lamp#builtin#gopls() abort
   \   'filetypes': ['go', 'gomod'],
   \   'root_uri': { bufnr -> lamp#findup(['go.mod', 'main.go'], bufname(bufnr)) },
   \   'initialization_options': { -> {
-  \     'usePlaceholders': v:true,
-  \     'completeUnimported': v:true,
-  \     'hoverKind': 'FullDocumentation',
-  \   } },
+  \      'usePlaceholders': v:true,
+  \      'staticcheck': v:true,
+  \      'experimentalPostfixCompletions': v:true,
+  \      'ui': {
+  \        'completion': {
+  \          'experimentalPostfixCompletions': v:true,
+  \        }
+  \      },
+  \      'analyses': {
+  \         'nilness': v:true,
+  \         'shadow': v:true,
+  \         'unusedparams': v:true,
+  \         'unusedwrite': v:true,
+  \         'fieldalignment': v:true
+  \      },
+  \      'codelenses': {
+  \         'gc_details': v:true,
+  \         'tidy': v:true
+  \      },
+  \    } }
   \ })
 
   autocmd! lamp#builtin BufWritePre *.go call execute('LampFormattingSync') | call execute('LampCodeActionSync source.organizeImports')

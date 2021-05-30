@@ -6,13 +6,17 @@ let s:highlight_ns = 'lamp#feature#diagnostic:highlight'
 " init
 "
 function! lamp#feature#diagnostic#init() abort
+  augroup lamp#feature#diagnostic
+    autocmd!
+    autocmd InsertEnter * call s:on_action()
+    autocmd InsertLeave * call s:on_action()
+    autocmd WinEnter * call s:on_action()
+  augroup END
+
   execute printf('augroup lamp#feature#diagnostic_%d', bufnr('%'))
     autocmd!
     autocmd BufWritePost <buffer> call s:on_buf_write_pre()
     autocmd BufWinEnter <buffer> call s:on_buf_win_enter()
-    autocmd InsertEnter <buffer> call s:on_action()
-    autocmd InsertLeave <buffer> call s:on_action()
-    autocmd WinEnter <buffer> call s:on_action()
     autocmd CursorMoved <buffer> call s:on_cursor_moved()
   augroup END
 
@@ -198,11 +202,6 @@ endfunction
 " apply
 "
 function! s:apply(server_name, diagnostics) abort
-  if !a:diagnostics.is_shown()
-    call lamp#log('[LOG]', 'diagnostics skipped: it does not shown', a:server_name)
-    return
-  endif
-
   if len(a:diagnostics.applied_diagnostics) == 0 && len(a:diagnostics.diagnostics) == 0
     call lamp#log('[LOG]', 'diagnostics skipped: 0 to 0', a:server_name)
     return
@@ -220,19 +219,19 @@ function! s:apply(server_name, diagnostics) abort
 
   " update.
   for l:diagnostic in a:diagnostics.diagnostics
-    let l:line = l:diagnostic.range.start.line
+    let l:lnum = l:diagnostic.range.start.line + 1
     let l:severity = get(l:diagnostic, 'severity', 1)
     if l:severity == 1
-      call lamp#view#sign#error(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#sign#error(l:sign_ns, l:bufnr, l:lnum)
       call lamp#view#highlight#error(l:highlight_ns, l:bufnr, l:diagnostic.range)
     elseif l:severity == 2
-      call lamp#view#sign#warning(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#sign#warning(l:sign_ns, l:bufnr, l:lnum)
       call lamp#view#highlight#warning(l:highlight_ns, l:bufnr, l:diagnostic.range)
     elseif l:severity == 3
-      call lamp#view#sign#information(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#sign#information(l:sign_ns, l:bufnr, l:lnum)
       call lamp#view#highlight#information(l:highlight_ns, l:bufnr, l:diagnostic.range)
     elseif l:severity == 4
-      call lamp#view#sign#hint(l:sign_ns, l:bufnr, l:line + 1)
+      call lamp#view#sign#hint(l:sign_ns, l:bufnr, l:lnum)
       call lamp#view#highlight#hint(l:highlight_ns, l:bufnr, l:diagnostic.range)
     endif
   endfor

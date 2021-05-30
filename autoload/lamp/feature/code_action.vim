@@ -25,7 +25,7 @@ function! lamp#feature#code_action#complete(input, command, len) abort
   let l:servers = filter(l:servers, { _, server -> server.supports('capabilities.codeActionProvider') })
   let l:kinds = []
   for l:server in l:servers
-    let l:kinds += l:server.capability.get_code_action_kinds()
+    let l:kinds += l:server.capabilities.get_code_action_kinds()
   endfor
   return filter(l:kinds, { _, k -> k =~ '^' . a:input })
 endfunction
