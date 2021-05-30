@@ -56,6 +56,9 @@ augroup END
 "
 function! s:on_text_document_did_open() abort
   let l:bufnr = bufnr('%')
+  if getbufvar(l:bufnr, '&buftype') !=# ''
+    return
+  endif
 
   let l:servers = lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
   if !empty(l:servers)

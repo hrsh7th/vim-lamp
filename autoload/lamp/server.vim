@@ -38,7 +38,7 @@ function! s:Server.new(name, option) abort
   \   'trace': get(a:option, 'trace', 'off'),
   \   'documents': {},
   \   'diagnostics': {},
-  \   'capabilities': s:Capabilities.new(),
+  \   'capabilities': s:Capabilities.new(get(a:option, 'capabilities', {})),
   \   'initialized': v:false,
   \   'state': {
   \     'started': v:false,

@@ -44,6 +44,9 @@ endfunction
 "
 function! s:sign_place(namespace, bufnr, lnum, highlight) abort
   try
+    if a:lnum <= 0
+      return
+    endif
     return sign_place(
           \   0,
           \   a:namespace,

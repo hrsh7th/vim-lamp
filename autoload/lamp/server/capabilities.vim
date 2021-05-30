@@ -274,9 +274,9 @@ let s:Capabilities = {}
 "
 " new
 "
-function! s:Capabilities.new() abort
+function! s:Capabilities.new(...) abort
   return extend(deepcopy(s:Capabilities), {
-  \   'capabilities': {},
+  \   'capabilities': { 'capabilities': get(a:000, 0, {}) },
   \   'dynamics': {}
   \ })
 endfunction
@@ -285,7 +285,7 @@ endfunction
 " merge
 "
 function! s:Capabilities.merge(capabilities) abort
-  let self.capabilities = a:capabilities
+  let self.capabilities = lamp#merge(a:capabilities, self.capabilities)
 endfunction
 
 "
