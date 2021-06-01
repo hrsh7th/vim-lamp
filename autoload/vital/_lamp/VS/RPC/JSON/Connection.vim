@@ -208,6 +208,8 @@ function! s:Connection._on_header(data) abort
   if l:header_offset < 4
     call add(self._headers, a:data)
     return v:false
+  elseif l:header_offset == strlen(a:data)
+    call add(self._headers, a:data)
   else
     call add(self._headers, strpart(a:data, 0, l:header_offset))
     call add(self._contents, strpart(a:data, l:header_offset))

@@ -1,3 +1,4 @@
+let s:Buffer = vital#lamp#improt('VS.Vim.Buffer')
 let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 
 "
@@ -31,7 +32,7 @@ endfunction
 "
 function! lamp#view#edit#apply_workspace(workspace_edit) abort
   for [l:uri, l:edits] in items(a:workspace_edit)
-    let l:bufnr = bufnr(lamp#protocol#document#decode_uri(l:uri), v:true)
+    let l:bufnr = s:Buffer.ensure(lamp#protocol#document#decode_uri(l:uri))
     if !bufloaded(l:bufnr)
       call setbufvar(l:bufnr, '&buflisted', v:true)
     endif

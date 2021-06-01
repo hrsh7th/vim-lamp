@@ -1,3 +1,4 @@
+let s:Buffer = vital#lamp#import('VS.Vim.Buffer')
 let s:Window = vital#lamp#import('VS.Vim.Window')
 let s:Markdown = vital#lamp#import('VS.Vim.Syntax.Markdown')
 
@@ -142,7 +143,7 @@ let s:Floatwin = {}
 function! s:Floatwin.new(option) abort
   let s:floatwin_id += 1
   let l:bufname = printf('lamp-floatwin-%s', s:floatwin_id)
-  let l:bufnr = bufnr(l:bufname, v:true)
+  let l:bufnr = s:Buffer.ensure(l:bufname)
   call setbufvar(l:bufnr, '&buflisted', 0)
   call setbufvar(l:bufnr, '&buftype', 'nofile')
   return extend(deepcopy(s:Floatwin), {
