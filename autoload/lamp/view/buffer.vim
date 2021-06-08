@@ -1,3 +1,5 @@
+let s:Buffer = vital#lamp#import('VS.Vim.Buffer')
+
 "
 " lamp#view#buffer#append_line
 "
@@ -25,7 +27,8 @@ endfunction
 "
 function! lamp#view#buffer#open(command, location) abort
   normal! m'
-  if bufnr(a:location.filename) != bufnr('%') || a:command !=# 'edit'
+  let l:bufnr = s:Buffer.ensure(a:location.filename)
+  if l:bufnr != bufnr('%') || a:command !=# 'edit'
     execute printf('keepalt keepjumps %s %s', a:command, a:location.filename)
   endif
 

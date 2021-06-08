@@ -1,4 +1,4 @@
-let s:Buffer = vital#lamp#improt('VS.Vim.Buffer')
+let s:Buffer = vital#lamp#import('VS.Vim.Buffer')
 let s:TextEdit = vital#lamp#import('VS.LSP.TextEdit')
 
 "
