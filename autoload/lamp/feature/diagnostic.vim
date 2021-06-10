@@ -182,15 +182,12 @@ endfunction
 "
 function! s:update() abort
   let l:bufnrs = {}
-  for l:winnr in range(1, tabpagewinnr(tabpagenr(), '$'))
-    let l:bufnrs[winbufnr(l:winnr)] = 1
+  for l:win in getwininfo()
+    let l:bufnrs[l:win.bufnr] = 1
   endfor
 
   for l:bufnr in keys(l:bufnrs)
-    if !bufexists(l:bufnr)
-      continue
-    endif
-
+    let l:bufnr = str2nr(l:bufnr)
     let l:uri = lamp#protocol#document#encode_uri(l:bufnr)
     for l:server in lamp#server#registry#find_by_filetype(getbufvar(l:bufnr, '&filetype'))
       let l:diagnostics = get(l:server.diagnostics, l:uri)
