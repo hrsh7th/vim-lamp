@@ -19,7 +19,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "husky": "^3.0.9",
+    "husky": "^9.1.7",
     "typescript": "^3.6.4",
     "typescript-language-server": "^0.4.0",
     "vscode-html-languageserver-bin": "^1.4.0"
